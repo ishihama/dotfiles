@@ -10,8 +10,8 @@ export ZSH=$HOME/.oh-my-zsh
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
-ZSH_THEME="af-magic"
-
+#ZSH_THEME="af-magic"
+ZSH_THEME="maran"
 # Uncomment the following line to use case-sensitive completion.
 # CASE_SENSITIVE="true"
 
@@ -87,22 +87,21 @@ source $ZSH/oh-my-zsh.sh
 # alias zshconfig="mate ~/.zshrc"
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 
-export ANDROID_HOME=$HOME/Library/Android/sdk
+# color
+#autoload -Uz colors
+#colors
 
-# peco
-function peco-select-history() {
-    local tac
-    if which tac > /dev/null; then
-        tac="tac"
-    else
-        tac="tail -r"
-    fi
-    BUFFER=$(\history -n 1 | \
-        eval $tac | \
-        peco --query "$LBUFFER")
-    CURSOR=$#BUFFER
-    zle clear-screen
-}
-zle -N peco-select-history
-bindkey '^r' peco-select-history
+# less
+export LESSCHARSET=utf-8 
 
+
+# OS Type
+if [ "$(uname)" = 'Darwin' ]; then
+    #mac
+    source ${HOME}/.zshrc.osx
+elif [ "$(uname)" = 'Linux' ]; then
+    #linux
+    source ${HOME}/.zshrc.linux
+else
+    echo "Unknown OS Type....."
+fi
