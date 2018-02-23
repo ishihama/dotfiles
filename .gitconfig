@@ -1,3 +1,9 @@
 [user]
 	name = REDACTED
 	email = REDACTED@example.com
+[core]
+  pager = less -cm
+  quotepath = false
+  editor = vim
+[color]
+  ui = true
