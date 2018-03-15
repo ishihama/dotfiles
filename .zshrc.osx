@@ -1,19 +1,25 @@
-# Android
-export ANDROID_HOME=$HOME/Library/Android/sdk
+## peco
+#function peco-select-history() {
+#    local tac
+#    if which tac > /dev/null; then
+#        tac="tac"
+#    else
+#        tac="tail -r"
+#    fi
+#    BUFFER=$(\history -n 1 | \
+#        eval $tac | \
+#        peco --query "$LBUFFER")
+#    CURSOR=$#BUFFER
+#    zle clear-screen
+#}
+#zle -N peco-select-history
+#bindkey '^r' peco-select-history
 
-# peco
-function peco-select-history() {
-    local tac
-    if which tac > /dev/null; then
-        tac="tac"
-    else
-        tac="tail -r"
-    fi
-    BUFFER=$(\history -n 1 | \
-        eval $tac | \
-        peco --query "$LBUFFER")
+# fzf
+function select-history() {
+    BUFFER=$(\history -n -r 1 | fzf --no-sort +m --query "$LBUFFER" --prompt="History > ")
     CURSOR=$#BUFFER
-    zle clear-screen
 }
-zle -N peco-select-history
-bindkey '^r' peco-select-history
+zle -N select-history
+bindkey '^r' select-history
+
