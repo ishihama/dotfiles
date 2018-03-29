@@ -4,6 +4,7 @@ export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"
 export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"
 
 alias open=xdg-open
+alias pbcopy=xsel --clipboard --input
 
 # fzf
 function select-history() {
