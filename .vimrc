@@ -87,7 +87,7 @@ if dein#load_state('/home/hammer/.cache/dein')
   call dein#add('Shougo/neosnippet-snippets')
 
   " You can specify revision/branch/tag.
-  "call dein#add('Shougo/deol.nvim', { 'rev': 'a1b5108fd' })
+  call dein#add('Shougo/deol.nvim', { 'rev': 'a1b5108fd' })
 
   " scala
   call dein#add('derekwyatt/vim-scala')
