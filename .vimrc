@@ -87,7 +87,46 @@ if dein#load_state('/home/hammer/.cache/dein')
   call dein#add('Shougo/neosnippet-snippets')
 
   " You can specify revision/branch/tag.
-  "call dein#add('Shougo/deol.nvim', { 'rev': 'a1b5108fd' })
+  " call dein#add('Shougo/deol.nvim', { 'rev': 'a1b5108fd' })
+
+  " 入力補完
+  call dein#add('Shougo/neocomplcache.vim')
+  " Ruby補完
+  call dein#add('Shougo/neocomplcache-rsense.vim')
+  " Ruby endwise 補完
+  call dein#add('tpope/vim-endwise')
+  " ファイル名補完 ctrl p
+  call dein#add("ctrlpvim/ctrlp.vim")
+  "　英単語補完
+  call dein#add('ujihisa/neco-look')
+
+  " rails
+  call dein#add('tpope/vim-rails', {'on_ft' : 'ruby'})
+
+  " 構文チェック
+  call dein#add('scrooloose/syntastic')
+
+  " ディレクトリツリー表示 ctrl e
+  call dein#add('scrooloose/nerdtree')
+  nnoremap <silent><C-e> :NERDTreeToggle<CR>
+  " nerdtree初期表示
+  autocmd VimEnter * execute 'NERDTree'
+  " ファイルアイコン
+  "call dein#add('tiagofumo/vim-nerdtree-syntax-highlight')
+  " ファイルアイコン
+  call dein#add('ryanoasis/vim-devicons')
+  " スペース可視化
+  call dein#add('bronson/vim-trailing-whitespace')
+
+  " Git
+  call dein#add('scrooloose/vim-fugitive')
+  " Gitコマンドヘルパー
+  "call dein#add('tpope/vim-fugitive')
+  " Gitステータス行表示
+  call dein#add('airblade/vim-gitgutter')
+
+  " vimステータスライン表示
+  call dein#add('itchyny/lightline.vim')
 
   " scala
   call dein#add('derekwyatt/vim-scala')
