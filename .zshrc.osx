@@ -15,6 +15,9 @@
 #zle -N peco-select-history
 #bindkey '^r' peco-select-history
 
+# ls color
+alias ls="ls -GF"
+
 # fzf
 function select-history() {
     BUFFER=$(\history -n -r 1 | fzf --no-sort +m --query "$LBUFFER" --prompt="History > ")
