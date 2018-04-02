@@ -106,9 +106,10 @@ if dein#load_state('~/.cache/dein')
   " 構文チェック
   call dein#add('scrooloose/syntastic')
 
-  " ディレクトリツリー表示 ctrl e
+  " ディレクトリツリー表示 ctrl n
   call dein#add('scrooloose/nerdtree')
-  nnoremap <silent><C-e> :NERDTreeToggle<CR>
+  nnoremap <C-n> :NERDTreeToggle<CR>
+
   " nerdtree初期表示
   "autocmd VimEnter * execute 'NERDTree'
   let g:NERDTreeDirArrows = 1
