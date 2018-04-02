@@ -72,15 +72,15 @@ if &compatible
 endif
 
 " Required:
-set runtimepath+=/home/hammer/.cache/dein/repos/github.com/Shougo/dein.vim
+set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 
 " Required:
-if dein#load_state('/home/hammer/.cache/dein')
-  call dein#begin('/home/hammer/.cache/dein')
+if dein#load_state('~/.cache/dein')
+  call dein#begin('~/.cache/dein')
 
   " Let dein manage dein
   " Required:
-  call dein#add('/home/hammer/.cache/dein/repos/github.com/Shougo/dein.vim')
+  call dein#add('~/.cache/dein/repos/github.com/Shougo/dein.vim')
 
   " Add or remove your plugins here:
   call dein#add('Shougo/neosnippet.vim')
@@ -111,10 +111,14 @@ if dein#load_state('/home/hammer/.cache/dein')
   nnoremap <silent><C-e> :NERDTreeToggle<CR>
   " nerdtree初期表示
   autocmd VimEnter * execute 'NERDTree'
+  let g:NERDTreeDirArrows = 1
+  let g:NERDTreeDirArrowExpandable  = '▶'
+  let g:NERDTreeDirArrowCollapsible = '▼'
+
   " ファイルアイコン
   "call dein#add('tiagofumo/vim-nerdtree-syntax-highlight')
   " ファイルアイコン
-  call dein#add('ryanoasis/vim-devicons')
+  "call dein#add('ryanoasis/vim-devicons')
   " スペース可視化
   call dein#add('bronson/vim-trailing-whitespace')
 
