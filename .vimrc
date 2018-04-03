@@ -40,6 +40,8 @@ nnoremap k gk
 " NERDTree
 nnoremap <C-n> :NERDTreeToggle<CR>
 
+" TagBar
+nnoremap <F8> :TagbarToggle<CR>
 
 " Tab系
 " 不可視文字を可視化(タブが「▸-」と表示される)
@@ -133,6 +135,11 @@ if dein#load_state('~/.cache/dein')
 
   " vimステータスライン表示
   call dein#add('itchyny/lightline.vim')
+
+  " tag アウトライン
+  call dein#add('majutsushi/tagbar')
+  " ctags helper
+  call dein#add('szw/vim-tags')
 
   " scala
   call dein#add('derekwyatt/vim-scala')
