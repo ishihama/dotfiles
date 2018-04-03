@@ -1,6 +1,10 @@
 # pbcopy
 alias pbcopy='clip.exe'
 
+# x server
+export DISPLAY=localhost:0.0
+
+
 # tmux wsl-terminal
 [[ -z "$TMUX" && -n "$USE_TMUX" ]] && {
     [[ -n "$ATTACH_ONLY" ]] && {
