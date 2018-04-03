@@ -37,6 +37,8 @@ set wildmode=list:longest
 " 折り返し時に表示行単位での移動できるようにする
 nnoremap j gj
 nnoremap k gk
+" NERDTree
+nnoremap <C-n> :NERDTreeToggle<CR>
 
 
 " Tab系
@@ -108,7 +110,6 @@ if dein#load_state('~/.cache/dein')
 
   " ディレクトリツリー表示 ctrl n
   call dein#add('scrooloose/nerdtree')
-  nnoremap <C-n> :NERDTreeToggle<CR>
 
   " nerdtree初期表示
   "autocmd VimEnter * execute 'NERDTree'
