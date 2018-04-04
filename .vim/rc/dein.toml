@@ -1,0 +1,64 @@
+[[plugins]]
+repo = 'Shougo/dein.vim'
+
+[[plugins]] # スニペット補完
+repo = 'Shougo/neosnippet.vim'
+
+[[plugins]] # スニペット集
+repo = 'Shougo/neosnippet-snippets'
+
+[[plugins]] # 入力補完
+repo = 'Shougo/neocomplcache.vim'
+
+[[plugins]] # Ruby補完
+repo = 'Shougo/neocomplcache-rsense.vim'
+
+[[plugins]] # Ruby endwise補完
+repo = 'tpope/vim-endwise'
+
+[[plugins]] # ファイル名補完 ctrl p
+repo = "ctrlpvim/ctrlp.vim"
+
+[[plugins]] # 英単語補完
+repo = 'ujihisa/neco-look'
+
+[[plugins]] # Rails
+repo = 'tpope/vim-rails'
+on_ft = 'ruby'
+
+[[plugins]] # 構文チェック
+repo = 'scrooloose/syntastic'
+
+[[plugins]] # ディレクトリツリー表示
+repo = 'scrooloose/nerdtree'
+
+#[[plugins]] # ファイルアイコン
+#repo = 'tiagofumo/vim-nerdtree-syntax-highlight'
+
+#[[plugins]] # ファイルアイコン
+#repo = 'ryanoasis/vim-devicons'
+
+[[plugins]] # スペース可視化
+repo = 'bronson/vim-trailing-whitespace'
+
+[[plugins]] # Git
+repo = 'scrooloose/vim-fugitive'
+
+#[[plugins]] # Git
+#repo = 'tpope/vim-fugitive'
+
+[[plugins]] # Gitステータス表示
+repo = 'airblade/vim-gitgutter'
+
+[[plugins]] # Vimステータスライン表示
+repo = 'itchyny/lightline.vim'
+
+[[plugins]] # tag アウトライン
+repo = 'majutsushi/tagbar'
+
+[[plugins]] # ctag
+repo = 'szw/vim-tags'
+
+[[plugins]] # scala
+repo = 'derekwyatt/vim-scala'
+

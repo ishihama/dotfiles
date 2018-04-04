@@ -1,6 +1,21 @@
-" setting
+" encoding
 "文字コードをUTF-8に設定
-set enc=utf-8
+set encoding=utf-8
+scriptencoding utf-8
+
+" 保存時の文字コード
+set fileencoding=utf-8
+" 読込時の文字コード
+set fileencodings=ucs-boms,utf-8,cp932,euc-jp
+" 改行コードの文字コード
+ set fileformats=unix,dos,mac
+
+" □や○文字が崩れる問題を解決
+set ambiwidth=double
+
+
+
+" file
 " バックアップファイルを作らない
 set nobackup
 " スワップファイルを作らない
@@ -9,8 +24,6 @@ set noswapfile
 set autoread
 " バッファが編集中でもその他のファイルを開けるように
 set hidden
-" 入力中のコマンドをステータスに表示する
-set showcmd
 
 
 " 見た目系
@@ -37,8 +50,16 @@ set wildmode=list:longest
 " 折り返し時に表示行単位での移動できるようにする
 nnoremap j gj
 nnoremap k gk
+" 入力中のコマンドをステータスに表示する
+set showcmd
+
 " NERDTree
 nnoremap <C-n> :NERDTreeToggle<CR>
+" nerdtree初期表示
+"autocmd VimEnter * execute 'NERDTree'
+let g:NERDTreeDirArrows = 1
+let g:NERDTreeDirArrowExpandable  = '▶'
+let g:NERDTreeDirArrowCollapsible = '▼'
 
 " TagBar
 nnoremap <F8> :TagbarToggle<CR>
@@ -69,7 +90,6 @@ set hlsearch
 nmap <Esc><Esc> :nohlsearch<CR><Esc>
 
 
-" dein
 "dein Scripts-----------------------------
 if &compatible
   set nocompatible               " Be iMproved
@@ -82,67 +102,14 @@ set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
 if dein#load_state('~/.cache/dein')
   call dein#begin('~/.cache/dein')
 
-  " Let dein manage dein
-  " Required:
-  call dein#add('~/.cache/dein/repos/github.com/Shougo/dein.vim')
+  " プラグインリストを収めた TOML ファイル
+  let g:rc_dir = expand('~/.vim/rc')
+  let s:toml = g:rc_dir . '/dein.toml'
+  let s:lazy_toml = g:rc_dir . '/dein_lazy.toml'
 
-  " Add or remove your plugins here:
-  call dein#add('Shougo/neosnippet.vim')
-  call dein#add('Shougo/neosnippet-snippets')
-
-  " You can specify revision/branch/tag.
-  " call dein#add('Shougo/deol.nvim', { 'rev': 'a1b5108fd' })
-
-  " 入力補完
-  call dein#add('Shougo/neocomplcache.vim')
-  " Ruby補完
-  call dein#add('Shougo/neocomplcache-rsense.vim')
-  " Ruby endwise 補完
-  call dein#add('tpope/vim-endwise')
-  " ファイル名補完 ctrl p
-  call dein#add("ctrlpvim/ctrlp.vim")
-  "　英単語補完
-  call dein#add('ujihisa/neco-look')
-
-  " rails
-  call dein#add('tpope/vim-rails', {'on_ft' : 'ruby'})
-
-  " 構文チェック
-  call dein#add('scrooloose/syntastic')
-
-  " ディレクトリツリー表示 ctrl n
-  call dein#add('scrooloose/nerdtree')
-
-  " nerdtree初期表示
-  "autocmd VimEnter * execute 'NERDTree'
-  let g:NERDTreeDirArrows = 1
-  let g:NERDTreeDirArrowExpandable  = '▶'
-  let g:NERDTreeDirArrowCollapsible = '▼'
-
-  " ファイルアイコン
-  "call dein#add('tiagofumo/vim-nerdtree-syntax-highlight')
-  " ファイルアイコン
-  "call dein#add('ryanoasis/vim-devicons')
-  " スペース可視化
-  call dein#add('bronson/vim-trailing-whitespace')
-
-  " Git
-  call dein#add('scrooloose/vim-fugitive')
-  " Gitコマンドヘルパー
-  "call dein#add('tpope/vim-fugitive')
-  " Gitステータス行表示
-  call dein#add('airblade/vim-gitgutter')
-
-  " vimステータスライン表示
-  call dein#add('itchyny/lightline.vim')
-
-  " tag アウトライン
-  call dein#add('majutsushi/tagbar')
-  " ctags helper
-  call dein#add('szw/vim-tags')
-
-  " scala
-  call dein#add('derekwyatt/vim-scala')
+  " TOML を読み込み、キャッシュしておく
+  call dein#load_toml(s:toml,      {'lazy': 0})
+  call dein#load_toml(s:lazy_toml, {'lazy': 1})
 
   " Required:
   call dein#end()
