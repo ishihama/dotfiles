@@ -65,3 +65,6 @@ repo = 'derekwyatt/vim-scala'
 [[plugins]] # cheatsheet
 repo = 'reireias/vim-cheatsheet'
 
+[[plugins]] # sub window resize
+repo = 'simeji/winresizer'
+
