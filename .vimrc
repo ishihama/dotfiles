@@ -10,10 +10,6 @@ set fileencodings=ucs-boms,utf-8,cp932,euc-jp
 " 改行コードの文字コード
  set fileformats=unix,dos,mac
 
-" □や○文字が崩れる問題を解決
-set ambiwidth=double
-
-
 
 " file
 " バックアップファイルを作らない
@@ -52,17 +48,11 @@ nnoremap j gj
 nnoremap k gk
 " 入力中のコマンドをステータスに表示する
 set showcmd
+" □や○文字が崩れる問題を解
+set ambiwidth=double
 
-" NERDTree
-nnoremap <C-n> :NERDTreeToggle<CR>
-" nerdtree初期表示
-"autocmd VimEnter * execute 'NERDTree'
-let g:NERDTreeDirArrows = 1
-let g:NERDTreeDirArrowExpandable  = '▶'
-let g:NERDTreeDirArrowCollapsible = '▼'
 
-" TagBar
-nnoremap <F8> :TagbarToggle<CR>
+
 
 " Tab系
 " 不可視文字を可視化(タブが「▸-」と表示される)
@@ -88,6 +78,24 @@ set wrapscan
 set hlsearch
 " ESC連打でハイライト解除
 nmap <Esc><Esc> :nohlsearch<CR><Esc>
+
+
+" plugin settings
+"
+" NERDTree
+nnoremap <C-n> :NERDTreeToggle<CR>
+
+" nerdtree初期表示
+"autocmd VimEnter * execute 'NERDTree'
+let g:NERDTreeDirArrows = 1
+let g:NERDTreeDirArrowExpandable  = '▶'
+let g:NERDTreeDirArrowCollapsible = '▼'
+
+" TagBar
+nnoremap <F8> :TagbarToggle<CR>
+
+" cheatsheet
+let g:cheatsheet#cheat_file = '~/.cheatsheet.md'
 
 
 "dein Scripts-----------------------------

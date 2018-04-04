@@ -62,3 +62,6 @@ repo = 'szw/vim-tags'
 [[plugins]] # scala
 repo = 'derekwyatt/vim-scala'
 
+[[plugins]] # cheatsheet
+repo = 'reireias/vim-cheatsheet'
+
