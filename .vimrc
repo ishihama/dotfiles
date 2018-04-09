@@ -96,6 +96,7 @@ nnoremap <F8> :TagbarToggle<CR>
 
 " cheatsheet
 let g:cheatsheet#cheat_file = '~/.cheatsheet.md'
+nnoremap <F1> :Cheat<CR>
 
 
 "dein Scripts-----------------------------
