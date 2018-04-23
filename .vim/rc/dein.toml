@@ -68,3 +68,9 @@ repo = 'reireias/vim-cheatsheet'
 [[plugins]] # sub window resize
 repo = 'simeji/winresizer'
 
+[[plugins]] # HTML5
+repo = 'othree/html5.vim'
+
+[[plugins]] # CSS3
+repo = 'hail2u/vim-css3-syntax'
+
