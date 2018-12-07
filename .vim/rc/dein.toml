@@ -59,6 +59,15 @@ repo = 'majutsushi/tagbar'
 [[plugins]] # ctag
 repo = 'szw/vim-tags'
 
+[[plugins]] # javascript
+repo = 'pangloss/vim-javascript'
+
+[[plugins]] # React(jsx)
+repo = 'mxw/vim-jsx'
+
+[[plugins]] # typescript
+repo = 'leafgarland/typescript-vim'
+
 [[plugins]] # scala
 repo = 'derekwyatt/vim-scala'
 
