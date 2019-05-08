@@ -1,6 +1,6 @@
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
-export PATH="$HOME/.rbenv/shims:$HOME/anaconda3/bin:/usr/local/cuda/bin:$HOME/.nodebrew/current/bin:$PATH"
+export PATH="$HOME/.rbenv/shims:$HOME/anaconda3/bin:/usr/local/cuda/bin:$HOME/.nodenv/bin:$PATH"
 
 export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
 
