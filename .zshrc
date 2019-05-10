@@ -109,6 +109,9 @@ eval "$(rbenv init -)"
 export PATH="$HOME/.nodenv/bin:$PATH"
 eval "$(nodenv init -)"
 
+# Golang
+export PATH="$HOME/go/bin:$PATH"
+
 # OS Type
 if [ "$(uname)" = 'Darwin' ]; then
     #mac
