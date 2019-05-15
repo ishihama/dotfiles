@@ -111,6 +111,9 @@ eval "$(nodenv init -)"
 # Golang
 export PATH="$HOME/go/bin:$PATH"
 
+# Flutter
+export PATH="$HOME/flutter/bin:$PATH"
+
 # OS Type
 if [ "$(uname)" = 'Darwin' ]; then
     #mac
