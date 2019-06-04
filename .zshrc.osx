@@ -26,3 +26,6 @@ function select-history() {
 zle -N select-history
 bindkey '^r' select-history
 
+# iTerm2 Shell Integration
+test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
+
