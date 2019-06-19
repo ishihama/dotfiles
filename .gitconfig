@@ -8,4 +8,4 @@
 [color]
   ui = true
 [credential]
-	helper = cache
+	helper = store
