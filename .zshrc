@@ -1,5 +1,5 @@
 # If you come from bash you might have to change your $PATH.
-export PATH=$HOME/bin:/usr/local/bin:$PATH:$(yarn global bin)
+export PATH="$HOME/bin:/usr/local/bin:$PATH"
 
 export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
 
@@ -112,6 +112,9 @@ export PATH="$HOME/go/bin:$PATH"
 
 # Flutter
 export PATH="$HOME/flutter/bin:$PATH"
+
+#
+export PATH="$HOME:$(yarn global bin):$PATH"
 
 # OS Type
 if [ "$(uname)" = 'Darwin' ]; then
