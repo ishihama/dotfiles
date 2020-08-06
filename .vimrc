@@ -98,6 +98,8 @@ nnoremap <F8> :TagbarToggle<CR>
 let g:cheatsheet#cheat_file = '~/.cheatsheet.md'
 nnoremap <F1> :Cheat<CR>
 
+" lsp setting  refer:  https://mattn.kaoriya.net/software/vim/20191231213507.htm
+source ~/.vim/config/lsp.vim
 
 "dein Scripts-----------------------------
 if &compatible

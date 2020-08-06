@@ -1,6 +1,19 @@
 [[plugins]]
 repo = 'Shougo/dein.vim'
 
+[[plugins]] # lsp
+repo = 'prabirshrestha/vim-lsp'
+
+[[plugins]] # lsp-settings
+repo = 'mattn/vim-lsp-settings'
+merged = 0
+
+[[plugins]] # auto-completion
+repo = 'prabirshrestha/asyncomplete.vim'
+
+[[plugins]] # auto-completion
+repo = 'prabirshrestha/asyncomplete-lsp.vim'
+
 [[plugins]] # スニペット補完
 repo = 'Shougo/neosnippet.vim'
 
@@ -85,4 +98,7 @@ repo = 'othree/html5.vim'
 
 [[plugins]] # CSS3
 repo = 'hail2u/vim-css3-syntax'
+
+[[plugins]] # Golang :Goimport, :w (with lint)
+repo = 'mattn/vim-goimports'
 
