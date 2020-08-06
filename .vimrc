@@ -10,7 +10,6 @@ set fileencodings=ucs-boms,utf-8,cp932,euc-jp
 " 改行コードの文字コード
  set fileformats=unix,dos,mac
 
-
 " file
 " バックアップファイルを作らない
 set nobackup
@@ -20,7 +19,6 @@ set noswapfile
 set autoread
 " バッファが編集中でもその他のファイルを開けるように
 set hidden
-
 
 " 見た目系
 " シンタックス
@@ -51,9 +49,6 @@ set showcmd
 " □や○文字が崩れる問題を解
 set ambiwidth=double
 
-
-
-
 " Tab系
 " 不可視文字を可視化(タブが「▸-」と表示される)
 " set list listchars=tab:\▸\-
@@ -63,7 +58,6 @@ set expandtab
 set tabstop=2
 " 行頭でのTab文字の表示幅
 set shiftwidth=2
-
 
 " 検索系
 " 検索文字列が小文字の場合は大文字小文字を区別なく検索する
@@ -78,7 +72,6 @@ set wrapscan
 set hlsearch
 " ESC連打でハイライト解除
 nmap <Esc><Esc> :nohlsearch<CR><Esc>
-
 
 " plugin settings
 "
@@ -98,43 +91,9 @@ nnoremap <F8> :TagbarToggle<CR>
 let g:cheatsheet#cheat_file = '~/.cheatsheet.md'
 nnoremap <F1> :Cheat<CR>
 
-" lsp setting  refer:  https://mattn.kaoriya.net/software/vim/20191231213507.htm
+" lsp setting  refer: https://mattn.kaoriya.net/software/vim/20191231213507.htm
 source ~/.vim/config/lsp.vim
 
-"dein Scripts-----------------------------
-if &compatible
-  set nocompatible               " Be iMproved
-endif
-
-" Required:
-set runtimepath+=~/.cache/dein/repos/github.com/Shougo/dein.vim
-
-" Required:
-if dein#load_state('~/.cache/dein')
-  call dein#begin('~/.cache/dein')
-
-  " プラグインリストを収めた TOML ファイル
-  let g:rc_dir = expand('~/.vim/rc')
-  let s:toml = g:rc_dir . '/dein.toml'
-  let s:lazy_toml = g:rc_dir . '/dein_lazy.toml'
-
-  " TOML を読み込み、キャッシュしておく
-  call dein#load_toml(s:toml,      {'lazy': 0})
-  call dein#load_toml(s:lazy_toml, {'lazy': 1})
-
-  " Required:
-  call dein#end()
-  call dein#save_state()
-endif
-
-" Required:
-filetype plugin indent on
-syntax enable
-
-" If you want to install not installed plugins on startup.
-if dein#check_install()
-  call dein#install()
-endif
-
-"End dein Scripts-------------------------
+" dein setting  refer: https://github.com/Shougo/dein.vim
+source ~/.vim/config/dein.vim
 
