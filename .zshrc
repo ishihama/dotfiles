@@ -126,3 +126,6 @@ elif [ "$(uname)" = 'Linux' ]; then
 else
     echo "Unknown OS Type....."
 fi
+
+autoload -U +X bashcompinit && bashcompinit
+complete -o nospace -C /usr/local/Cellar/tfenv/2.2.2/versions/0.12.5/terraform terraform
