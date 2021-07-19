@@ -127,5 +127,9 @@ else
     echo "Unknown OS Type....."
 fi
 
+#THIS MUST BE AT THE END OF THE FILE FOR SDKMAN TO WORK!!!
+export SDKMAN_DIR="$(echo ~)/.sdkman"
+[[ -s "$(echo ~)/.sdkman/bin/sdkman-init.sh" ]] && source "$(echo ~)/.sdkman/bin/sdkman-init.sh"
+
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /usr/local/Cellar/tfenv/2.2.2/versions/0.12.5/terraform terraform
