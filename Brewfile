@@ -10,7 +10,7 @@ brew "coreutils"
 brew "unbound"
 brew "cask"
 brew "cocoapods"
-brew "docker", link: false
+brew "docker"
 brew "gobject-introspection"
 brew "harfbuzz"
 brew "libass"
@@ -26,7 +26,6 @@ brew "htop"
 brew "libusbmuxd"
 brew "libimobiledevice"
 brew "ideviceinstaller"
-brew "python@3.8"
 brew "imagemagick"
 brew "ios-deploy"
 brew "jq"
@@ -35,7 +34,6 @@ brew "libxml2"
 brew "mas"
 brew "maven"
 brew "mecab"
-brew "mono"
 brew "nkf"
 brew "nmap"
 brew "node-build"
@@ -45,6 +43,7 @@ brew "p7zip"
 brew "postgresql"
 brew "pstree"
 brew "pwgen"
+brew "python@3.8"
 brew "redis"
 brew "snapcraft"
 brew "terraform", link: false
@@ -67,13 +66,16 @@ cask "cyberduck"
 cask "docker"
 cask "google-chrome"
 cask "google-japanese-ime"
+cask "intellij-idea-ce"
 cask "iterm2"
 cask "multipass"
-cask "pdftotext"
 cask "slack"
 cask "visual-studio-code"
 mas "Apple Configurator 2", id: 1037126344
+mas "GarageBand", id: 682658836
+mas "iMovie", id: 408981434
 mas "Keynote", id: 409183694
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft PowerPoint", id: 462062816
 mas "Numbers", id: 409203825
+mas "Pages", id: 409201541
