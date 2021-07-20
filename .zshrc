@@ -121,8 +121,8 @@ export PATH="$HOME/flutter/bin:$PATH"
 export PATH="$HOME:$(yarn global bin):$PATH"
 
 # asdf
-. /opt/homebrew/opt/asdf/asdf.sh
-
+. $(brew --prefix asdf)/asdf.sh
+. $(brew --prefix asdf)/etc/bash_completion.d/asdf.bash
 
 # OS Type
 if [ "$(uname)" = 'Darwin' ]; then
