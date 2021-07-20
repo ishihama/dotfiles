@@ -117,8 +117,12 @@ export PATH="$HOME/go/bin:$PATH"
 # Flutter
 export PATH="$HOME/flutter/bin:$PATH"
 
-#
+# yarn
 export PATH="$HOME:$(yarn global bin):$PATH"
+
+# asdf
+. /opt/homebrew/opt/asdf/asdf.sh
+
 
 # OS Type
 if [ "$(uname)" = 'Darwin' ]; then
@@ -137,3 +141,4 @@ export SDKMAN_DIR="$(echo ~)/.sdkman"
 
 autoload -U +X bashcompinit && bashcompinit
 complete -o nospace -C /usr/local/Cellar/tfenv/2.2.2/versions/0.12.5/terraform terraform
+
