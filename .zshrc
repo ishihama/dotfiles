@@ -104,13 +104,6 @@ zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
 export PATH="/opt/homebrew/bin:$PATH"
 export PATH="/opt/homebrew/sbin:$PATH"
 
-# ruby rbenv
-eval "$(rbenv init -)"
-
-# node nodenv
-export PATH="$HOME/.nodenv/bin:$PATH"
-eval "$(nodenv init -)"
-
 # Golang
 export PATH="$HOME/go/bin:$PATH"
 
@@ -123,6 +116,16 @@ export PATH="$HOME:$(yarn global bin):$PATH"
 # asdf
 . $(brew --prefix asdf)/asdf.sh
 . $(brew --prefix asdf)/etc/bash_completion.d/asdf.bash
+
+# Android
+export ANDROID_HOME="$HOME/Library/Android/sdk"
+export ANDROID_SDK_ROOT="$HOME/Library/Android/sdk"
+export ANDROID_AVD_HOME="$HOME/.android/avd"
+export PATH="${ANDROID_SDK_ROOT}/tools:$PATH"
+export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
+
+# direnv
+eval "$(direnv hook zsh)"
 
 # OS Type
 if [ "$(uname)" = 'Darwin' ]; then
@@ -140,5 +143,4 @@ export SDKMAN_DIR="$(echo ~)/.sdkman"
 [[ -s "$(echo ~)/.sdkman/bin/sdkman-init.sh" ]] && source "$(echo ~)/.sdkman/bin/sdkman-init.sh"
 
 autoload -U +X bashcompinit && bashcompinit
-complete -o nospace -C /usr/local/Cellar/tfenv/2.2.2/versions/0.12.5/terraform terraform
 
