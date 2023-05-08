@@ -124,6 +124,10 @@ export ANDROID_AVD_HOME="$HOME/.android/avd"
 export PATH="${ANDROID_SDK_ROOT}/tools:$PATH"
 export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
 
+
+# Rust
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # direnv
 eval "$(direnv hook zsh)"
 
