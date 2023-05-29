@@ -114,8 +114,10 @@ export PATH="$HOME/flutter/bin:$PATH"
 export PATH="$HOME:$(yarn global bin):$PATH"
 
 # asdf
-. $(brew --prefix asdf)/asdf.sh
-. $(brew --prefix asdf)/etc/bash_completion.d/asdf.bash
+# . $(brew --prefix asdf)/asdf.sh
+#. $(brew --prefix asdf)/etc/bash_completion.d/asdf.bash
+source "/opt/homebrew/opt/asdf/libexec/asdf.sh"
+source "/opt/homebrew/opt/asdf/etc/bash_completion.d/asdf.bash"
 
 # Android
 export ANDROID_HOME="$HOME/Library/Android/sdk"
