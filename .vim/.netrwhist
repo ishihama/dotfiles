@@ -1,0 +1,6 @@
+let g:netrw_dirhistmax  =10
+let g:netrw_dirhistcnt =4
+let g:netrw_dirhist_4='/Users/ishihama/Projects/sandbox/jhipster/src/main/resources/config/liquibase/changelog'
+let g:netrw_dirhist_3='/Users/ishihama/Projects/swe-ec/swo-front/packages/service-main-bff'
+let g:netrw_dirhist_2='/Users/ishihama/Projects/ishihama/open-ai/functions'
+let g:netrw_dirhist_1='/Users/ishihama/Projects/swe-ec/swo-front-wlp/.husky'
