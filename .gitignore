@@ -1,0 +1,18 @@
+# Homebrew
+Brewfile.lock.json
+
+# macOS
+.DS_Store
+*.swp
+*.swo
+
+# Local overrides
+*.local
+.zshrc.local
+.vimrc.local
+
+# Secrets (never commit)
+.env
+.envrc.local
+*.pem
+*.key

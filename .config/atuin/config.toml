@@ -1,0 +1,23 @@
+# Atuin configuration
+# https://docs.atuin.sh/configuration/config/
+
+# Search mode: prefix, fulltext, fuzzy, skim
+search_mode = "fuzzy"
+
+# Filter mode: global, host, session, directory
+filter_mode = "global"
+
+# Style: auto, full, compact
+style = "compact"
+
+# Inline height
+inline_height = 20
+
+# Show preview
+show_preview = true
+
+# Enter accepts immediately
+enter_accept = true
+
+# Key binding mode: auto, emacs, vim-normal, vim-insert
+keymap_mode = "auto"

@@ -1,121 +1,144 @@
+# Taps
 tap "auth0/auth0-cli"
-tap "homebrew/bundle"
-tap "homebrew/cask-versions"
 tap "homeport/tap"
 tap "sdkman/tap"
 tap "shopify/shopify"
-brew "glib"
-brew "pixman"
-brew "harfbuzz"
-brew "webp"
-brew "arp-scan"
-brew "autoconf"
-brew "automake"
+
+# Core tools
 brew "coreutils"
-brew "asdf"
-brew "pycparser"
-brew "cffi"
-brew "docutils"
-brew "python@3.11"
-brew "awscli"
-brew "unbound"
-brew "gnutls"
-brew "emacs"
-brew "cask"
-brew "ruby"
-brew "cocoapods"
-brew "csvq"
-brew "deno"
-brew "direnv"
-brew "docker"
-brew "docker-compose"
-brew "libass"
-brew "srt"
-brew "tesseract"
-brew "ffmpeg"
 brew "findutils"
-brew "node"
-brew "fzf"
+brew "gnu-sed"
+brew "grep"
 brew "gawk"
-brew "gh"
-brew "gibo"
+
+# Version management
+brew "mise"
+
+# Shell & Terminal
+brew "zsh"
+brew "tmux"
+brew "fzf"
+brew "direnv"
+
+# Modern CLI tools
+brew "ripgrep"
+brew "fd"
+brew "bat"
+brew "eza"
+brew "tree"
+brew "htop"
+brew "btop"
+brew "pstree"
+brew "watch"
+brew "jq"
+brew "yq"
+brew "httpie"
+brew "git-delta"
+brew "tldr"
+brew "zoxide"
+brew "starship"
+brew "atuin"
+brew "procs"
+brew "dust"
+brew "duf"
+brew "sd"
+brew "tokei"
+brew "hyperfine"
+brew "xh"
+brew "glow"
+brew "choose-rust"
+
+# Git
 brew "git"
 brew "git-secrets"
-brew "gnu-sed"
-brew "gnupg"
-brew "go"
-brew "pkgconf"
-brew "gobject-introspection"
-brew "grep"
-brew "guile"
-brew "htop"
-brew "libusbmuxd"
-brew "libimobiledevice"
-brew "ideviceinstaller"
-brew "iftop"
-brew "libheif"
-brew "imagemagick"
-brew "ios-deploy"
-brew "jq"
-brew "libffi"
-brew "libgsf"
-brew "libxml2"
-brew "mas"
-brew "maven"
-brew "mecab"
-brew "mkcert"
-brew "nghttp2"
-brew "nginx"
-brew "ninja"
-brew "nkf"
-brew "nmap"
-brew "node-build"
-brew "osslsigncode"
-brew "p7zip"
-brew "postgresql@14"
-brew "pstree"
-brew "pwgen"
-brew "python@3.10"
-brew "python@3.12"
-brew "tcl-tk"
-brew "qemu"
-brew "rclone"
-brew "redis"
-brew "snapcraft"
-brew "telnet"
-brew "terraformer"
-brew "tfenv"
-brew "tflint"
-brew "tmux"
-brew "tnftp"
-brew "tree"
-brew "watch"
+brew "gh"
+brew "gibo"
+brew "lazygit"
+brew "lefthook"
+
+# Network
 brew "wget"
-brew "zsh"
+brew "nmap"
+brew "mkcert"
+brew "iftop"
+brew "arp-scan"
+
+# Programming languages (use asdf for version management)
+brew "go"
+brew "deno"
+brew "python"
+
+# Build tools
+brew "autoconf"
+brew "automake"
+brew "ninja"
+brew "gnupg"
+
+# Cloud & DevOps
+brew "awscli"
+brew "terraformer"
+brew "tflint"
 brew "auth0/auth0-cli/auth0"
 brew "homeport/tap/dyff"
+
+# Java/JVM
+brew "maven"
 brew "sdkman/tap/sdkman-cli"
-brew "shopify/shopify/toxiproxy"
-cask "anaconda"
-cask "android-platform-tools"
-cask "android-studio"
-cask "flutter"
-cask "github"
-cask "google-chrome"
-cask "google-cloud-sdk"
-cask "intellij-idea"
+
+# Database
+brew "postgresql"
+brew "redis"
+
+# iOS Development
+brew "cocoapods"
+brew "libimobiledevice"
+brew "ideviceinstaller"
+brew "ios-deploy"
+
+# Media
+brew "ffmpeg"
+brew "imagemagick"
+brew "tesseract"
+
+# Misc
+brew "csvq"
+brew "mecab"
+brew "nkf"
+brew "p7zip"
+brew "pwgen"
+brew "rclone"
+brew "nginx"
+brew "mas"
+
+# =============
+# Cask (GUI Apps)
+# =============
+
+# Development
+cask "visual-studio-code"
 cask "intellij-idea-ce"
-cask "iterm2"
-cask "microsoft-auto-update"
-cask "microsoft-word"
+cask "android-studio"
+cask "android-platform-tools"
 cask "rancher"
+
+# Cloud
+cask "gcloud-cli"
+
+# Communication
 cask "slack"
 cask "slack-cli"
-cask "stoplight-studio"
-cask "visual-studio-code"
-cask "wireshark"
 cask "zoom"
-mas "Apple Configurator", id: 1037126344
+
+# Browsers
+cask "google-chrome"
+
+# Microsoft
+cask "microsoft-word"
+
+# =============
+# Mac App Store
+# =============
+# mas "Apple Configurator", id: 1037126344  # requires macOS 15.7+
 mas "GarageBand", id: 682658836
 mas "iMovie", id: 408981434
 mas "Keynote", id: 409183694
@@ -123,25 +146,44 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft PowerPoint", id: 462062816
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
-vscode "arjun.swagger-viewer"
-vscode "bierner.markdown-mermaid"
-vscode "dbaeumer.vscode-eslint"
-vscode "denoland.vscode-deno"
+
+# =============
+# VSCode Extensions
+# =============
+
+# Git
 vscode "eamodio.gitlens"
-vscode "editorconfig.editorconfig"
-vscode "esbenp.prettier-vscode"
-vscode "figma.figma-vscode-extension"
 vscode "github.vscode-github-actions"
-vscode "gruntfuggly.todo-tree"
-vscode "marp-team.marp-vscode"
-vscode "ms-azuretools.vscode-docker"
-vscode "ms-ceintl.vscode-language-pack-ja"
+
+# Languages & Frameworks
+vscode "denoland.vscode-deno"
 vscode "ms-playwright.playwright"
+vscode "styled-components.vscode-styled-components"
+
+# Linting & Formatting
+vscode "dbaeumer.vscode-eslint"
+vscode "esbenp.prettier-vscode"
+vscode "stylelint.vscode-stylelint"
+vscode "editorconfig.editorconfig"
+vscode "streetsidesoftware.code-spell-checker"
+
+# Documentation
+vscode "bierner.markdown-mermaid"
+vscode "marp-team.marp-vscode"
+vscode "yzane.markdown-pdf"
+vscode "arjun.swagger-viewer"
+
+# DevOps
+vscode "ms-azuretools.vscode-docker"
 vscode "ms-vscode-remote.remote-containers"
 vscode "redhat.vscode-yaml"
-vscode "streetsidesoftware.code-spell-checker"
-vscode "styled-components.vscode-styled-components"
-vscode "stylelint.vscode-stylelint"
-vscode "wayou.vscode-todo-highlight"
+
+# Productivity
+vscode "gruntfuggly.todo-tree"
 vscode "yoavbls.pretty-ts-errors"
-vscode "yzane.markdown-pdf"
+
+# UI/Design
+vscode "figma.figma-vscode-extension"
+
+# Localization
+vscode "ms-ceintl.vscode-language-pack-ja"

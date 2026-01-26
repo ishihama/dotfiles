@@ -8,13 +8,19 @@ set fileencoding=utf-8
 " 読込時の文字コード
 set fileencodings=ucs-boms,utf-8,cp932,euc-jp
 " 改行コードの文字コード
- set fileformats=unix,dos,mac
+set fileformats=unix,dos,mac
 
 " file
 " バックアップファイルを作らない
 set nobackup
 " スワップファイルを作らない
 set noswapfile
+" undoファイルを有効化（永続的なundo履歴）
+set undofile
+set undodir=~/.vim/undo
+if !isdirectory(expand('~/.vim/undo'))
+  call mkdir(expand('~/.vim/undo'), 'p')
+endif
 " 編集中のファイルが変更されたら自動で読み直す
 set autoread
 " バッファが編集中でもその他のファイルを開けるように
@@ -23,6 +29,8 @@ set hidden
 " 見た目系
 " シンタックス
 syntax on
+" True Color対応
+set termguicolors
 " 行番号を表示
 set number
 " 現在の行を強調表示

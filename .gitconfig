@@ -21,3 +21,11 @@
 	rebase = true
 [commit]
 	template = ~/.gitmessage
+[diff]
+	algorithm = histogram
+[merge]
+	conflictstyle = diff3
+[rerere]
+	enabled = true
+[fetch]
+	prune = true

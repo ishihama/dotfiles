@@ -1,0 +1,6 @@
+[tools]
+node = "22"
+terraform = "1.10"
+python = "3.12"
+go = "latest"
+deno = "latest"

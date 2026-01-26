@@ -20,12 +20,6 @@ repo = 'Shougo/neosnippet.vim'
 [[plugins]] # スニペット集
 repo = 'Shougo/neosnippet-snippets'
 
-[[plugins]] # 入力補完
-repo = 'Shougo/neocomplcache.vim'
-
-[[plugins]] # Ruby補完
-repo = 'Shougo/neocomplcache-rsense.vim'
-
 [[plugins]] # Ruby endwise補完
 repo = 'tpope/vim-endwise'
 
@@ -38,9 +32,6 @@ repo = 'ujihisa/neco-look'
 [[plugins]] # Rails
 repo = 'tpope/vim-rails'
 on_ft = 'ruby'
-
-[[plugins]] # 構文チェック
-repo = 'scrooloose/syntastic'
 
 [[plugins]] # ディレクトリツリー表示
 repo = 'scrooloose/nerdtree'
@@ -55,10 +46,7 @@ repo = 'scrooloose/nerdtree'
 repo = 'bronson/vim-trailing-whitespace'
 
 [[plugins]] # Git
-repo = 'scrooloose/vim-fugitive'
-
-#[[plugins]] # Git
-#repo = 'tpope/vim-fugitive'
+repo = 'tpope/vim-fugitive'
 
 [[plugins]] # Gitステータス表示
 repo = 'airblade/vim-gitgutter'
@@ -76,7 +64,7 @@ repo = 'szw/vim-tags'
 repo = 'pangloss/vim-javascript'
 
 [[plugins]] # React(jsx)
-repo = 'mxw/vim-jsx'
+repo = 'maxmellon/vim-jsx-pretty'
 
 [[plugins]] # typescript
 repo = 'leafgarland/typescript-vim'
