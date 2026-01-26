@@ -1,144 +1,97 @@
-# Taps
 tap "auth0/auth0-cli"
 tap "homeport/tap"
 tap "sdkman/tap"
 tap "shopify/shopify"
-
-# Core tools
-brew "coreutils"
-brew "findutils"
-brew "gnu-sed"
-brew "grep"
-brew "gawk"
-
-# Version management
-brew "mise"
-
-# Shell & Terminal
-brew "zsh"
-brew "tmux"
-brew "fzf"
-brew "direnv"
-
-# Modern CLI tools
-brew "ripgrep"
-brew "fd"
-brew "bat"
-brew "eza"
-brew "tree"
-brew "htop"
-brew "btop"
-brew "pstree"
-brew "watch"
-brew "jq"
-brew "yq"
-brew "httpie"
-brew "git-delta"
-brew "tldr"
-brew "zoxide"
-brew "starship"
-brew "atuin"
-brew "procs"
-brew "dust"
-brew "duf"
-brew "sd"
-brew "tokei"
-brew "hyperfine"
-brew "xh"
-brew "glow"
-brew "choose-rust"
-
-# Git
-brew "git"
-brew "git-secrets"
-brew "gh"
-brew "gibo"
-brew "lazygit"
-brew "lefthook"
-
-# Network
-brew "wget"
-brew "nmap"
-brew "mkcert"
-brew "iftop"
 brew "arp-scan"
-
-# Programming languages (use asdf for version management)
-brew "go"
-brew "deno"
-brew "python"
-
-# Build tools
+brew "atuin"
 brew "autoconf"
 brew "automake"
-brew "ninja"
-brew "gnupg"
-
-# Cloud & DevOps
 brew "awscli"
-brew "terraformer"
-brew "tflint"
-brew "auth0/auth0-cli/auth0"
-brew "homeport/tap/dyff"
-
-# Java/JVM
-brew "maven"
-brew "sdkman/tap/sdkman-cli"
-
-# Database
-brew "postgresql"
-brew "redis"
-
-# iOS Development
+brew "bat"
+brew "btop"
+brew "choose-rust"
 brew "cocoapods"
+brew "coreutils"
+brew "csvq"
+brew "deno"
+brew "direnv"
+brew "duf"
+brew "dust"
+brew "eza"
+brew "fd"
+brew "ffmpeg"
+brew "findutils"
+brew "fzf"
+brew "gawk"
+brew "gh"
+brew "gibo"
+brew "git"
+brew "git-delta"
+brew "git-secrets"
+brew "glow"
+brew "gnu-sed"
+brew "gnupg"
+brew "go"
+brew "grep"
+brew "htop"
+brew "python@3.14"
+brew "httpie"
+brew "hyperfine"
 brew "libimobiledevice"
 brew "ideviceinstaller"
-brew "ios-deploy"
-
-# Media
-brew "ffmpeg"
+brew "iftop"
 brew "imagemagick"
-brew "tesseract"
-
-# Misc
-brew "csvq"
+brew "ios-deploy"
+brew "jq"
+brew "lazygit"
+brew "lefthook"
+brew "mas"
+brew "maven"
 brew "mecab"
+brew "mise"
+brew "mkcert"
+brew "nginx"
+brew "ninja"
 brew "nkf"
+brew "nmap"
 brew "p7zip"
+brew "postgresql@14"
+brew "procs"
+brew "pstree"
 brew "pwgen"
 brew "rclone"
-brew "nginx"
-brew "mas"
-
-# =============
-# Cask (GUI Apps)
-# =============
-
-# Development
-cask "visual-studio-code"
-cask "intellij-idea-ce"
-cask "android-studio"
+brew "redis"
+brew "ripgrep"
+brew "sd"
+brew "starship"
+brew "terraformer"
+brew "tesseract"
+brew "tflint"
+brew "tldr"
+brew "tmux"
+brew "tokei"
+brew "tree"
+brew "watch"
+brew "wget"
+brew "xh"
+brew "yq"
+brew "zoxide"
+brew "zsh"
+brew "auth0/auth0-cli/auth0"
+brew "homeport/tap/dyff"
+brew "sdkman/tap/sdkman-cli"
 cask "android-platform-tools"
-cask "rancher"
-
-# Cloud
+cask "android-studio"
 cask "gcloud-cli"
-
-# Communication
+cask "ghostty"
+cask "google-chrome"
+cask "intellij-idea-ce"
+cask "microsoft-word"
+cask "rancher"
 cask "slack"
 cask "slack-cli"
+cask "visual-studio-code"
 cask "zoom"
-
-# Browsers
-cask "google-chrome"
-
-# Microsoft
-cask "microsoft-word"
-
-# =============
-# Mac App Store
-# =============
-# mas "Apple Configurator", id: 1037126344  # requires macOS 15.7+
 mas "GarageBand", id: 682658836
 mas "iMovie", id: 408981434
 mas "Keynote", id: 409183694
@@ -146,44 +99,25 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft PowerPoint", id: 462062816
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
-
-# =============
-# VSCode Extensions
-# =============
-
-# Git
-vscode "eamodio.gitlens"
-vscode "github.vscode-github-actions"
-
-# Languages & Frameworks
-vscode "denoland.vscode-deno"
-vscode "ms-playwright.playwright"
-vscode "styled-components.vscode-styled-components"
-
-# Linting & Formatting
-vscode "dbaeumer.vscode-eslint"
-vscode "esbenp.prettier-vscode"
-vscode "stylelint.vscode-stylelint"
-vscode "editorconfig.editorconfig"
-vscode "streetsidesoftware.code-spell-checker"
-
-# Documentation
-vscode "bierner.markdown-mermaid"
-vscode "marp-team.marp-vscode"
-vscode "yzane.markdown-pdf"
 vscode "arjun.swagger-viewer"
-
-# DevOps
+vscode "bierner.markdown-mermaid"
+vscode "dbaeumer.vscode-eslint"
+vscode "denoland.vscode-deno"
+vscode "eamodio.gitlens"
+vscode "editorconfig.editorconfig"
+vscode "esbenp.prettier-vscode"
+vscode "figma.figma-vscode-extension"
+vscode "github.vscode-github-actions"
+vscode "gruntfuggly.todo-tree"
+vscode "marp-team.marp-vscode"
+vscode "ms-azuretools.vscode-containers"
 vscode "ms-azuretools.vscode-docker"
+vscode "ms-ceintl.vscode-language-pack-ja"
+vscode "ms-playwright.playwright"
 vscode "ms-vscode-remote.remote-containers"
 vscode "redhat.vscode-yaml"
-
-# Productivity
-vscode "gruntfuggly.todo-tree"
+vscode "streetsidesoftware.code-spell-checker"
+vscode "styled-components.vscode-styled-components"
+vscode "stylelint.vscode-stylelint"
 vscode "yoavbls.pretty-ts-errors"
-
-# UI/Design
-vscode "figma.figma-vscode-extension"
-
-# Localization
-vscode "ms-ceintl.vscode-language-pack-ja"
+vscode "yzane.markdown-pdf"
