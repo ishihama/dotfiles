@@ -9,10 +9,10 @@ source $ZSH/oh-my-zsh.sh
 # aliases
 alias vi=vim
 alias cat='bat --paging=never'
-alias ls='eza'
-alias ll='eza -la'
-alias la='eza -a'
-alias lt='eza --tree'
+alias ls='eza --icons'
+alias ll='eza -la --icons --git'
+alias la='eza -a --icons'
+alias lt='eza --tree --icons'
 alias grep='rg'
 alias find='fd'
 alias ps='procs'

@@ -1,6 +1,3 @@
-# ls color
-alias ls="ls -GF"
-
 # fzf
 function select-history() {
     BUFFER=$(\history -n -r 1 | fzf --no-sort +m --query "$LBUFFER" --prompt="History > ")
@@ -8,6 +5,39 @@ function select-history() {
 }
 zle -N select-history
 bindkey '^r' select-history
+
+# ghq + fzf + tmux: リポジトリ選択してtmuxセッションを開く
+function ghq-tmux() {
+    local repo=$(ghq list | fzf --prompt="Repository > ")
+    if [[ -z "$repo" ]]; then
+        return
+    fi
+
+    local repo_path=$(ghq root)/$repo
+    local session_name=$(basename $repo | tr '.' '-')
+
+    if [[ -n "$TMUX" ]]; then
+        # tmux内: 新規セッション作成 or 既存セッションに切り替え
+        if ! tmux has-session -t "$session_name" 2>/dev/null; then
+            tmux new-session -d -s "$session_name" -c "$repo_path"
+        fi
+        tmux switch-client -t "$session_name"
+    else
+        # tmux外: 新規セッション作成 or 既存セッションにattach
+        if tmux has-session -t "$session_name" 2>/dev/null; then
+            tmux attach-session -t "$session_name"
+        else
+            tmux new-session -s "$session_name" -c "$repo_path"
+        fi
+    fi
+}
+
+function ghq-tmux-widget() {
+    ghq-tmux
+    zle reset-prompt
+}
+zle -N ghq-tmux-widget
+bindkey '^G' ghq-tmux-widget
 
 # iTerm2 Shell Integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
