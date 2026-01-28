@@ -19,3 +19,5 @@ Brewfile.lock.json
 
 # Vim
 .vim/undo/
+.vim/.netrwhist
+.vim/.vim
