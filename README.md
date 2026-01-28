@@ -336,15 +336,38 @@ git log --oneline | fzf --preview 'git show {1}'
 procs | fzf | awk '{print $1}' | xargs kill
 ```
 
+## Claude Code設定
+
+`~/.claude/settings.json`を管理。APIキーは含まれていないので、別途設定が必要。
+
+### 設定内容
+
+- **model**: デフォルトモデル (opus)
+- **language**: 応答言語 (日本語)
+- **permissions**: 自動許可/拒否するコマンド
+- **statusLine**: ccusageでトークン使用量表示
+- **hooks**: 完了時にサウンド再生
+
+### APIキーの設定
+
+```bash
+# 方法1: 環境変数で設定
+export ANTHROPIC_API_KEY="sk-ant-..."
+
+# 方法2: settings.jsonのenvに追加
+# ~/.claude/settings.json の "env" に追記
+```
+
 ## 構成
 
 ```
-.zshrc          # メインシェル設定
-.zshrc.osx      # macOS用 (fzf, ghq-tmux, gwq-tmux, cheat, iTerm2)
-.zshrc.linux    # Linux用
-.zshrc.wsl      # WSL用
-.vimrc          # Vim設定
-.tmux.conf      # tmux設定 (prefix: Ctrl+T)
-.gitconfig      # Git設定
-Brewfile        # Homebrewパッケージ
+.zshrc              # メインシェル設定
+.zshrc.osx          # macOS用 (fzf, ghq-tmux, gwq-tmux, cheat, iTerm2)
+.zshrc.linux        # Linux用
+.zshrc.wsl          # WSL用
+.vimrc              # Vim設定
+.tmux.conf          # tmux設定 (prefix: Ctrl+T)
+.gitconfig          # Git設定
+Brewfile            # Homebrewパッケージ
+.config/claude/     # Claude Code設定
 ```

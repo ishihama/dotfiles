@@ -56,6 +56,12 @@ if [ -d "$DOTFILES_DIR/.config/ghostty" ]; then
   link_file "$DOTFILES_DIR/.config/ghostty" "$HOME/.config/ghostty"
 fi
 
+# Claude Code settings
+if [ -d "$DOTFILES_DIR/.config/claude" ]; then
+  mkdir -p "$HOME/.claude"
+  link_file "$DOTFILES_DIR/.config/claude/settings.json" "$HOME/.claude/settings.json"
+fi
+
 echo ""
 
 # ------------------------------

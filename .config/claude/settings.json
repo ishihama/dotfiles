@@ -1,0 +1,38 @@
+{
+  "env": {
+  },
+  "model": "opus",
+  "language": "日本語",
+  "permissions": {
+    "defaultMode": "plan",
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run test:*)",
+      "Bash(git diff:*)",
+      "Bash(gh:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./secrets/**)"
+    ]
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx ccusage statusline --visual-burn-rate emoji",
+    "padding": 0
+  },
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "afplay /System/Library/Sounds/Glass.aiff"
+          }
+        ]
+      }
+    ]
+  }
+}
