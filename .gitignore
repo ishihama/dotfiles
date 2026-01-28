@@ -9,7 +9,6 @@ Brewfile.lock.json
 # Local overrides
 *.local
 .zshrc.local
-.vimrc.local
 
 # Secrets (never commit)
 .env
@@ -17,7 +16,5 @@ Brewfile.lock.json
 *.pem
 *.key
 
-# Vim
-.vim/undo/
-.vim/.netrwhist
-.vim/.vim
+# Neovim
+# (lazy-lock.json is tracked for reproducibility)

@@ -55,6 +55,9 @@ fi
 if [ -d "$DOTFILES_DIR/.config/ghostty" ]; then
   link_file "$DOTFILES_DIR/.config/ghostty" "$HOME/.config/ghostty"
 fi
+if [ -d "$DOTFILES_DIR/.config/nvim" ]; then
+  link_file "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
+fi
 
 # Claude Code settings
 if [ -d "$DOTFILES_DIR/.config/claude" ]; then
@@ -86,6 +89,11 @@ fi
 echo "Running brew bundle..."
 brew bundle --file="$DOTFILES_DIR/Brewfile"
 
+echo "Installing gh extensions..."
+if command -v gh &> /dev/null; then
+  gh extension install benelan/gh-fzf 2>/dev/null || echo "gh-fzf already installed or skipped"
+fi
+
 echo ""
 
 # ------------------------------
@@ -114,18 +122,6 @@ if [ ! -d "$ZSH_CUSTOM/plugins/zsh-syntax-highlighting" ]; then
 fi
 
 echo ""
-
-# ------------------------------
-# Vim (dein)
-# ------------------------------
-echo "--- Vim (dein) ---"
-
-if [ ! -d "$HOME/.cache/dein" ]; then
-  echo "Installing dein..."
-  curl -fsSL https://raw.githubusercontent.com/Shougo/dein-installer.vim/master/installer.sh | sh -s -- ~/.cache/dein
-else
-  echo "dein already installed"
-fi
 
 echo ""
 

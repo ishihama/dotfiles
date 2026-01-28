@@ -9,20 +9,19 @@ macOS、Linux、WSL用の個人dotfiles。
 git clone https://github.com/REDACTED/dotfiles.git ~/repos/personal/dotfiles
 cd ~/repos/personal/dotfiles
 
-# 2. init.shを実行 (シンボリックリンク作成、oh-my-zsh、Homebrew、パッケージ、deinをインストール)
+# 2. init.shを実行 (シンボリックリンク、oh-my-zsh、Homebrew、パッケージ、gh拡張をインストール)
 ./init.sh
 
-# 3. Homebrewパッケージをインストール/更新
-brew bundle
-
-# 4. gh拡張をインストール
-gh extension install benelan/gh-fzf
-
-# 5. シェルを再読み込み
+# 3. シェルを再読み込み
 source ~/.zshrc
+
+# 4. Neovimを起動（初回はプラグイン自動インストール）
+nvim
 ```
 
 ## キーバインド
+
+### シェル
 
 | キー | 説明 |
 |------|------|
@@ -30,10 +29,28 @@ source ~/.zshrc
 | `Ctrl+G` | ghq + fzf + tmux (リポジトリ選択) |
 | `Ctrl+W` | gwq + fzf + tmux (worktree選択) |
 | `Ctrl+B` | git branch切り替え (fzf + preview) |
-| `Ctrl+F` | ファイル検索→vimで開く (fd + fzf) |
+| `Ctrl+F` | ファイル検索→nvimで開く (fd + fzf) |
 | `Ctrl+K` | プロセスkill (procs + fzf) |
 | `lg` | lazygit起動 |
 | `cheat` | チートシート表示 (コマンドラインに貼付) |
+
+### Neovim
+
+| キー | 説明 |
+|------|------|
+| `Space` | Leader キー |
+| `Space+e` | ファイルツリー toggle |
+| `Space+ff` | ファイル検索 (telescope) |
+| `Space+fg` | grep検索 (telescope) |
+| `Space+fb` | バッファ一覧 |
+| `gd` | 定義へジャンプ |
+| `gr` | 参照一覧 |
+| `K` | ホバー情報 |
+| `Space+ca` | コードアクション |
+| `Space+rn` | リネーム |
+| `gcc` | 行コメント toggle |
+| `Tab` | 次のウィンドウ |
+| `Shift+Tab` | 前のウィンドウ |
 
 ## ghq + fzf + tmux ワークフロー
 
@@ -122,13 +139,13 @@ gwq remove feature/login
 # プレビューで各ブランチの最新コミットを確認
 ```
 
-### Ctrl+F: ファイル検索→vimで開く
+### Ctrl+F: ファイル検索→nvimで開く
 
-fd + fzf + batでファイルを検索。プレビューでシンタックスハイライト付きの内容を確認してvimで開く。
+fd + fzf + batでファイルを検索。プレビューでシンタックスハイライト付きの内容を確認してnvimで開く。
 
 ```bash
 # Ctrl+Fを押す → ファイル一覧が表示
-# 選択するとvimで開く
+# 選択するとnvimで開く
 # プレビューでファイル内容を確認（bat使用）
 ```
 
@@ -324,10 +341,10 @@ gwq status              # 全worktreeのgit status
 
 ```bash
 # ファイルを検索して編集
-vim $(fd -e ts | fzf)
+nvim $(fd -e ts | fzf)
 
 # 検索結果を開く
-rg -l "TODO" | fzf | xargs vim
+rg -l "TODO" | fzf | xargs nvim
 
 # fzfでgit log
 git log --oneline | fzf --preview 'git show {1}'
@@ -360,14 +377,16 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 ## 構成
 
 ```
-.zshrc              # メインシェル設定
+.zshrc              # メインシェル設定 (共通関数含む)
 .zshrc.local        # ローカル設定 (gitignore、APIキーなど)
-.zshrc.osx          # macOS用 (fzf, ghq-tmux, gwq-tmux, cheat, iTerm2)
+.zshrc.osx          # macOS固有設定
 .zshrc.linux        # Linux用
 .zshrc.wsl          # WSL用
-.vimrc              # Vim設定
 .tmux.conf          # tmux設定 (prefix: Ctrl+T)
 .gitconfig          # Git設定
 Brewfile            # Homebrewパッケージ
+.config/nvim/       # Neovim設定 (lazy.nvim, catppuccin, LSP)
 .config/claude/     # Claude Code設定
+.config/ghostty/    # Ghostty設定
+.config/atuin/      # Atuin設定
 ```
