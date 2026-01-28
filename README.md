@@ -108,6 +108,48 @@ gwq remove feature/login
 
 セッション名は`{リポジトリ}-{ブランチ}`（`.`と`/`は`-`に置換）。
 
+## 便利キーバインド
+
+日常の開発を効率化するfzf連携キーバインド。
+
+### Ctrl+B: git branch切り替え
+
+ローカルブランチをfzfで選択してcheckout。プレビューでコミット履歴を確認できる。
+
+```bash
+# Ctrl+Bを押す → ブランチ一覧が表示
+# 選択するとそのブランチにcheckout
+# プレビューで各ブランチの最新コミットを確認
+```
+
+### Ctrl+F: ファイル検索→vimで開く
+
+fd + fzf + batでファイルを検索。プレビューでシンタックスハイライト付きの内容を確認してvimで開く。
+
+```bash
+# Ctrl+Fを押す → ファイル一覧が表示
+# 選択するとvimで開く
+# プレビューでファイル内容を確認（bat使用）
+```
+
+### Ctrl+K: プロセスkill
+
+procsでプロセス一覧を表示、fzfで選択してkill。
+
+```bash
+# Ctrl+Kを押す → プロセス一覧が表示
+# 選択するとkill -9で終了
+# プレビューでプロセスツリーを確認
+```
+
+### lg: lazygit
+
+lazygitをすぐ起動できるエイリアス。
+
+```bash
+lg    # lazygit起動
+```
+
 ## gh-fzf: GitHub CLI + Fuzzy Finder
 
 `gh`コマンドをfzfでラップしてPR/Issue/Actionsを高速ナビゲーション。
