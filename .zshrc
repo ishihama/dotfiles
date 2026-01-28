@@ -92,3 +92,5 @@ export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
 [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
 alias find='fd'  # 復元
 
+# ローカル設定 (APIキーなど、gitignore対象)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

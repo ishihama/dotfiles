@@ -350,18 +350,18 @@ procs | fzf | awk '{print $1}' | xargs kill
 
 ### APIキーの設定
 
-```bash
-# 方法1: 環境変数で設定
-export ANTHROPIC_API_KEY="sk-ant-..."
+`~/.zshrc.local`に記載（gitignore対象）:
 
-# 方法2: settings.jsonのenvに追加
-# ~/.claude/settings.json の "env" に追記
+```bash
+# ~/.zshrc.local
+export ANTHROPIC_API_KEY="sk-ant-..."
 ```
 
 ## 構成
 
 ```
 .zshrc              # メインシェル設定
+.zshrc.local        # ローカル設定 (gitignore、APIキーなど)
 .zshrc.osx          # macOS用 (fzf, ghq-tmux, gwq-tmux, cheat, iTerm2)
 .zshrc.linux        # Linux用
 .zshrc.wsl          # WSL用
