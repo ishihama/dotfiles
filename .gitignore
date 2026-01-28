@@ -16,3 +16,6 @@ Brewfile.lock.json
 .envrc.local
 *.pem
 *.key
+
+# Vim
+.vim/undo/

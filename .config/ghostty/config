@@ -1,0 +1,54 @@
+# Theme - システムのlight/darkに自動追従
+theme = light:Catppuccin Latte,dark:Catppuccin Mocha
+
+# Font
+font-family = Menlo
+font-size = 14
+font-thicken = true
+
+# Window
+background-opacity = 0.95
+background-blur-radius = 20
+macos-titlebar-style = tabs
+macos-option-as-alt = true
+
+# Shell integration
+shell-integration = zsh
+shell-integration-features = cursor,sudo,title
+
+# Behavior
+copy-on-select = clipboard
+confirm-close-surface = false
+mouse-hide-while-typing = true
+
+# tmux連携: Ctrl+T prefix対応
+# Ctrl+TはGhosttyのデフォルトで新規タブなので無効化
+
+# Ctrl+T をtmuxに渡す
+keybind = ctrl+t=unbind
+
+# Cmd+T → tmux prefix (Ctrl+T = \x14)
+keybind = super+t=text:\x14
+# Cmd+N → prefix + c (新規window)
+keybind = super+n=text:\x14c
+# Cmd+W → prefix + x (pane閉じる)
+keybind = super+w=text:\x14x
+# Cmd+1-9 → prefix + 1-9
+keybind = super+1=text:\x141
+keybind = super+2=text:\x142
+keybind = super+3=text:\x143
+keybind = super+4=text:\x144
+keybind = super+5=text:\x145
+keybind = super+6=text:\x146
+keybind = super+7=text:\x147
+keybind = super+8=text:\x148
+keybind = super+9=text:\x149
+# Cmd+H/J/K/L → prefix + h/j/k/l (pane移動)
+keybind = super+h=text:\x14h
+keybind = super+j=text:\x14j
+keybind = super+k=text:\x14k
+keybind = super+l=text:\x14l
+# Cmd+| → prefix + | (縦分割)
+keybind = super+backslash=text:\x14|
+# Cmd+- → prefix + - (横分割)
+keybind = super+minus=text:\x14-
