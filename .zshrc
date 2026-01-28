@@ -82,7 +82,7 @@ fi
 autoload -U +X bashcompinit && bashcompinit
 
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
-export PATH="/Users/REDACTED/.rd/bin:$PATH"
+export PATH="$HOME/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
 
 # SDKMAN (via Homebrew)

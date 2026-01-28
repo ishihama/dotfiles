@@ -1,6 +1,5 @@
-[user]
-	name = REDACTED
-	email = REDACTED@example.com
+[include]
+	path = ~/.gitconfig.local
 [core]
   pager = less -cm
   quotepath = false
