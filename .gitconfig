@@ -1,9 +1,15 @@
 [include]
 	path = ~/.gitconfig.local
 [core]
-  pager = less -cm
+  pager = delta
   quotepath = false
   editor = vim
+[delta]
+  navigate = true
+  line-numbers = true
+  side-by-side = false
+[interactive]
+  diffFilter = delta --color-only
 [color]
   ui = true
 [secrets]

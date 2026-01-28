@@ -3,7 +3,7 @@ export PATH="$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH"
 # oh-my-zsh
 export ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="lukerandall"
-plugins=(git z zsh-autosuggestions zsh-syntax-highlighting)
+plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 source $ZSH/oh-my-zsh.sh
 
 # aliases

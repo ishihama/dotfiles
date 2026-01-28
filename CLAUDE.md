@@ -58,17 +58,17 @@ source ~/.zshrc
 - Selects repository from ghq list with fzf preview (README.md or git log)
 - Creates/attaches tmux session named `{owner}-{repo}` (dots replaced with dashes)
 - Behavior differs inside/outside tmux (switch-client vs attach-session)
-- Function defined in `.zshrc.osx:10-53`
+- Widget: `.zshrc.osx:10-34`, exec: `.zshrc.osx:37-56`
 
 **gwq + fzf + tmux (`Ctrl+W` or tmux prefix+w)**
 - Selects worktree from gwq list with fzf preview (git log)
 - Creates/attaches tmux session named `{repo}-{branch}` (dots and slashes replaced with dashes)
 - Enables parallel development across branches with separate Claude Code instances
-- Function defined in `.zshrc.osx:56-86`
+- Widget: `.zshrc.osx:76-96`, exec: `.zshrc.osx:98-117`
 
 **Modern CLI Tool Aliases**
-- All defined in `.zshrc:11-23` - traditional commands aliased to modern alternatives (cat→bat, ls→eza, grep→rg, find→fd, ps→procs, du→dust, df→duf, sed→sd, top→btop, http→xh)
-- Important: SDKMAN init temporarily unaliases `find` at `.zshrc:90-93` to avoid conflicts, then restores it
+- All defined in `.zshrc:10-23` - traditional commands aliased to modern alternatives (cat→bat, ls→eza, grep→rg, find→fd, ps→procs, du→dust, df→duf, sed→sd, top→btop, http→xh)
+- Important: SDKMAN init temporarily unaliases `find` at `.zshrc:88-93` to avoid conflicts, then restores it
 
 ## Git Commit Conventions
 
@@ -96,7 +96,7 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 - Symlinks all dotfiles from repo to `$HOME`, plus `.vim` directory and `.config/` subdirectories
 
 **Platform Detection**
-- `.zshrc:72-80` detects OS via `uname` and sources platform-specific config
+- `.zshrc:71-80` detects OS via `uname` and sources platform-specific config
 - macOS is the primary platform with the most features in `.zshrc.osx`
 
 **Persistent Undo**

@@ -7,83 +7,130 @@ zle -N select-history
 bindkey '^r' select-history
 
 # ghq + fzf + tmux: リポジトリ選択してtmuxセッションを開く (プレビュー付き)
-function ghq-tmux() {
-    local ghq_root=$(ghq root)
-    local repo=$(ghq list | fzf \
-        --prompt="Repository > " \
-        --preview="
-            path=\"${ghq_root}/{}\"
-            if [[ -f \"\$path/README.md\" ]]; then
-                head -30 \"\$path/README.md\"
-            else
-                cd \"\$path\" && git log --oneline -10
-            fi
-        " \
-        --preview-window=right:50% \
-        --bind='ctrl-/:toggle-preview')
-
-    if [[ -z "$repo" ]]; then
-        return
-    fi
-
-    local repo_path="${ghq_root}/${repo}"
-    local session_name=$(echo "$repo" | awk -F'/' '{print $(NF-1)"-"$NF}' | tr '.' '-')
-
-    if [[ -n "$TMUX" ]]; then
-        # tmux内: 新規セッション作成 or 既存セッションに切り替え
-        if ! tmux has-session -t "$session_name" 2>/dev/null; then
-            tmux new-session -d -s "$session_name" -c "$repo_path"
-        fi
-        tmux switch-client -t "$session_name"
-    else
-        # tmux外: 新規セッション作成 or 既存セッションにattach
-        if tmux has-session -t "$session_name" 2>/dev/null; then
-            tmux attach-session -t "$session_name"
-        else
-            tmux new-session -s "$session_name" -c "$repo_path"
-        fi
-    fi
-}
-
 function ghq-tmux-widget() {
-    ghq-tmux
+    zle -I
+    local ghq_root=$(ghq root)
+
+    # exec を $() 内で実行
+    local repo=$(
+        exec < /dev/tty
+        ghq list | fzf \
+            --prompt="Repository > " \
+            --preview="cat '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10" \
+            --preview-window=right:50% \
+            --bind='ctrl-/:toggle-preview'
+    )
+
+    if [[ -n "$repo" ]]; then
+        local repo_path="${ghq_root}/${repo}"
+        local session_name
+        session_name=$(echo "$repo" | awk -F'/' '{print $(NF-1)"-"$NF}' | tr '.' '-')
+        BUFFER="ghq-tmux-exec '$session_name' '$repo_path'"
+        zle accept-line
+    fi
     zle reset-prompt
 }
 zle -N ghq-tmux-widget
 bindkey '^G' ghq-tmux-widget
 
+# 実際のtmuxセッション操作 (ウィジェットから呼ばれる)
+function ghq-tmux-exec() {
+    local session_name="$1"
+    local repo_path="$2"
+
+    # セッションがなければ先に作成（detached）
+    if ! tmux has-session -t "$session_name" 2>/dev/null; then
+        tmux new-session -d -s "$session_name" -c "$repo_path"
+    fi
+
+    if [[ -n "$TMUX" ]]; then
+        # tmux 内 → switch-client
+        tmux switch-client -t "$session_name"
+    elif [[ -t 0 ]]; then
+        # tmux 外 + 実際のターミナル → attach-session
+        tmux attach-session -t "$session_name"
+    else
+        # ターミナルではない (Claude Code等) → メッセージ表示
+        echo "Session '$session_name' created. Run: tmux attach -t '$session_name'"
+    fi
+}
+
+# 非ウィジェット版 (tmux popup用)
+function ghq-tmux() {
+    local ghq_root=$(ghq root)
+    local repo=$(ghq list | fzf \
+        --prompt="Repository > " \
+        --preview="cat '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10" \
+        --preview-window=right:50%)
+
+    [[ -z "$repo" ]] && return
+
+    local repo_path="${ghq_root}/${repo}"
+    local session_name=$(echo "$repo" | awk -F'/' '{print $(NF-1)"-"$NF}' | tr '.' '-')
+
+    # ghq-tmux-exec と同じロジック
+    ghq-tmux-exec "$session_name" "$repo_path"
+}
+
 # gwq + fzf + tmux: worktree選択してtmuxセッションを開く
+function gwq-tmux-widget() {
+    zle -I
+
+    local worktree=$(
+        exec < /dev/tty
+        gwq list 2>/dev/null | fzf \
+            --prompt="Worktree > " \
+            --preview='git -C {} log --oneline -10'
+    )
+
+    if [[ -n "$worktree" ]]; then
+        local branch=$(cd "$worktree" && git branch --show-current)
+        local repo=$(basename "$(cd "$worktree" && git rev-parse --show-toplevel)")
+        local session_name=$(echo "${repo}-${branch}" | tr './' '--')
+        BUFFER="gwq-tmux-exec '$session_name' '$worktree'"
+        zle accept-line
+    fi
+    zle reset-prompt
+}
+zle -N gwq-tmux-widget
+bindkey '^W' gwq-tmux-widget
+
+function gwq-tmux-exec() {
+    local session_name="$1"
+    local worktree="$2"
+
+    # セッションがなければ先に作成（detached）
+    if ! tmux has-session -t "$session_name" 2>/dev/null; then
+        tmux new-session -d -s "$session_name" -c "$worktree"
+    fi
+
+    if [[ -n "$TMUX" ]]; then
+        # tmux 内 → switch-client
+        tmux switch-client -t "$session_name"
+    elif [[ -t 0 ]]; then
+        # tmux 外 + 実際のターミナル → attach-session
+        tmux attach-session -t "$session_name"
+    else
+        # ターミナルではない (Claude Code等) → メッセージ表示
+        echo "Session '$session_name' created. Run: tmux attach -t '$session_name'"
+    fi
+}
+
+# 非ウィジェット版 (tmux popup用)
 function gwq-tmux() {
     local worktree=$(gwq list 2>/dev/null | fzf \
         --prompt="Worktree > " \
-        --preview='cd {} && git log --oneline -10')
+        --preview='git -C {} log --oneline -10')
 
-    if [[ -z "$worktree" ]]; then
-        return
-    fi
+    [[ -z "$worktree" ]] && return
 
     local branch=$(cd "$worktree" && git branch --show-current)
     local repo=$(basename "$(cd "$worktree" && git rev-parse --show-toplevel)")
     local session_name=$(echo "${repo}-${branch}" | tr './' '--')
 
-    # tmux内外で適切にセッション作成/切り替え
-    if [[ -n "$TMUX" ]]; then
-        tmux has-session -t "$session_name" 2>/dev/null || \
-            tmux new-session -d -s "$session_name" -c "$worktree"
-        tmux switch-client -t "$session_name"
-    else
-        tmux has-session -t "$session_name" 2>/dev/null && \
-            tmux attach-session -t "$session_name" || \
-            tmux new-session -s "$session_name" -c "$worktree"
-    fi
+    # gwq-tmux-exec と同じロジック
+    gwq-tmux-exec "$session_name" "$worktree"
 }
-
-function gwq-tmux-widget() {
-    gwq-tmux
-    zle reset-prompt
-}
-zle -N gwq-tmux-widget
-bindkey '^W' gwq-tmux-widget
 
 # チートシート: キーバインド・エイリアス一覧 (fzf検索)
 function cheat() {
@@ -191,58 +238,66 @@ EOF
 }
 
 # git branch切り替え (fzf + preview)
-function git-branch-fzf() {
-    local branch=$(git branch --sort=-committerdate | \
-        command sed 's/^[* ]*//' | \
-        fzf --prompt="Branch > " \
-            --preview='git log --oneline --graph -20 {}' \
-            --preview-window=right:50%)
-    if [[ -n "$branch" ]]; then
-        git checkout "$branch"
-    fi
-}
-
 function git-branch-fzf-widget() {
-    git-branch-fzf
+    zle -I
+
+    local branch=$(
+        exec < /dev/tty
+        git branch --sort=-committerdate | \
+            command sed 's/^[* ]*//' | \
+            fzf --prompt="Branch > " \
+                --preview='git log --oneline --graph -20 {}' \
+                --preview-window=right:50%
+    )
+
+    if [[ -n "$branch" ]]; then
+        BUFFER="git checkout '$branch'"
+        zle accept-line
+    fi
     zle reset-prompt
 }
 zle -N git-branch-fzf-widget
 bindkey '^B' git-branch-fzf-widget
 
 # ファイル検索してvimで開く (fd + fzf)
-function find-file-vim() {
-    local file=$(fd --type f --hidden --exclude .git | \
-        fzf --prompt="File > " \
-            --preview='bat --color=always --style=numbers --line-range=:100 {}' \
-            --preview-window=right:60%)
-    if [[ -n "$file" ]]; then
-        vim "$file"
-    fi
-}
-
 function find-file-vim-widget() {
-    find-file-vim
+    zle -I
+
+    local file=$(
+        exec < /dev/tty
+        fd --type f --hidden --exclude .git | \
+            fzf --prompt="File > " \
+                --preview='bat --color=always --style=numbers --line-range=:100 {}' \
+                --preview-window=right:60%
+    )
+
+    if [[ -n "$file" ]]; then
+        BUFFER="vim '$file'"
+        zle accept-line
+    fi
     zle reset-prompt
 }
 zle -N find-file-vim-widget
 bindkey '^F' find-file-vim-widget
 
 # プロセスkill (procs + fzf)
-function kill-process-fzf() {
-    local pid=$(procs --no-header | \
-        fzf --prompt="Kill > " \
-            --header="Select process to kill" \
-            --preview='procs --tree {1}' \
-            --preview-window=right:40% | \
-        awk '{print $1}')
-    if [[ -n "$pid" ]]; then
-        echo "Killing PID: $pid"
-        kill -9 "$pid"
-    fi
-}
-
 function kill-process-fzf-widget() {
-    kill-process-fzf
+    zle -I
+
+    local selected=$(
+        exec < /dev/tty
+        procs --no-header | \
+            fzf --prompt="Kill > " \
+                --header="Select process to kill" \
+                --preview='procs --tree {1}' \
+                --preview-window=right:40%
+    )
+
+    if [[ -n "$selected" ]]; then
+        local pid=$(echo "$selected" | awk '{print $1}')
+        BUFFER="kill -9 $pid"
+        zle accept-line
+    fi
     zle reset-prompt
 }
 zle -N kill-process-fzf-widget
