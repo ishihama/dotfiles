@@ -220,8 +220,8 @@ function git-branch-fzf-widget() {
 zle -N git-branch-fzf-widget
 bindkey '^B' git-branch-fzf-widget
 
-# ファイル検索してvimで開く (fd + fzf)
-function find-file-vim-widget() {
+# ファイル検索してnvimで開く (fd + fzf)
+function find-file-nvim-widget() {
     zle -I
 
     local file=$(
@@ -233,13 +233,13 @@ function find-file-vim-widget() {
     )
 
     if [[ -n "$file" ]]; then
-        BUFFER="vim '$file'"
+        BUFFER="nvim '$file'"
         zle accept-line
     fi
     zle reset-prompt
 }
-zle -N find-file-vim-widget
-bindkey '^F' find-file-vim-widget
+zle -N find-file-nvim-widget
+bindkey '^F' find-file-nvim-widget
 
 # プロセスkill (procs + fzf)
 function kill-process-fzf-widget() {
@@ -271,7 +271,7 @@ function memo() {
     mkdir -p "$MEMO_DIR"
 
     if [[ -n "$1" ]]; then
-        vim "$MEMO_DIR/$1.md"
+        nvim "$MEMO_DIR/$1.md"
     else
         local selected=$(
             { echo "[+ 新規作成]"; fd -e md . "$MEMO_DIR" 2>/dev/null | xargs -I{} basename {} .md; } | \
@@ -286,9 +286,9 @@ function memo() {
             echo -n "ファイル名 (拡張子不要): "
             read filename
             [[ -z "$filename" ]] && return
-            vim "$MEMO_DIR/$filename.md"
+            nvim "$MEMO_DIR/$filename.md"
         else
-            vim "$MEMO_DIR/$selected.md"
+            nvim "$MEMO_DIR/$selected.md"
         fi
     fi
 }
@@ -307,7 +307,7 @@ function memo-search() {
     if [[ -n "$match" ]]; then
         local file=$(echo "$match" | cut -d':' -f1)
         local line=$(echo "$match" | cut -d':' -f2)
-        vim "+$line" "$file"
+        nvim "+$line" "$file"
     fi
 }
 
@@ -331,7 +331,7 @@ function cheat() {
 [shell] Ctrl+W          gwq-tmux (worktree選択)
 [shell] Ctrl+R          履歴検索 (atuin/fzf)
 [shell] Ctrl+B          git branch切り替え
-[shell] Ctrl+F          ファイル検索→vim
+[shell] Ctrl+F          ファイル検索→nvim
 [shell] Ctrl+K          プロセスkill
 [nvim] Space            Leader
 [nvim] Space+e          ファイルツリー toggle

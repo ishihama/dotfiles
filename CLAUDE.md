@@ -9,48 +9,47 @@ Personal dotfiles repository for macOS (primary), with Linux and WSL support. Ma
 ## Setup Commands
 
 ```bash
-# Initial installation - symlinks dotfiles, installs oh-my-zsh, Homebrew, packages, dein, and mise
+# Initial installation - symlinks dotfiles, installs oh-my-zsh, Homebrew, packages, gh-fzf, and mise
 ./init.sh
-
-# Install/update Homebrew packages (includes gwq, gh, and other tools)
-brew bundle
-
-# Install gh-fzf extension
-gh extension install benelan/gh-fzf
 
 # Reload shell
 source ~/.zshrc
+
+# Start Neovim (plugins auto-install on first launch)
+nvim
 ```
 
 ## Architecture
 
 **Shell Configuration (Zsh)**
-- `.zshrc` - Main config with oh-my-zsh, modern CLI tool aliases, path setup (Go/Rust/Flutter/Android), mise (asdf replacement), SDKMAN, zoxide, atuin, starship prompt
-- `.zshrc.osx` - macOS-specific with key bindings: `Ctrl+G` (ghq-tmux), `Ctrl+W` (gwq-tmux), `Ctrl+B` (git branch fzf), `Ctrl+F` (file search+vim), `Ctrl+K` (procs kill), `cheat` function, iTerm2 integration
+- `.zshrc` - Main config with oh-my-zsh, modern CLI tool aliases, fzf widgets (ghq-tmux, gwq-tmux, git-branch, file-search, process-kill), cheat function, memo function, path setup (Go/Rust/Flutter/Android), mise, SDKMAN, zoxide, atuin, starship prompt
+- `.zshrc.osx` - macOS-specific settings (currently minimal)
 - `.zshrc.linux` - Linux-specific (Linuxbrew, xdg-open aliases)
 - `.zshrc.wsl` - WSL-specific (Windows clipboard, X Server display)
 
-**Important:** The `.zshrc.osx` file contains critical fzf-based workflow functions that integrate ghq, gwq, and tmux for repository/worktree management.
-
-**Vim Configuration**
-- `.vimrc` - Main config with encoding, undofile (persistent undo in `~/.vim/undo`), display settings, sources `.vim/config/dein.vim` and `.vim/config/lsp.vim`
-- `.vim/config/dein.vim` - Dein plugin manager setup, loads `.vim/rc/dein.toml` and `.vim/rc/dein_lazy.toml`
-- `.vim/config/lsp.vim` - Language Server Protocol settings
-- `.vim/rc/dein.toml` - Plugin specifications
-- `.vim/rc/dein_lazy.toml` - Lazy-loaded plugins
+**Neovim Configuration**
+- `.config/nvim/init.lua` - Entry point, loads config modules
+- `.config/nvim/lua/config/options.lua` - Basic settings (encoding, undofile, display, tabs, search)
+- `.config/nvim/lua/config/keymaps.lua` - Key bindings (Space as leader, telescope, LSP, window navigation)
+- `.config/nvim/lua/config/autocmds.lua` - Auto commands (memo auto-save, yank highlight, etc.)
+- `.config/nvim/lua/plugins/init.lua` - lazy.nvim setup
+- `.config/nvim/lua/plugins/ui.lua` - catppuccin, lualine, bufferline, gitsigns
+- `.config/nvim/lua/plugins/editor.lua` - nvim-tree, telescope, treesitter, which-key
+- `.config/nvim/lua/plugins/lsp.lua` - mason, lspconfig, nvim-cmp (TypeScript, Go, Python, Rust, Java, Bash)
+- `.config/nvim/lua/plugins/coding.lua` - autopairs, comment, surround
 
 **Other Configs**
 - `.tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux)
-- `.gitconfig` - User settings, commit template (`~/.gitmessage`), rebase on pull, delta pager, ghq root (`~/repos`)
+- `.gitconfig` - User settings (in .gitconfig.local), commit template (`~/.gitmessage`), rebase on pull, delta pager, ghq root (`~/repos`)
 - `.gitmessage` - Commit message template with emoji conventions
 - `.mise.toml` - mise version manager config (replacement for asdf)
 - `starship.toml` - Starship prompt configuration
 - `lefthook.yml` - Git hooks configuration
 - `.config/atuin/` - Atuin shell history sync config
-- `.config/ghostty/` - Ghostty terminal emulator config
+- `.config/ghostty/` - Ghostty terminal emulator config (catppuccin theme)
 
 **Package Management**
-- `Brewfile` - Homebrew packages (modern CLI tools: bat, eza, fd, ripgrep, procs, dust, duf, sd, btop, xh, zoxide, atuin, fzf, lazygit, delta, gh, ghq, gwq, mise, etc.), casks, Mac App Store apps
+- `Brewfile` - Homebrew packages (modern CLI tools: bat, eza, fd, ripgrep, procs, dust, duf, sd, btop, xh, zoxide, atuin, fzf, lazygit, delta, gh, ghq, gwq, mise, neovim, etc.), casks, Mac App Store apps
 
 ## Key Workflows
 
@@ -58,17 +57,17 @@ source ~/.zshrc
 - Selects repository from ghq list with fzf preview (README.md or git log)
 - Creates/attaches tmux session named `{owner}-{repo}` (dots replaced with dashes)
 - Behavior differs inside/outside tmux (switch-client vs attach-session)
-- Widget: `.zshrc.osx:10-34`, exec: `.zshrc.osx:37-56`
+- Defined in `.zshrc`
 
 **gwq + fzf + tmux (`Ctrl+W` or tmux prefix+w)**
 - Selects worktree from gwq list with fzf preview (git log)
 - Creates/attaches tmux session named `{repo}-{branch}` (dots and slashes replaced with dashes)
 - Enables parallel development across branches with separate Claude Code instances
-- Widget: `.zshrc.osx:76-96`, exec: `.zshrc.osx:98-117`
+- Defined in `.zshrc`
 
 **Modern CLI Tool Aliases**
-- All defined in `.zshrc:10-23` - traditional commands aliased to modern alternatives (cat→bat, ls→eza, grep→rg, find→fd, ps→procs, du→dust, df→duf, sed→sd, top→btop, http→xh)
-- Important: SDKMAN init temporarily unaliases `find` at `.zshrc:88-93` to avoid conflicts, then restores it
+- All defined in `.zshrc` - traditional commands aliased to modern alternatives (cat→bat, ls→eza, grep→rg, find→fd, ps→procs, du→dust, df→duf, sed→sd, top→btop, http→xh, vi/vim→nvim)
+- Important: SDKMAN init temporarily unaliases `find` to avoid conflicts, then restores it
 
 ## Git Commit Conventions
 
@@ -92,12 +91,22 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 ## Development Notes
 
 **Symlink Management**
-- `init.sh:13-33` contains `link_file()` helper that backs up existing files with timestamp before symlinking
-- Symlinks all dotfiles from repo to `$HOME`, plus `.vim` directory and `.config/` subdirectories
+- `init.sh` contains `link_file()` helper that backs up existing files with timestamp before symlinking
+- Symlinks all dotfiles from repo to `$HOME`, plus `.config/` subdirectories (nvim, atuin, ghostty, claude)
 
 **Platform Detection**
-- `.zshrc:71-80` detects OS via `uname` and sources platform-specific config
-- macOS is the primary platform with the most features in `.zshrc.osx`
+- `.zshrc` detects OS via `uname` and sources platform-specific config
+- macOS is the primary platform; common functions are in `.zshrc` (not `.zshrc.osx`)
 
-**Persistent Undo**
-- Vim undofile enabled at `.vimrc:19-23`, stores in `~/.vim/undo/` (created automatically if missing)
+**Neovim Key Bindings**
+- `Space` - Leader key
+- `Space+e` - Toggle file tree (nvim-tree)
+- `Space+ff` - Find files (telescope)
+- `Space+fg` - Grep search (telescope)
+- `gd` - Go to definition
+- `gr` - References
+- `K` - Hover info
+- `Space+ca` - Code action
+- `Space+rn` - Rename
+- `gcc` - Toggle line comment
+- `Tab/Shift+Tab` - Window navigation

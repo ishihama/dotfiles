@@ -292,7 +292,7 @@ atuin search "git"      # 履歴から"git"を検索
 atuin stats             # シェル使用統計を表示
 
 # fzf例
-vim $(fzf)              # fzfで選択したファイルを開く
+nvim $(fzf)              # fzfで選択したファイルを開く
 kill -9 $(ps aux | fzf | awk '{print $2}')  # fzfでプロセスをkill
 ```
 
