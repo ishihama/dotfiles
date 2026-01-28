@@ -29,6 +29,10 @@ source ~/.zshrc
 | `Ctrl+R` | fzf履歴検索 |
 | `Ctrl+G` | ghq + fzf + tmux (リポジトリ選択) |
 | `Ctrl+W` | gwq + fzf + tmux (worktree選択) |
+| `Ctrl+B` | git branch切り替え (fzf + preview) |
+| `Ctrl+F` | ファイル検索→vimで開く (fd + fzf) |
+| `Ctrl+K` | プロセスkill (procs + fzf) |
+| `lg` | lazygit起動 |
 | `cheat` | チートシート表示 (コマンドラインに貼付) |
 
 ## ghq + fzf + tmux ワークフロー
@@ -38,8 +42,8 @@ source ~/.zshrc
 ### 初回セットアップ
 
 ```bash
-# ghqでリポジトリを取得
-ghq get https://github.com/cli/cli
+# ghqでリポジトリを取得（例: Anthropicのclaude-codeリポジトリ）
+ghq get https://github.com/anthropics/claude-code
 
 # Ctrl+Gを押して、リポジトリを選択 → tmuxセッションに入る！
 ```
@@ -262,7 +266,7 @@ gh fzf issue            # Issueをファジー検索
 gh fzf run              # Actions runをファジー検索
 
 # ghq例
-ghq get cli/cli         # github.com/cli/cliを~/repos/github.com/cli/cliにクローン
+ghq get anthropics/claude-code  # 例: ~/repos/github.com/anthropics/claude-codeにクローン
 ghq list                # 全リポジトリ一覧
 ghq root                # ルートディレクトリを表示
 

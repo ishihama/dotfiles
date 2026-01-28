@@ -104,6 +104,9 @@ function cheat() {
 [shell] Ctrl+G          ghq-tmux (リポジトリ選択)
 [shell] Ctrl+W          gwq-tmux (worktree選択)
 [shell] Ctrl+R          履歴検索 (atuin/fzf)
+[shell] Ctrl+B          git branch切り替え
+[shell] Ctrl+F          ファイル検索→vim
+[shell] Ctrl+K          プロセスkill
 [ghostty] Cmd+T         tmux prefix送信
 [ghostty] Cmd+N         新規tmux window
 [ghostty] Cmd+W         pane閉じる
@@ -125,6 +128,7 @@ function cheat() {
 [alias] top             btop
 [alias] http            xh
 [alias] vi              vim
+[alias] lg              lazygit
 [git] ghq get           リポジトリclone
 [git] ghq list          リポジトリ一覧
 [git] gwq add -b <br>   worktree作成
@@ -140,6 +144,67 @@ EOF
         print -z "$key "
     fi
 }
+
+# git branch切り替え (fzf + preview)
+function git-branch-fzf() {
+    local branch=$(git branch --sort=-committerdate | \
+        command sed 's/^[* ]*//' | \
+        fzf --prompt="Branch > " \
+            --preview='git log --oneline --graph -20 {}' \
+            --preview-window=right:50%)
+    if [[ -n "$branch" ]]; then
+        git checkout "$branch"
+    fi
+}
+
+function git-branch-fzf-widget() {
+    git-branch-fzf
+    zle reset-prompt
+}
+zle -N git-branch-fzf-widget
+bindkey '^B' git-branch-fzf-widget
+
+# ファイル検索してvimで開く (fd + fzf)
+function find-file-vim() {
+    local file=$(fd --type f --hidden --exclude .git | \
+        fzf --prompt="File > " \
+            --preview='bat --color=always --style=numbers --line-range=:100 {}' \
+            --preview-window=right:60%)
+    if [[ -n "$file" ]]; then
+        vim "$file"
+    fi
+}
+
+function find-file-vim-widget() {
+    find-file-vim
+    zle reset-prompt
+}
+zle -N find-file-vim-widget
+bindkey '^F' find-file-vim-widget
+
+# プロセスkill (procs + fzf)
+function kill-process-fzf() {
+    local pid=$(procs --no-header | \
+        fzf --prompt="Kill > " \
+            --header="Select process to kill" \
+            --preview='procs --tree {1}' \
+            --preview-window=right:40% | \
+        awk '{print $1}')
+    if [[ -n "$pid" ]]; then
+        echo "Killing PID: $pid"
+        kill -9 "$pid"
+    fi
+}
+
+function kill-process-fzf-widget() {
+    kill-process-fzf
+    zle reset-prompt
+}
+zle -N kill-process-fzf-widget
+bindkey '^K' kill-process-fzf-widget
+
+# lazygit alias
+alias lg='lazygit'
 
 # iTerm2 Shell Integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"
