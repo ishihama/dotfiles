@@ -42,9 +42,6 @@ export PATH="$HOME/go/bin:$PATH"
 # Flutter
 export PATH="$HOME/flutter/bin:$PATH"
 
-# yarn
-export PATH="$HOME:$(yarn global bin):$PATH"
-
 # mise (asdf alternative)
 eval "$(mise activate zsh)"
 
@@ -89,6 +86,9 @@ export PATH="/Users/REDACTED/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)
 
 # SDKMAN (via Homebrew)
+# findエイリアスを一時解除 (SDKMAN init scriptがfind -typeを使うため)
+unalias find 2>/dev/null
 export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
 [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
+alias find='fd'  # 復元
 

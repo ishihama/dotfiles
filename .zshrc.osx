@@ -6,15 +6,28 @@ function select-history() {
 zle -N select-history
 bindkey '^r' select-history
 
-# ghq + fzf + tmux: リポジトリ選択してtmuxセッションを開く
+# ghq + fzf + tmux: リポジトリ選択してtmuxセッションを開く (プレビュー付き)
 function ghq-tmux() {
-    local repo=$(ghq list | fzf --prompt="Repository > ")
+    local ghq_root=$(ghq root)
+    local repo=$(ghq list | fzf \
+        --prompt="Repository > " \
+        --preview="
+            path=\"${ghq_root}/{}\"
+            if [[ -f \"\$path/README.md\" ]]; then
+                head -30 \"\$path/README.md\"
+            else
+                cd \"\$path\" && git log --oneline -10
+            fi
+        " \
+        --preview-window=right:50% \
+        --bind='ctrl-/:toggle-preview')
+
     if [[ -z "$repo" ]]; then
         return
     fi
 
-    local repo_path=$(ghq root)/$repo
-    local session_name=$(basename $repo | tr '.' '-')
+    local repo_path="${ghq_root}/${repo}"
+    local session_name=$(echo "$repo" | awk -F'/' '{print $(NF-1)"-"$NF}' | tr '.' '-')
 
     if [[ -n "$TMUX" ]]; then
         # tmux内: 新規セッション作成 or 既存セッションに切り替え
@@ -38,6 +51,95 @@ function ghq-tmux-widget() {
 }
 zle -N ghq-tmux-widget
 bindkey '^G' ghq-tmux-widget
+
+# gwq + fzf + tmux: worktree選択してtmuxセッションを開く
+function gwq-tmux() {
+    local worktree=$(gwq list 2>/dev/null | fzf \
+        --prompt="Worktree > " \
+        --preview='cd {} && git log --oneline -10')
+
+    if [[ -z "$worktree" ]]; then
+        return
+    fi
+
+    local branch=$(cd "$worktree" && git branch --show-current)
+    local repo=$(basename "$(cd "$worktree" && git rev-parse --show-toplevel)")
+    local session_name=$(echo "${repo}-${branch}" | tr './' '--')
+
+    # tmux内外で適切にセッション作成/切り替え
+    if [[ -n "$TMUX" ]]; then
+        tmux has-session -t "$session_name" 2>/dev/null || \
+            tmux new-session -d -s "$session_name" -c "$worktree"
+        tmux switch-client -t "$session_name"
+    else
+        tmux has-session -t "$session_name" 2>/dev/null && \
+            tmux attach-session -t "$session_name" || \
+            tmux new-session -s "$session_name" -c "$worktree"
+    fi
+}
+
+function gwq-tmux-widget() {
+    gwq-tmux
+    zle reset-prompt
+}
+zle -N gwq-tmux-widget
+bindkey '^W' gwq-tmux-widget
+
+# チートシート: キーバインド・エイリアス一覧 (fzf検索)
+function cheat() {
+    local selected=$(cat <<'EOF' | fzf --prompt="Cheatsheet > " --header="Enter: コマンドラインに貼付 | Ctrl+/: toggle preview" --preview='echo {}' --preview-window=hidden
+[tmux] Ctrl+T           prefix
+[tmux] prefix h/j/k/l   pane移動 (vim風)
+[tmux] prefix H/J/K/L   paneリサイズ
+[tmux] prefix |         縦分割
+[tmux] prefix -         横分割
+[tmux] prefix g         ghq-tmux popup
+[tmux] prefix w         gwq-tmux popup
+[tmux] prefix c         新規window
+[tmux] prefix n/p       次/前のwindow
+[tmux] prefix 1-9       window切替
+[tmux] prefix d         detach
+[tmux] prefix [         コピーモード (vi)
+[tmux] prefix x         pane閉じる
+[shell] Ctrl+G          ghq-tmux (リポジトリ選択)
+[shell] Ctrl+W          gwq-tmux (worktree選択)
+[shell] Ctrl+R          履歴検索 (atuin/fzf)
+[ghostty] Cmd+T         tmux prefix送信
+[ghostty] Cmd+N         新規tmux window
+[ghostty] Cmd+W         pane閉じる
+[ghostty] Cmd+1-9       tmux window切替
+[ghostty] Cmd+H/J/K/L   tmux pane移動
+[ghostty] Cmd+\         縦分割
+[ghostty] Cmd+-         横分割
+[alias] cat             bat --paging=never
+[alias] ls              eza --icons
+[alias] ll              eza -la --icons --git
+[alias] la              eza -a --icons
+[alias] lt              eza --tree --icons
+[alias] grep            rg (ripgrep)
+[alias] find            fd
+[alias] ps              procs
+[alias] du              dust
+[alias] df              duf
+[alias] sed             sd
+[alias] top             btop
+[alias] http            xh
+[alias] vi              vim
+[git] ghq get           リポジトリclone
+[git] ghq list          リポジトリ一覧
+[git] gwq add -b <br>   worktree作成
+[git] gwq list          worktree一覧
+[git] gwq remove        worktree削除
+[zoxide] z <dir>        スマートcd
+[zoxide] zi             インタラクティブ選択
+EOF
+)
+    if [[ -n "$selected" ]]; then
+        # キー部分だけ抽出してコマンドラインに貼り付け
+        local key=$(echo "$selected" | command sed 's/^\[[^]]*\] *\([^ ]*\).*/\1/')
+        print -z "$key "
+    fi
+}
 
 # iTerm2 Shell Integration
 test -e "${HOME}/.iterm2_shell_integration.zsh" && source "${HOME}/.iterm2_shell_integration.zsh"

@@ -52,6 +52,9 @@ link_file "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml"
 if [ -d "$DOTFILES_DIR/.config/atuin" ]; then
   link_file "$DOTFILES_DIR/.config/atuin" "$HOME/.config/atuin"
 fi
+if [ -d "$DOTFILES_DIR/.config/ghostty" ]; then
+  link_file "$DOTFILES_DIR/.config/ghostty" "$HOME/.config/ghostty"
+fi
 
 echo ""
 

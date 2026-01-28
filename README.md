@@ -1,258 +1,304 @@
 # dotfiles
 
-Personal dotfiles for macOS, Linux, and WSL.
+macOS、Linux、WSL用の個人dotfiles。
 
-## Setup
+## セットアップ
 
 ```bash
-# 1. Clone this repository
-git clone https://github.com/yourusername/dotfiles.git ~/repos/personal/dotfiles
+# 1. リポジトリをクローン
+git clone https://github.com/REDACTED/dotfiles.git ~/repos/personal/dotfiles
 cd ~/repos/personal/dotfiles
 
-# 2. Run init script (symlinks dotfiles, installs oh-my-zsh, Homebrew, packages, dein)
+# 2. init.shを実行 (シンボリックリンク作成、oh-my-zsh、Homebrew、パッケージ、deinをインストール)
 ./init.sh
 
-# 3. Install/update Homebrew packages
+# 3. Homebrewパッケージをインストール/更新
 brew bundle
 
-# 4. Install gh extensions
+# 4. gh拡張をインストール
 gh extension install benelan/gh-fzf
 
-# 5. Reload shell
+# 5. シェルを再読み込み
 source ~/.zshrc
 ```
 
-## Keybindings
+## キーバインド
 
-| Key | Description |
-|-----|-------------|
-| `Ctrl+R` | fzf history search |
-| `Ctrl+G` | ghq + fzf + tmux (repository selector) |
+| キー | 説明 |
+|------|------|
+| `Ctrl+R` | fzf履歴検索 |
+| `Ctrl+G` | ghq + fzf + tmux (リポジトリ選択) |
+| `Ctrl+W` | gwq + fzf + tmux (worktree選択) |
+| `cheat` | チートシート表示 (コマンドラインに貼付) |
 
-## ghq + fzf + tmux Workflow
+## ghq + fzf + tmux ワークフロー
 
-`Ctrl+G` opens a repository selector that creates/attaches tmux sessions.
+`Ctrl+G`でリポジトリ選択してtmuxセッションを作成/アタッチ。
 
-### First Time Setup
+### 初回セットアップ
 
 ```bash
-# Get a repository with ghq
+# ghqでリポジトリを取得
 ghq get https://github.com/cli/cli
 
-# Press Ctrl+G, select the repo, and you're in a tmux session!
+# Ctrl+Gを押して、リポジトリを選択 → tmuxセッションに入る！
 ```
 
-### Daily Usage
+### 日常の使い方
 
-1. Press `Ctrl+G`
-2. Select a repository with fzf
-3. Automatically creates a tmux session named after the repo (or attaches if it exists)
+1. `Ctrl+G`を押す
+2. fzfでリポジトリを選択
+3. リポジトリ名のtmuxセッションが自動作成される（既存なら切り替え）
 
-### Behavior
+### 動作
 
-| Context | Action |
-|---------|--------|
-| Outside tmux | Creates new session or attaches to existing |
-| Inside tmux | Creates new session or switches to existing |
-| Cancel fzf | Does nothing |
+| 状況 | 動作 |
+|------|------|
+| tmux外 | 新規セッション作成 or 既存にアタッチ |
+| tmux内 | 新規セッション作成 or 既存に切り替え |
+| fzfキャンセル | 何もしない |
 
-Session names are derived from the repository basename (`.` replaced with `-`).
+セッション名はリポジトリのbasename（`.`は`-`に置換）。
 
-## gh-fzf: GitHub CLI with Fuzzy Finder
+## gwq + fzf + tmux ワークフロー
 
-Wraps `gh` commands with fzf for fast PR/Issue/Actions navigation.
+`Ctrl+W`でworktree選択して並行開発用のtmuxセッションを作成/切り替え。
+
+gwqは`./init.sh`実行時に`brew bundle`でインストールされる。
+
+### 使い方
+
+1. `Ctrl+W`を押す
+2. fzfでworktreeを選択（プレビューで最近のコミット表示）
+3. `{リポジトリ}-{ブランチ}`名のtmuxセッションが自動作成される（既存なら切り替え）
+
+### なぜWorktree？
+
+- **並行開発**: stashなしで複数ブランチを同時に作業
+- **複数Claude Code**: 異なるブランチで同時にClaude Codeを実行
+- **素早いコンテキスト切り替え**: 各worktreeは完全な作業コピー
+
+### 典型的なワークフロー
 
 ```bash
-gh fzf pr          # Browse PRs with fzf, checkout/merge/view
-gh fzf issue       # Browse Issues with fzf
-gh fzf run         # Browse GitHub Actions runs
-gh fzf release     # Browse releases
+# 新機能を開始
+gwq add -b feature/login
+
+# 別の機能も並行して開始
+gwq add -b feature/signup
+
+# Ctrl+Wで切り替え
+# それぞれ独自のtmuxセッションでフルコンテキスト維持
+
+# 完了したらクリーンアップ
+gwq remove feature/login
+```
+
+### 動作
+
+| 状況 | 動作 |
+|------|------|
+| tmux外 | 新規セッション作成 or 既存にアタッチ |
+| tmux内 | 新規セッション作成 or 既存に切り替え |
+| fzfキャンセル | 何もしない |
+
+セッション名は`{リポジトリ}-{ブランチ}`（`.`と`/`は`-`に置換）。
+
+## gh-fzf: GitHub CLI + Fuzzy Finder
+
+`gh`コマンドをfzfでラップしてPR/Issue/Actionsを高速ナビゲーション。
+
+```bash
+gh fzf pr          # PRをfzfで閲覧、checkout/merge/view
+gh fzf issue       # Issueをfzfで閲覧
+gh fzf run         # GitHub Actionsの実行を閲覧
+gh fzf release     # リリースを閲覧
 ```
 
 ## gwq: Git Worktree Manager
 
-Manage multiple worktrees for parallel development (great for running multiple Claude Code instances).
+並行開発用のworktree管理（複数Claude Codeインスタンスに最適）。
 
 ```bash
-gwq add -b feature/login   # Create worktree with new branch
-gwq list                    # List all worktrees
-gwq status                  # Check status of all worktrees
-cd $(gwq get login)         # Jump to a worktree
-gwq remove feature/old      # Remove a worktree
+gwq add -b feature/login   # 新ブランチでworktree作成
+gwq list                    # 全worktree一覧
+gwq status                  # 全worktreeのstatus確認
+cd $(gwq get login)         # worktreeにジャンプ
+gwq remove feature/old      # worktree削除
 ```
 
-## Modern CLI Tools
+## モダンCLIツール
 
-Traditional commands are aliased to modern alternatives with better UX.
+従来のコマンドをUXの良いモダンな代替ツールにエイリアス。
 
-### File Operations
+### ファイル操作
 
-| Alias | Tool | Replaces | Features |
-|-------|------|----------|----------|
-| `ls` | eza | ls | Icons, colors, Git integration |
-| `ll` | eza -la | ls -la | Long format with Git status |
-| `la` | eza -a | ls -a | Show hidden files |
-| `lt` | eza --tree | tree | Tree view with icons |
-| `cat` | bat | cat | Syntax highlighting, line numbers |
-| `find` | fd | find | Intuitive syntax, fast, respects .gitignore |
-| `grep` | ripgrep (rg) | grep | Ultra fast, .gitignore aware |
+| エイリアス | ツール | 置換対象 | 特徴 |
+|------------|--------|----------|------|
+| `ls` | eza | ls | アイコン、カラー、Git連携 |
+| `ll` | eza -la | ls -la | Git status付きロングフォーマット |
+| `la` | eza -a | ls -a | 隠しファイル表示 |
+| `lt` | eza --tree | tree | アイコン付きツリー表示 |
+| `cat` | bat | cat | シンタックスハイライト、行番号 |
+| `find` | fd | find | 直感的な構文、高速、.gitignore対応 |
+| `grep` | ripgrep (rg) | grep | 超高速、.gitignore対応 |
 
 ```bash
-# eza examples
-ll                      # List with Git status (M=modified, N=new)
-lt -L 2                 # Tree view, 2 levels deep
+# eza例
+ll                      # Git status付きリスト (M=modified, N=new)
+lt -L 2                 # ツリー表示、深さ2
 
-# bat examples
-bat README.md           # Syntax highlighted view
-bat -l json data.txt    # Force JSON highlighting
-bat --diff file.txt     # Show git diff
+# bat例
+bat README.md           # シンタックスハイライト表示
+bat -l json data.txt    # JSON強制ハイライト
+bat --diff file.txt     # git diff表示
 
-# fd examples
-fd pattern              # Find files matching pattern
-fd -e js                # Find all .js files
-fd -H pattern           # Include hidden files
+# fd例
+fd pattern              # パターンにマッチするファイル検索
+fd -e js                # 全.jsファイル検索
+fd -H pattern           # 隠しファイルも含む
 
-# ripgrep examples
-rg "TODO"               # Search for TODO in current dir
-rg -i "error" -g "*.log"  # Case insensitive, only .log files
-rg -C 3 "function"      # Show 3 lines of context
+# ripgrep例
+rg "TODO"               # カレントディレクトリでTODO検索
+rg -i "error" -g "*.log"  # 大文字小文字無視、.logファイルのみ
+rg -C 3 "function"      # 前後3行のコンテキスト表示
 ```
 
-### System Monitoring
+### システム監視
 
-| Alias | Tool | Replaces | Features |
-|-------|------|----------|----------|
-| `ps` | procs | ps | Colorful, tree view, watch mode |
-| `top` | btop | top/htop | Beautiful resource monitor |
-| `du` | dust | du | Intuitive disk usage visualization |
-| `df` | duf | df | Colorful disk free space |
+| エイリアス | ツール | 置換対象 | 特徴 |
+|------------|--------|----------|------|
+| `ps` | procs | ps | カラフル、ツリー表示、watchモード |
+| `top` | btop | top/htop | 美しいリソースモニター |
+| `du` | dust | du | 直感的なディスク使用量表示 |
+| `df` | duf | df | カラフルな空き容量表示 |
 
 ```bash
-# procs examples
-ps                      # Process list with colors
-procs --tree            # Process tree view
-procs --watch           # Auto-refresh mode
-procs zsh               # Filter by name
+# procs例
+ps                      # カラー付きプロセスリスト
+procs --tree            # プロセスツリー表示
+procs --watch           # 自動更新モード
+procs zsh               # 名前でフィルタ
 
-# dust examples
-dust                    # Disk usage of current dir
-dust -d 2               # Limit depth to 2
-dust -r                 # Reverse order (largest last)
+# dust例
+dust                    # カレントディレクトリのディスク使用量
+dust -d 2               # 深さ2まで
+dust -r                 # 逆順（最大が最後）
 
-# duf examples
-duf                     # All mounted filesystems
-duf /home               # Specific path only
+# duf例
+duf                     # 全マウントファイルシステム
+duf /home               # 特定パスのみ
 ```
 
-### Text Processing
+### テキスト処理
 
-| Alias | Tool | Replaces | Features |
-|-------|------|----------|----------|
-| `sed` | sd | sed | Intuitive syntax, no escaping hell |
-| `http` | xh | curl/httpie | Colorful output, easy syntax |
+| エイリアス | ツール | 置換対象 | 特徴 |
+|------------|--------|----------|------|
+| `sed` | sd | sed | 直感的な構文、エスケープ地獄なし |
+| `http` | xh | curl/httpie | カラフル出力、簡単な構文 |
 
 ```bash
-# sd examples
-sd 'before' 'after' file.txt       # Replace in file
-sd -F 'exact.match' 'new' file     # Literal string (no regex)
-echo "hello" | sd 'ell' 'ipp'      # Pipe usage
+# sd例
+sd 'before' 'after' file.txt       # ファイル内置換
+sd -F 'exact.match' 'new' file     # リテラル文字列（正規表現なし）
+echo "hello" | sd 'ell' 'ipp'      # パイプ使用
 
-# xh examples
-xh httpbin.org/get                 # GET request
-xh POST api.example.com data=value # POST with JSON
-xh -d https://example.com/file     # Download file
+# xh例
+xh httpbin.org/get                 # GETリクエスト
+xh POST api.example.com data=value # JSONでPOST
+xh -d https://example.com/file     # ファイルダウンロード
 ```
 
-### Navigation & History
+### ナビゲーション & 履歴
 
-| Tool | Replaces | Features |
-|------|----------|----------|
-| zoxide | cd | Learns your habits, `z foo` jumps to ~/projects/foo |
-| atuin | history | SQLite-backed, sync across machines, fuzzy search |
-| fzf | - | Fuzzy finder for everything |
+| ツール | 置換対象 | 特徴 |
+|--------|----------|------|
+| zoxide | cd | 習慣を学習、`z foo`で~/projects/fooにジャンプ |
+| atuin | history | SQLiteバックエンド、マシン間同期、ファジー検索 |
+| fzf | - | 何でもファジーファインダー |
 
 ```bash
-# zoxide examples
-z dotfiles              # Jump to most frecent match for "dotfiles"
-z foo bar               # Jump to path matching "foo" and "bar"
-zi                      # Interactive selection with fzf
+# zoxide例
+z dotfiles              # "dotfiles"に最も頻繁にマッチするパスにジャンプ
+z foo bar               # "foo"と"bar"にマッチするパスにジャンプ
+zi                      # fzfでインタラクティブ選択
 
-# atuin examples
-# Ctrl+R triggers atuin search (configured via atuin init)
-atuin search "git"      # Search history for "git"
-atuin stats             # Show shell usage statistics
+# atuin例
+# Ctrl+Rでatuin検索（atuin initで設定済み）
+atuin search "git"      # 履歴から"git"を検索
+atuin stats             # シェル使用統計を表示
 
-# fzf examples
-vim $(fzf)              # Open file selected with fzf
-kill -9 $(ps aux | fzf | awk '{print $2}')  # Kill process with fzf
+# fzf例
+vim $(fzf)              # fzfで選択したファイルを開く
+kill -9 $(ps aux | fzf | awk '{print $2}')  # fzfでプロセスをkill
 ```
 
-### Git Tools
+### Gitツール
 
-| Tool | Purpose | Features |
-|------|---------|----------|
-| lazygit | Git TUI | Stage, commit, rebase, merge with keyboard |
-| delta | Git diff | Syntax highlighting, line numbers, side-by-side |
-| gh | GitHub CLI | PR, Issue, Actions from terminal |
-| gh-fzf | gh + fzf | Fuzzy find PRs, Issues, runs |
-| ghq | Repo manager | Organize repos under ~/repos |
-| gwq | Worktree manager | Parallel branch development |
+| ツール | 用途 | 特徴 |
+|--------|------|------|
+| lazygit | Git TUI | キーボードでstage、commit、rebase、merge |
+| delta | Git diff | シンタックスハイライト、行番号、サイドバイサイド |
+| gh | GitHub CLI | ターミナルからPR、Issue、Actions |
+| gh-fzf | gh + fzf | PRやIssue、runをファジー検索 |
+| ghq | リポジトリ管理 | ~/repos配下にリポジトリを整理 |
+| gwq | Worktree管理 | 並行ブランチ開発 |
 
 ```bash
 # lazygit
-lazygit                 # Open TUI in current repo
+lazygit                 # 現在のリポジトリでTUIを開く
 
-# delta (auto-used by git diff via .gitconfig)
-git diff                # Beautiful diff with syntax highlighting
+# delta (.gitconfigでgit diffが自動使用)
+git diff                # シンタックスハイライト付きの美しいdiff
 
-# gh examples
-gh pr create            # Create PR
-gh pr checkout 123      # Checkout PR #123
-gh issue list           # List issues
+# gh例
+gh pr create            # PR作成
+gh pr checkout 123      # PR #123をチェックアウト
+gh issue list           # Issue一覧
 
-# gh-fzf examples
-gh fzf pr               # Fuzzy find and act on PRs
-gh fzf issue            # Fuzzy find issues
-gh fzf run              # Fuzzy find Actions runs
+# gh-fzf例
+gh fzf pr               # PRをファジー検索して操作
+gh fzf issue            # Issueをファジー検索
+gh fzf run              # Actions runをファジー検索
 
-# ghq examples
-ghq get cli/cli         # Clone github.com/cli/cli to ~/repos/github.com/cli/cli
-ghq list                # List all repos
-ghq root                # Show root directory
+# ghq例
+ghq get cli/cli         # github.com/cli/cliを~/repos/github.com/cli/cliにクローン
+ghq list                # 全リポジトリ一覧
+ghq root                # ルートディレクトリを表示
 
-# gwq examples
-gwq add -b feature/x    # Create worktree for new branch
-gwq list                # List all worktrees
-gwq status              # Git status of all worktrees
+# gwq例
+gwq add -b feature/x    # 新ブランチ用worktree作成
+gwq list                # 全worktree一覧
+gwq status              # 全worktreeのgit status
 ```
 
 ### Tips
 
-**Combine tools for power workflows:**
+**ツールを組み合わせたパワーワークフロー:**
 
 ```bash
-# Find and edit files
+# ファイルを検索して編集
 vim $(fd -e ts | fzf)
 
-# Search and open results
+# 検索結果を開く
 rg -l "TODO" | fzf | xargs vim
 
-# Git log with fzf
+# fzfでgit log
 git log --oneline | fzf --preview 'git show {1}'
 
-# Kill process interactively
+# インタラクティブにプロセスをkill
 procs | fzf | awk '{print $1}' | xargs kill
 ```
 
-## Structure
+## 構成
 
 ```
-.zshrc          # Main shell config
-.zshrc.osx      # macOS-specific (fzf, ghq-tmux, iTerm2)
-.zshrc.linux    # Linux-specific
-.zshrc.wsl      # WSL-specific
-.vimrc          # Vim config
-.tmux.conf      # tmux config (prefix: Ctrl+T)
-.gitconfig      # Git config
-Brewfile        # Homebrew packages
+.zshrc          # メインシェル設定
+.zshrc.osx      # macOS用 (fzf, ghq-tmux, gwq-tmux, cheat, iTerm2)
+.zshrc.linux    # Linux用
+.zshrc.wsl      # WSL用
+.vimrc          # Vim設定
+.tmux.conf      # tmux設定 (prefix: Ctrl+T)
+.gitconfig      # Git設定
+Brewfile        # Homebrewパッケージ
 ```
