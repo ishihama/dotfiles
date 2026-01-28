@@ -129,13 +129,58 @@ function cheat() {
 [alias] http            xh
 [alias] vi              vim
 [alias] lg              lazygit
-[git] ghq get           リポジトリclone
-[git] ghq list          リポジトリ一覧
-[git] gwq add -b <br>   worktree作成
-[git] gwq list          worktree一覧
-[git] gwq remove        worktree削除
-[zoxide] z <dir>        スマートcd
-[zoxide] zi             インタラクティブ選択
+[ghq] ghq get <repo>              clone (github.com/user/repo or user/repo)
+[ghq] ghq get -p <repo>           clone with SSH
+[ghq] ghq list                    一覧表示
+[ghq] ghq list -p                 フルパスで一覧
+[ghq] ghq root                    ルートディレクトリ表示
+[ghq] ghq create <repo>           新規リポジトリ作成
+[gwq] gwq add <branch>            既存branchからworktree作成
+[gwq] gwq add -b <branch>         新規branch + worktree作成
+[gwq] gwq add -i                  fzfでbranch選択して作成
+[gwq] gwq add -s <branch>         作成後そのディレクトリに留まる
+[gwq] gwq list                    現在リポジトリのworktree一覧
+[gwq] gwq list -g                 全worktree一覧
+[gwq] gwq list -v                 詳細表示
+[gwq] gwq remove <path>           worktree削除
+[gwq] gwq status                  全worktreeの状態表示
+[git] git switch -c <branch>      新規branch作成+切替
+[git] git switch <branch>         branch切替
+[git] git restore <file>          変更を破棄
+[git] git restore --staged <file> ステージング解除
+[git] git stash -u                untracked含めてstash
+[git] git stash pop               stash適用+削除
+[git] git log --oneline -n 10     簡潔なログ表示
+[git] git diff --cached           ステージング済みの差分
+[git] git rebase -i HEAD~3        直近3コミットを編集
+[bat] bat <file>                  シンタックスハイライト表示
+[bat] bat -l <lang> <file>        言語指定
+[bat] bat -p <file>               装飾なし (plain)
+[bat] bat -A <file>               非表示文字も表示
+[eza] eza -l                      詳細表示
+[eza] eza -la                     隠しファイル含む詳細
+[eza] eza --tree -L 2             ツリー表示 (深さ2)
+[eza] eza --git                   git status表示
+[eza] eza -s modified             更新日時順
+[fd] fd <pattern>                 ファイル名検索
+[fd] fd -e <ext>                  拡張子で絞込 (-e ts)
+[fd] fd -t f                      ファイルのみ
+[fd] fd -t d                      ディレクトリのみ
+[fd] fd -H                        隠しファイル含む
+[fd] fd -x <cmd> {}               見つけたファイルにコマンド実行
+[rg] rg <pattern>                 ファイル内容検索
+[rg] rg -i <pattern>              大文字小文字無視
+[rg] rg -t <type> <pattern>       ファイルタイプ指定 (-t py)
+[rg] rg -g '*.ts' <pattern>       glob指定
+[rg] rg -C 3 <pattern>            前後3行表示
+[rg] rg -l <pattern>              マッチしたファイル名のみ
+[fzf] fzf --preview 'bat {}'      プレビュー付き
+[fzf] fzf -m                      複数選択可
+[fzf] fzf -q <query>              初期クエリ指定
+[fzf] cmd | fzf                   パイプで入力
+[zoxide] z <dir>                  スマートcd
+[zoxide] zi                       fzfで選択
+[zoxide] zoxide query <dir>       パス検索
 EOF
 )
     if [[ -n "$selected" ]]; then
