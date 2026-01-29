@@ -35,7 +35,6 @@ brew "gnu-sed"
 brew "gnupg"
 brew "go"
 brew "grep"
-brew "htop"
 brew "python@3.14"
 brew "httpie"
 brew "hyperfine"
@@ -96,8 +95,6 @@ cask "slack"
 cask "slack-cli"
 cask "visual-studio-code"
 cask "zoom"
-mas "GarageBand", id: 682658836
-mas "iMovie", id: 408981434
 mas "Keynote", id: 409183694
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft PowerPoint", id: 462062816
