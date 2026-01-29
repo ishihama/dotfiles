@@ -335,6 +335,13 @@ function cheat() {
 [shell] Ctrl+B          git branch切り替え
 [shell] Ctrl+F          ファイル検索→nvim
 [shell] Ctrl+K          プロセスkill
+[ghostty] Cmd+T         tmux prefix (Ctrl+T)
+[ghostty] Cmd+N         新規window (tmux)
+[ghostty] Cmd+W         pane閉じる (tmux)
+[ghostty] Cmd+1-9       window切替 (tmux)
+[ghostty] Cmd+H/J/K/L   pane移動 (tmux)
+[ghostty] Cmd+\         縦分割 (tmux)
+[ghostty] Cmd+-         横分割 (tmux)
 [nvim] Space            Leader
 [nvim] Space+e          ファイルツリー toggle
 [nvim] Space+ff         ファイル検索

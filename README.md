@@ -89,6 +89,18 @@ git config user.email  # → 仕事用メールアドレスが表示される
 | `lg` | lazygit起動 |
 | `cheat` | チートシート表示 (コマンドラインに貼付) |
 
+### Ghostty (tmux連携)
+
+| キー | 説明 |
+|------|------|
+| `Cmd+T` | tmux prefix (Ctrl+T) |
+| `Cmd+N` | 新規window |
+| `Cmd+W` | pane閉じる |
+| `Cmd+1-9` | window切替 |
+| `Cmd+H/J/K/L` | pane移動 (vim風) |
+| `Cmd+\` | 縦分割 |
+| `Cmd+-` | 横分割 |
+
 ### Neovim
 
 | キー | 説明 |

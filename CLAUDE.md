@@ -48,7 +48,7 @@ nvim
 - `starship.toml` - Starship prompt configuration
 - `lefthook.yml` - Git hooks configuration
 - `.config/atuin/` - Atuin shell history sync config
-- `.config/ghostty/` - Ghostty terminal emulator config (catppuccin theme)
+- `.config/ghostty/` - Ghostty terminal emulator config (catppuccin theme, tmux integration keybindings: Cmd+T=prefix, Cmd+N=new window, Cmd+W=close pane, Cmd+1-9=window switch, Cmd+H/J/K/L=pane nav, Cmd+\=vsplit, Cmd+-=hsplit)
 - `.config/gwq/config.toml` - gwq configuration (basedir: `~/repos`)
 
 **Package Management**
