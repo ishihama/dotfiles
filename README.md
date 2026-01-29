@@ -441,7 +441,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 .gitconfig                     # Git共通設定 (git管理対象)
 .gitconfig.local               # Git includeIf設定 (git管理外)
 .gitconfig.personal.example    # 個人用Gitテンプレート
-.gitconfig.work.example         # 仕事用Gitテンプレート
+.gitconfig.work.example        # 仕事用Gitテンプレート
 Brewfile                       # Homebrewパッケージ
 .config/nvim/                  # Neovim設定 (lazy.nvim, catppuccin, LSP)
 .config/claude/                # Claude Code設定

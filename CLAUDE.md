@@ -107,7 +107,7 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 - `.gitconfig.local` - Contains `includeIf` directives (NOT git-managed, must be created manually per environment)
 - `.gitconfig.personal` / `.gitconfig.work` - Account-specific configs (NOT git-managed, copied from `.example` templates)
 - `.gitconfig.personal.example` / `.gitconfig.work.example` - Templates provided in repo (git-managed)
-- Directory structure: `~/repos/github.com/personal/` uses personal config, `~/repos/github.com/work/` (or work) uses work config
+- Directory structure: `~/repos/github.com/personal/` uses personal config, `~/repos/github.com/work/` uses work config
 - All repository remote URLs should use `git@github.com:` (not `git@github-personal:` or `git@github-work:`)
 - SSH key switching happens via `core.sshCommand` in the includeIf configs
 - **IMPORTANT**: Never commit personal information (names, emails, org names) to the dotfiles repo - only use templates with placeholders
