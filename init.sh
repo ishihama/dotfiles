@@ -43,9 +43,6 @@ find "$DOTFILES_DIR" -maxdepth 1 -name ".*" -type f ! -name ".git*" -print0 | wh
   link_file "$file" "$HOME/$filename"
 done
 
-# .vim directory
-link_file "$DOTFILES_DIR/.vim" "$HOME/.vim"
-
 # .config directory
 mkdir -p "$HOME/.config"
 link_file "$DOTFILES_DIR/starship.toml" "$HOME/.config/starship.toml"

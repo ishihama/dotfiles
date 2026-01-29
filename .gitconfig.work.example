@@ -1,0 +1,7 @@
+# Work GitHub account settings
+[core]
+	sshCommand = ssh -i ~/.ssh/id_ed25519_work
+
+[user]
+	name = Your Work Name
+	email = your.work.email@company.com

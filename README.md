@@ -6,17 +6,72 @@ macOS、Linux、WSL用の個人dotfiles。
 
 ```bash
 # 1. リポジトリをクローン
-git clone https://github.com/REDACTED/dotfiles.git ~/repos/personal/dotfiles
-cd ~/repos/personal/dotfiles
+ghq get https://github.com/YOUR_USERNAME/dotfiles
+cd ~/repos/github.com/personal/dotfiles
 
 # 2. init.shを実行 (シンボリックリンク、oh-my-zsh、Homebrew、パッケージ、gh拡張をインストール)
 ./init.sh
 
-# 3. シェルを再読み込み
+# 3. Git設定（複数GitHubアカウント対応）
+# 3-1. .gitconfig.localを作成
+cat > ~/.gitconfig.local << 'EOF'
+# Directory-specific configurations
+[includeIf "gitdir:/Users/YOUR_USERNAME/repos/github.com/personal/**"]
+	path = ~/.gitconfig.personal
+[includeIf "gitdir:/Users/YOUR_USERNAME/repos/github.com/work/**"]
+	path = ~/.gitconfig.work
+EOF
+
+# 3-2. 個人用Git設定をテンプレートからコピー
+cp .gitconfig.personal.example ~/.gitconfig.personal
+
+# 3-3. ~/.gitconfig.personalを編集（名前・メール・SSH鍵を設定）
+nvim ~/.gitconfig.personal
+# [user]
+#   name = Your Name
+#   email = your.email@example.com
+# [core]
+#   sshCommand = ssh -i ~/.ssh/id_ed25519_personal
+
+# 3-4. 仕事用も同様に設定（必要な場合）
+cp .gitconfig.work.example ~/.gitconfig.work
+nvim ~/.gitconfig.work
+
+# 4. シェルを再読み込み
 source ~/.zshrc
 
-# 4. Neovimを起動（初回はプラグイン自動インストール）
+# 5. Neovimを起動（初回はプラグイン自動インストール）
 nvim
+```
+
+### Git設定の詳細
+
+このdotfilesは複数GitHubアカウントに対応しています。ディレクトリパスに応じて自動的にユーザー情報とSSH鍵を切り替えます。
+
+**ファイル構成:**
+- `.gitconfig` - 共通設定（git管理対象）
+- `.gitconfig.local` - `includeIf`設定（git管理**外**、環境ごとに作成）
+- `.gitconfig.personal` / `.gitconfig.work` - 個人情報（git管理**外**）
+- `.gitconfig.personal.example` / `.gitconfig.work.example` - テンプレート（git管理対象）
+
+**ディレクトリ構造の推奨:**
+```
+~/repos/github.com/
+  ├── personal/     # 個人用リポジトリ（.gitconfig.personalが適用される）
+  │   └── dotfiles/
+  └── work/         # 仕事用リポジトリ（.gitconfig.workが適用される）
+      └── project/
+```
+
+**動作確認:**
+```bash
+# personalディレクトリで
+cd ~/repos/github.com/personal/dotfiles
+git config user.email  # → 個人用メールアドレスが表示される
+
+# workディレクトリで
+cd ~/repos/github.com/work/project
+git config user.email  # → 仕事用メールアドレスが表示される
 ```
 
 ## キーバインド
@@ -377,16 +432,20 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 ## 構成
 
 ```
-.zshrc              # メインシェル設定 (共通関数含む)
-.zshrc.local        # ローカル設定 (gitignore、APIキーなど)
-.zshrc.osx          # macOS固有設定
-.zshrc.linux        # Linux用
-.zshrc.wsl          # WSL用
-.tmux.conf          # tmux設定 (prefix: Ctrl+T)
-.gitconfig          # Git設定
-Brewfile            # Homebrewパッケージ
-.config/nvim/       # Neovim設定 (lazy.nvim, catppuccin, LSP)
-.config/claude/     # Claude Code設定
-.config/ghostty/    # Ghostty設定
-.config/atuin/      # Atuin設定
+.zshrc                         # メインシェル設定 (共通関数含む)
+.zshrc.local                   # ローカル設定 (gitignore、APIキーなど)
+.zshrc.osx                     # macOS固有設定
+.zshrc.linux                   # Linux用
+.zshrc.wsl                     # WSL用
+.tmux.conf                     # tmux設定 (prefix: Ctrl+T)
+.gitconfig                     # Git共通設定 (git管理対象)
+.gitconfig.local               # Git includeIf設定 (git管理外)
+.gitconfig.personal.example    # 個人用Gitテンプレート
+.gitconfig.work.example         # 仕事用Gitテンプレート
+Brewfile                       # Homebrewパッケージ
+.config/nvim/                  # Neovim設定 (lazy.nvim, catppuccin, LSP)
+.config/claude/                # Claude Code設定
+.config/ghostty/               # Ghostty設定
+.config/atuin/                 # Atuin設定
+.config/gwq/                   # gwq設定 (worktree管理)
 ```

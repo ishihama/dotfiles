@@ -40,13 +40,16 @@ nvim
 
 **Other Configs**
 - `.tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux)
-- `.gitconfig` - User settings (in .gitconfig.local), commit template (`~/.gitmessage`), rebase on pull, delta pager, ghq root (`~/repos`)
+- `.gitconfig` - Common settings, default user (INVALID/invalid@example.com for accident prevention), includes `.gitconfig.local`, commit template, delta pager, ghq root (`~/repos`)
+- `.gitconfig.local` - includeIf directives for multi-account support (NOT git-managed, created per environment)
+- `.gitconfig.personal.example` / `.gitconfig.work.example` - Templates for account-specific configs (git-managed templates, actual files are NOT git-managed)
 - `.gitmessage` - Commit message template with emoji conventions
 - `.mise.toml` - mise version manager config (replacement for asdf)
 - `starship.toml` - Starship prompt configuration
 - `lefthook.yml` - Git hooks configuration
 - `.config/atuin/` - Atuin shell history sync config
 - `.config/ghostty/` - Ghostty terminal emulator config (catppuccin theme)
+- `.config/gwq/config.toml` - gwq configuration (basedir: `~/repos`)
 
 **Package Management**
 - `Brewfile` - Homebrew packages (modern CLI tools: bat, eza, fd, ripgrep, procs, dust, duf, sd, btop, xh, zoxide, atuin, fzf, lazygit, delta, gh, ghq, gwq, mise, neovim, etc.), casks, Mac App Store apps
@@ -97,6 +100,17 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 **Platform Detection**
 - `.zshrc` detects OS via `uname` and sources platform-specific config
 - macOS is the primary platform; common functions are in `.zshrc` (not `.zshrc.osx`)
+
+**Git Multi-Account Configuration**
+- Uses `includeIf` to automatically switch user info and SSH keys based on directory path
+- `.gitconfig` - Common settings + default INVALID user (accident prevention) + includes `.gitconfig.local`
+- `.gitconfig.local` - Contains `includeIf` directives (NOT git-managed, must be created manually per environment)
+- `.gitconfig.personal` / `.gitconfig.work` - Account-specific configs (NOT git-managed, copied from `.example` templates)
+- `.gitconfig.personal.example` / `.gitconfig.work.example` - Templates provided in repo (git-managed)
+- Directory structure: `~/repos/github.com/personal/` uses personal config, `~/repos/github.com/work/` (or work) uses work config
+- All repository remote URLs should use `git@github.com:` (not `git@github-personal:` or `git@github-work:`)
+- SSH key switching happens via `core.sshCommand` in the includeIf configs
+- **IMPORTANT**: Never commit personal information (names, emails, org names) to the dotfiles repo - only use templates with placeholders
 
 **Neovim Key Bindings**
 - `Space` - Leader key

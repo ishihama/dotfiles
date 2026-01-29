@@ -1,3 +1,8 @@
+# ===== Default (accident prevention) =====
+[user]
+	name = INVALID
+	email = invalid@example.com
+
 [include]
 	path = ~/.gitconfig.local
 [core]
