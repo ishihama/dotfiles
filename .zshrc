@@ -87,7 +87,7 @@ function ghq-tmux-widget() {
 
     local repo=$(
         exec < /dev/tty
-        ghq list | fzf \
+        ghq list | grep -v '@' | fzf \
             --prompt="Repository > " \
             --preview="cat '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10" \
             --preview-window=right:50% \
@@ -125,7 +125,7 @@ function ghq-tmux-exec() {
 
 function ghq-tmux() {
     local ghq_root=$(ghq root)
-    local repo=$(ghq list | fzf \
+    local repo=$(ghq list | grep -v '@' | fzf \
         --prompt="Repository > " \
         --preview="cat '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10" \
         --preview-window=right:50%)
