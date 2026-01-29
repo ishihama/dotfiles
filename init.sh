@@ -58,6 +58,9 @@ fi
 if [ -d "$DOTFILES_DIR/.config/nvim" ]; then
   link_file "$DOTFILES_DIR/.config/nvim" "$HOME/.config/nvim"
 fi
+if [ -d "$DOTFILES_DIR/.config/gwq" ]; then
+  link_file "$DOTFILES_DIR/.config/gwq" "$HOME/.config/gwq"
+fi
 
 # Claude Code settings
 if [ -d "$DOTFILES_DIR/.config/claude" ]; then

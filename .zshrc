@@ -157,9 +157,10 @@ function gwq-tmux-widget() {
     )
 
     if [[ -n "$worktree" ]]; then
-        local branch=$(cd "$worktree" && git branch --show-current)
-        local repo=$(basename "$(cd "$worktree" && git rev-parse --show-toplevel)")
-        local session_name=$(echo "${repo}-${branch}" | tr './' '--')
+        # ディレクトリ名から owner/repo@branch または owner/repo 形式を取得
+        local dir_name=$(basename "$worktree")
+        local parent_name=$(basename "$(dirname "$worktree")")
+        local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
         BUFFER="gwq-tmux-exec '$session_name' '$worktree'"
         zle accept-line
     fi
@@ -192,9 +193,10 @@ function gwq-tmux() {
 
     [[ -z "$worktree" ]] && return
 
-    local branch=$(cd "$worktree" && git branch --show-current)
-    local repo=$(basename "$(cd "$worktree" && git rev-parse --show-toplevel)")
-    local session_name=$(echo "${repo}-${branch}" | tr './' '--')
+    # ディレクトリ名から owner/repo@branch または owner/repo 形式を取得
+    local dir_name=$(basename "$worktree")
+    local parent_name=$(basename "$(dirname "$worktree")")
+    local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
     gwq-tmux-exec "$session_name" "$worktree"
 }
 
