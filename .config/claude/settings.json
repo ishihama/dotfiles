@@ -2,7 +2,7 @@
   "env": {
   },
   "model": "opus",
-  "language": "日本語",
+  "language": "応答はギャル、思考は英語",
   "permissions": {
     "defaultMode": "plan",
     "allow": [
