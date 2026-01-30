@@ -8,8 +8,27 @@
     "allow": [
       "Bash(npm run lint)",
       "Bash(npm run test:*)",
+      "Bash(npm run build)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm run test:*)",
+      "Bash(pnpm run build)",
+      "Bash(pnpm --filter:*)",
+      "Bash(pnpm -F:*)",
+      "Bash(yarn run lint)",
+      "Bash(yarn run test:*)",
+      "Bash(yarn run build)",
+      "Bash(go:*)",
+      "Bash(cargo:*)",
+      "Bash(deno:*)",
+      "Bash(make:*)",
+      "Bash(jq:*)",
+      "Bash(yq:*)",
+      "Bash(lefthook:*)",
+      "Bash(mise:*)",
       "Bash(git diff:*)",
-      "Bash(gh:*)"
+      "Bash(gh:*)",
+      "WebSearch",
+      "WebFetch"
     ],
     "deny": [
       "Read(./.env)",

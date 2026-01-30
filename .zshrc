@@ -203,6 +203,29 @@ function gwq-tmux() {
     gwq-tmux-exec "$session_name" "$worktree"
 }
 
+# gwq wrapper: add -i でorigin/プレフィックスを自動除去
+function gwq() {
+    if [[ "$1" == "add" && "$2" == "-i" ]]; then
+        # カスタム interactive モード
+        local branch=$(git branch -a --sort=-committerdate 2>/dev/null | \
+            command sed 's/^[* ]*//' | \
+            command sed 's/remotes\///' | \
+            fzf --prompt="Branch > " \
+                --preview='git log --oneline --graph -10 {}')
+
+        [[ -z "$branch" ]] && return
+
+        if [[ "$branch" == origin/* ]]; then
+            local local_branch="${branch#origin/}"
+            command gwq add -b "$local_branch" "$branch"
+        else
+            command gwq add "$branch"
+        fi
+    else
+        command gwq "$@"
+    fi
+}
+
 # git branch切り替え (fzf + preview)
 function git-branch-fzf-widget() {
     zle -I
