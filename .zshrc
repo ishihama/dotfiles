@@ -89,7 +89,7 @@ function ghq-tmux-widget() {
         exec < /dev/tty
         ghq list | grep -v '@' | fzf \
             --prompt="Repository > " \
-            --preview="cat '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10" \
+            --preview="bat --color=always --style=plain '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10 --color=always" \
             --preview-window=right:50% \
             --bind='ctrl-/:toggle-preview'
     )
@@ -127,7 +127,7 @@ function ghq-tmux() {
     local ghq_root=$(ghq root)
     local repo=$(ghq list | grep -v '@' | fzf \
         --prompt="Repository > " \
-        --preview="cat '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10" \
+        --preview="bat --color=always --style=plain '$ghq_root'/{}/README.md 2>/dev/null || git -C '$ghq_root'/{} log --oneline -10 --color=always" \
         --preview-window=right:50%)
 
     [[ -z "$repo" ]] && return
@@ -138,26 +138,22 @@ function ghq-tmux() {
 }
 
 # gwq + fzf + tmux: worktree選択してtmuxセッションを開く
-function gwq-list-paths() {
-    gwq list -g 2>/dev/null | \
-        command awk -F'│' \
-        '/~\//{gsub(/^[[:space:]]+|[[:space:]]+$/,"",$3); sub(/^~/,ENVIRON["HOME"],$3); print $3}'
-}
-
 function gwq-tmux-widget() {
     zle -I
+    local gwq_basedir=$(gwq config get worktree.basedir | /usr/bin/sed "s|^~|$HOME|")
 
-    local worktree=$(
+    local worktree_relative=$(
         exec < /dev/tty
-        gwq list -g 2>/dev/null | \
-            command awk -F'│' \
-            '/~\//{gsub(/^[[:space:]]+|[[:space:]]+$/,"",$3); sub(/^~/,ENVIRON["HOME"],$3); print $3}' | \
+        gwq list -g --json 2>/dev/null | \
+            jq -r '.[] | .path' | \
+            /usr/bin/sed "s|^$gwq_basedir/||" | \
             fzf --prompt="Worktree > " \
-                --preview='git -C {} log --oneline -10'
+                --preview="git -C '$gwq_basedir'/{} log --oneline -10 --color=always" \
+                --preview-window=right:60%
     )
 
-    if [[ -n "$worktree" ]]; then
-        # ディレクトリ名から owner/repo@branch または owner/repo 形式を取得
+    if [[ -n "$worktree_relative" ]]; then
+        local worktree="${gwq_basedir}/${worktree_relative}"
         local dir_name=$(basename "$worktree")
         local parent_name=$(basename "$(dirname "$worktree")")
         local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
@@ -187,12 +183,19 @@ function gwq-tmux-exec() {
 }
 
 function gwq-tmux() {
-    local worktree=$(gwq-list-paths | fzf \
-        --prompt="Worktree > " \
-        --preview='git -C {} log --oneline -10')
+    local gwq_basedir=$(gwq config get worktree.basedir | /usr/bin/sed "s|^~|$HOME|")
+    local worktree_relative=$(
+        gwq list -g --json 2>/dev/null | \
+            jq -r '.[] | .path' | \
+            /usr/bin/sed "s|^$gwq_basedir/||" | \
+            fzf --prompt="Worktree > " \
+                --preview="git -C '$gwq_basedir'/{} log --oneline -10 --color=always" \
+                --preview-window=right:50%
+    )
 
-    [[ -z "$worktree" ]] && return
+    [[ -z "$worktree_relative" ]] && return
 
+    local worktree="${gwq_basedir}/${worktree_relative}"
     # ディレクトリ名から owner/repo@branch または owner/repo 形式を取得
     local dir_name=$(basename "$worktree")
     local parent_name=$(basename "$(dirname "$worktree")")
@@ -207,9 +210,9 @@ function git-branch-fzf-widget() {
     local branch=$(
         exec < /dev/tty
         git branch --sort=-committerdate | \
-            command sed 's/^[* ]*//' | \
+            /usr/bin/sed 's/^[* ]*//' | \
             fzf --prompt="Branch > " \
-                --preview='git log --oneline --graph -20 {}' \
+                --preview='git log --oneline --graph -20 --color=always {}' \
                 --preview-window=right:50%
     )
 
@@ -428,7 +431,7 @@ function cheat() {
 EOF
 )
     if [[ -n "$selected" ]]; then
-        local key=$(echo "$selected" | command sed 's/^\[[^]]*\] *\([^ ]*\).*/\1/')
+        local key=$(echo "$selected" | /usr/bin/sed 's/^\[[^]]*\] *\([^ ]*\).*/\1/')
         print -z "$key "
     fi
 }
