@@ -1,5 +1,5 @@
-# Theme - システムのlight/darkに自動追従
-theme = light:Catppuccin Latte,dark:Catppuccin Mocha
+# Theme
+theme = TokyoNight Storm
 
 # Font
 font-family = Menlo
@@ -7,8 +7,10 @@ font-size = 14
 font-thicken = true
 
 # Window
-background-opacity = 0.95
-background-blur-radius = 20
+window-width = 180
+window-height = 50
+background-opacity = 0.80
+background-blur-radius = 0
 macos-titlebar-style = tabs
 macos-option-as-alt = true
 
