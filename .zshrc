@@ -455,6 +455,12 @@ function cheat() {
 [memo] memo                       メモ一覧 (fzf選択/新規作成)
 [memo] memo <name>                指定メモを直接開く
 [memo] memo-search                全文検索→該当行へジャンプ
+[claude] claude                   対話モード (履歴保持)
+[claude] claude --no-resume       一時的な対話 (履歴なし)
+[claude] claude -c                前回の会話を継続
+[claude] claude -r                過去の会話をfzf選択して再開
+[claude] claude -p "prompt"       単発クエリ (非対話)
+[claude] claude -p "prompt" --add-file <file>   ファイル含めて質問
 EOF
 )
     if [[ -n "$selected" ]]; then
