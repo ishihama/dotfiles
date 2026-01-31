@@ -39,7 +39,7 @@ nvim
 - `.config/nvim/lua/plugins/coding.lua` - autopairs, comment, surround
 
 **Other Configs**
-- `.tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux)
+- `.tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux), status bar shows CPU (C:) and RAM (M:) usage, Pokemon displayed on new session (pokemon-go-colorscripts -r -s, installed via `go install`)
 - `.gitconfig` - Common settings, default user (INVALID/invalid@example.com for accident prevention), includes `.gitconfig.local`, commit template, delta pager, ghq root (`~/repos`)
 - `.gitconfig.local` - includeIf directives for multi-account support (NOT git-managed, created per environment)
 - `.gitconfig.personal.example` / `.gitconfig.work.example` - Templates for account-specific configs (git-managed templates, actual files are NOT git-managed)

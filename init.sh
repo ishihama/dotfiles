@@ -97,6 +97,25 @@ fi
 echo ""
 
 # ------------------------------
+# pokemon-go-colorscripts
+# ------------------------------
+echo "--- pokemon-go-colorscripts ---"
+
+if ! command -v pokemon-go-colorscripts &> /dev/null; then
+  if command -v go &> /dev/null; then
+    echo "Installing pokemon-go-colorscripts..."
+    go install github.com/scottmckendry/pokemon-go-colorscripts@latest
+  else
+    echo "[warn] Go not found. Skipping pokemon-go-colorscripts installation."
+    echo "       Install Go first, then run: go install github.com/scottmckendry/pokemon-go-colorscripts@latest"
+  fi
+else
+  echo "pokemon-go-colorscripts already installed"
+fi
+
+echo ""
+
+# ------------------------------
 # oh-my-zsh
 # ------------------------------
 echo "--- oh-my-zsh ---"

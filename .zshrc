@@ -489,3 +489,8 @@ alias find='fd'  # 復元
 
 # ローカル設定 (APIキーなど、gitignore対象)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
+# Pokemon (ターミナル起動時にランダム表示)
+if command -v pokemon-go-colorscripts &> /dev/null; then
+    pokemon-go-colorscripts -r -s
+fi

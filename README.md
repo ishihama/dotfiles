@@ -119,6 +119,30 @@ git config user.email  # → 仕事用メールアドレスが表示される
 | `Tab` | 次のウィンドウ |
 | `Shift+Tab` | 前のウィンドウ |
 
+## tmux機能
+
+### ステータスバー
+
+右側に以下を表示:
+- セッション名
+- gitmux (ブランチ、変更状態)
+- `C:XX%` - CPU使用率
+- `M:XX%` - メモリ使用率
+- バッテリー残量 (🔋放電中/⚡充電中)
+- 日時
+
+### Pokemon表示
+
+ターミナル起動時と新規tmuxセッション作成時にランダムでポケモンを表示。
+- `pokemon-go-colorscripts -r -s` (ランダム、色違い)
+
+**インストール** (Go必須):
+```bash
+go install github.com/scottmckendry/pokemon-go-colorscripts@latest
+```
+
+`init.sh` 実行時に自動インストールされる（Go がある場合）。
+
 ## ghq + fzf + tmux ワークフロー
 
 `Ctrl+G`でリポジトリ選択してtmuxセッションを作成/アタッチ。
@@ -449,7 +473,7 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 .zshrc.osx                     # macOS固有設定
 .zshrc.linux                   # Linux用
 .zshrc.wsl                     # WSL用
-.tmux.conf                     # tmux設定 (prefix: Ctrl+T)
+.tmux.conf                     # tmux設定 (prefix: Ctrl+T, CPU/RAM表示, Pokemon)
 .gitconfig                     # Git共通設定 (git管理対象)
 .gitconfig.local               # Git includeIf設定 (git管理外)
 .gitconfig.personal.example    # 個人用Gitテンプレート
