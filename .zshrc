@@ -23,6 +23,10 @@ alias sed='sd'
 alias top='btop'
 alias http='xh'
 
+# Editor (Claude Code の Ctrl+G などで使用)
+export EDITOR=nvim
+export VISUAL=nvim
+
 # less
 export LESSCHARSET=utf-8
 
