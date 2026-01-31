@@ -3,12 +3,20 @@
 local augroup = vim.api.nvim_create_augroup
 local autocmd = vim.api.nvim_create_autocmd
 
--- Open nvim-tree on startup (except for memo files)
+-- Open nvim-tree on startup (skip if file specified, NVIM_NO_TREE=1, or memo files)
 augroup("NvimTreeAutoOpen", { clear = true })
 autocmd("VimEnter", {
   group = "NvimTreeAutoOpen",
   callback = function()
-    -- Skip nvim-tree for memo files
+    -- Skip if NVIM_NO_TREE environment variable is set
+    if vim.env.NVIM_NO_TREE == "1" then
+      return
+    end
+    -- Skip if file was specified as argument (e.g., nvim somefile.txt)
+    if vim.fn.argc() > 0 then
+      return
+    end
+    -- Skip for memo files
     local filename = vim.fn.expand("%:p")
     local memo_dir = vim.fn.expand("~") .. "/memos"
     if filename:sub(1, #memo_dir) == memo_dir then
