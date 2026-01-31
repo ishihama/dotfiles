@@ -5,11 +5,14 @@
 
 [include]
 	path = ~/.gitconfig.local
+	path = ~/.config/delta/catppuccin.gitconfig
 [core]
   pager = delta
   quotepath = false
   editor = vim
 [delta]
+  features = catppuccin-mocha
+  syntax-theme = Catppuccin Mocha
   navigate = true
   line-numbers = true
   side-by-side = false

@@ -97,6 +97,21 @@ fi
 echo ""
 
 # ------------------------------
+# delta catppuccin theme
+# ------------------------------
+echo "--- delta catppuccin theme ---"
+
+mkdir -p ~/.config/delta
+if [ ! -f ~/.config/delta/catppuccin.gitconfig ]; then
+  echo "Downloading catppuccin theme for delta..."
+  curl -sL https://raw.githubusercontent.com/catppuccin/delta/main/catppuccin.gitconfig -o ~/.config/delta/catppuccin.gitconfig
+else
+  echo "delta catppuccin theme already installed"
+fi
+
+echo ""
+
+# ------------------------------
 # pokemon-go-colorscripts
 # ------------------------------
 echo "--- pokemon-go-colorscripts ---"
