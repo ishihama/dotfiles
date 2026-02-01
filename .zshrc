@@ -461,6 +461,32 @@ function cheat() {
 [claude] claude -r                過去の会話をfzf選択して再開
 [claude] claude -p "prompt"       単発クエリ (非対話)
 [claude] claude -p "prompt" --add-file <file>   ファイル含めて質問
+[jq] jq '.'                       JSON整形
+[jq] jq '.key'                    キー抽出
+[jq] jq '.[] | .name'             配列から特定キー抽出
+[jq] jq -r '.key'                 raw出力 (引用符なし)
+[yq] yq '.'                       YAML整形
+[yq] yq '.key'                    キー抽出
+[yq] yq -o json                   YAML→JSON変換
+[gh] gh pr create                 PR作成
+[gh] gh pr view                   PR表示
+[gh] gh pr checkout <number>      PRをcheckout
+[gh] gh issue list                issue一覧
+[gh] gh repo clone <repo>         リポジトリclone
+[gh] gh browse                    ブラウザでリポジトリ開く
+[glow] glow <file.md>             Markdownプレビュー
+[glow] glow -p <file.md>          ページャー付きプレビュー
+[tldr] tldr <command>             コマンドの簡易説明
+[hyperfine] hyperfine '<cmd>'     コマンドのベンチマーク
+[hyperfine] hyperfine '<cmd1>' '<cmd2>'   比較ベンチマーク
+[tokei] tokei                     コード行数統計
+[tokei] tokei -e node_modules     除外指定
+[gibo] gibo dump Node             gitignoreテンプレート出力
+[gibo] gibo list                  テンプレート一覧
+[direnv] direnv allow             .envrc有効化
+[direnv] direnv deny              .envrc無効化
+[yazi] yazi                       ファイルマネージャ起動
+[yazi] y                          yazi + cd連携 (終了時にcd)
 EOF
 )
     if [[ -n "$selected" ]]; then
