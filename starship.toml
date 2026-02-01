@@ -32,7 +32,7 @@ format = "[ $path]($style) "
 
 [git_branch]
 symbol = ""
-style = "bold #a6e3a1"
+style = "bold #cba6f7"
 format = "[$symbol $branch]($style) "
 
 [git_status]
@@ -66,4 +66,5 @@ only_with_files = true
 
 [cmd_duration]
 min_time = 2000
+style = "#7f849c"
 format = "[$duration]($style) "
