@@ -1,5 +1,8 @@
 export PATH="$HOME/.local/bin:$HOME/bin:/usr/local/bin:$PATH"
 
+# カスタム補完ディレクトリ (oh-my-zshのcompinit前に設定)
+fpath=(~/.zsh/completions $fpath)
+
 # oh-my-zsh
 export ZSH=$HOME/.oh-my-zsh
 ZSH_THEME="lukerandall"
@@ -518,6 +521,47 @@ unalias find 2>/dev/null
 export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
 [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
 alias find='fd'  # 復元
+
+# 補完ファイル生成 (初回 or 更新時に実行)
+function setup-completions() {
+    local comp_dir=~/.zsh/completions
+    mkdir -p "$comp_dir"
+
+    echo "Generating completions..."
+
+    # GitHub CLI
+    command -v gh &>/dev/null && gh completion -s zsh > "$comp_dir/_gh"
+
+    # mise
+    command -v mise &>/dev/null && mise completion zsh > "$comp_dir/_mise"
+
+    # Docker
+    command -v docker &>/dev/null && docker completion zsh > "$comp_dir/_docker"
+
+    # Rustup & Cargo
+    command -v rustup &>/dev/null && rustup completions zsh > "$comp_dir/_rustup"
+    command -v rustup &>/dev/null && rustup completions zsh cargo > "$comp_dir/_cargo"
+
+    # pnpm
+    command -v pnpm &>/dev/null && pnpm completion zsh > "$comp_dir/_pnpm"
+
+    # kubectl
+    command -v kubectl &>/dev/null && kubectl completion zsh > "$comp_dir/_kubectl"
+
+    # helm
+    command -v helm &>/dev/null && helm completion zsh > "$comp_dir/_helm"
+
+    # lazygit
+    # lazygitは補完なし
+
+    # fzf
+    [[ -f /opt/homebrew/opt/fzf/shell/completion.zsh ]] && cp /opt/homebrew/opt/fzf/shell/completion.zsh "$comp_dir/_fzf"
+
+    echo "Done! Restart shell or run: source ~/.zshrc"
+}
+
+# 補完ディレクトリがなければ初回セットアップを促す
+[[ ! -d ~/.zsh/completions ]] && echo "Run 'setup-completions' to enable CLI completions"
 
 # ローカル設定 (APIキーなど、gitignore対象)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
