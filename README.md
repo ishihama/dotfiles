@@ -7,35 +7,18 @@ macOS、Linux、WSL用の個人dotfiles。
 ```bash
 # 1. リポジトリをクローン
 ghq get https://github.com/YOUR_USERNAME/dotfiles
-cd ~/repos/github.com/personal/dotfiles
+cd ~/repos/github.com/ishihama/dotfiles
 
-# 2. init.shを実行 (シンボリックリンク、oh-my-zsh、Homebrew、パッケージ、gh拡張をインストール)
+# 2. init.shを実行 (シンボリックリンク、oh-my-zsh、Homebrew、パッケージ、gh拡張、Git設定を自動セットアップ)
 ./init.sh
+# ↑ Git設定が対話的に行われます。
+#    - GitHubユーザー名を入力
+#    - 仕事用アカウントの有無を選択
+#    - 名前、メール、SSH鍵パスを入力
+#    - .gitconfig.local、.gitconfig.personal、.gitconfig.workが自動生成されます
 
-# 3. Git設定（複数GitHubアカウント対応）
-# 3-1. .gitconfig.localを作成
-cat > ~/.gitconfig.local << 'EOF'
-# Directory-specific configurations
-[includeIf "gitdir:/Users/YOUR_USERNAME/repos/github.com/personal/**"]
-	path = ~/.gitconfig.personal
-[includeIf "gitdir:/Users/YOUR_USERNAME/repos/github.com/work/**"]
-	path = ~/.gitconfig.work
-EOF
-
-# 3-2. 個人用Git設定をテンプレートからコピー
-cp .gitconfig.personal.example ~/.gitconfig.personal
-
-# 3-3. ~/.gitconfig.personalを編集（名前・メール・SSH鍵を設定）
-nvim ~/.gitconfig.personal
-# [user]
-#   name = Your Name
-#   email = your.email@example.com
-# [core]
-#   sshCommand = ssh -i ~/.ssh/id_ed25519_personal
-
-# 3-4. 仕事用も同様に設定（必要な場合）
-cp .gitconfig.work.example ~/.gitconfig.work
-nvim ~/.gitconfig.work
+# 3. セットアップの検証（オプション）
+./scripts/validate.sh
 
 # 4. シェルを再読み込み
 source ~/.zshrc
@@ -48,16 +31,18 @@ nvim
 
 このdotfilesは複数GitHubアカウントに対応しています。ディレクトリパスに応じて自動的にユーザー情報とSSH鍵を切り替えます。
 
+**自動セットアップ:** `./init.sh` 実行時に `.gitconfig.local` が存在しない場合、対話的にGit設定を作成します。手動で設定ファイルをコピー・編集する必要はありません。
+
 **ファイル構成:**
 - `.gitconfig` - 共通設定（git管理対象）
-- `.gitconfig.local` - `includeIf`設定（git管理**外**、環境ごとに作成）
-- `.gitconfig.personal` / `.gitconfig.work` - 個人情報（git管理**外**）
-- `.gitconfig.personal.example` / `.gitconfig.work.example` - テンプレート（git管理対象）
+- `.gitconfig.local` - `includeIf`設定（git管理**外**、`init.sh`で自動生成）
+- `.gitconfig.personal` / `.gitconfig.work` - 個人情報（git管理**外**、`init.sh`で自動生成）
+- `.gitconfig.personal.example` / `.gitconfig.work.example` - テンプレート（git管理対象、参考用）
 
 **ディレクトリ構造の推奨:**
 ```
 ~/repos/github.com/
-  ├── personal/     # 個人用リポジトリ（.gitconfig.personalが適用される）
+  ├── ishihama/     # 個人用リポジトリ（.gitconfig.personalが適用される）
   │   └── dotfiles/
   └── work/         # 仕事用リポジトリ（.gitconfig.workが適用される）
       └── project/
@@ -65,8 +50,8 @@ nvim
 
 **動作確認:**
 ```bash
-# personalディレクトリで
-cd ~/repos/github.com/personal/dotfiles
+# ishihamaディレクトリで
+cd ~/repos/github.com/ishihama/dotfiles
 git config user.email  # → 個人用メールアドレスが表示される
 
 # workディレクトリで
@@ -468,20 +453,33 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 ## 構成
 
 ```
+init.sh                        # セットアップオーケストレータ
+scripts/
+  ├── lib/
+  │   ├── core.sh             # コアユーティリティ (ログ、エラーハンドリング)
+  │   └── platform.sh         # プラットフォーム検出
+  ├── setup/
+  │   ├── symlinks.sh         # シンボリックリンク管理
+  │   ├── homebrew.sh         # Homebrewインストール
+  │   ├── shell.sh            # シェル環境セットアップ
+  │   ├── git.sh              # Git設定（対話的自動生成）
+  │   └── tools.sh            # 追加ツール
+  └── validate.sh             # セットアップ検証
 .zshrc                         # メインシェル設定 (共通関数含む)
 .zshrc.local                   # ローカル設定 (gitignore、APIキーなど)
-.zshrc.osx                     # macOS固有設定
-.zshrc.linux                   # Linux用
-.zshrc.wsl                     # WSL用
+.zshrc.{osx,linux,wsl}        # プラットフォーム固有設定
 .tmux.conf                     # tmux設定 (prefix: Ctrl+T, CPU/RAM表示, Pokemon)
 .gitconfig                     # Git共通設定 (git管理対象)
-.gitconfig.local               # Git includeIf設定 (git管理外)
+.gitconfig.local               # Git includeIf設定 (git管理外、自動生成)
 .gitconfig.personal.example    # 個人用Gitテンプレート
 .gitconfig.work.example        # 仕事用Gitテンプレート
 Brewfile                       # Homebrewパッケージ
-.config/nvim/                  # Neovim設定 (lazy.nvim, catppuccin, LSP)
-.config/claude/                # Claude Code設定
-.config/ghostty/               # Ghostty設定
-.config/atuin/                 # Atuin設定
-.config/gwq/                   # gwq設定 (worktree管理)
+.config/
+  ├── nvim/                   # Neovim設定 (lazy.nvim, catppuccin, LSP)
+  ├── claude/                 # Claude Code設定
+  ├── ghostty/                # Ghostty設定
+  ├── atuin/                  # Atuin設定
+  ├── gwq/                    # gwq設定 (worktree管理)
+  └── shell/
+      └── cheat.sh            # チートシート関数 (.zshrcから抽出)
 ```
