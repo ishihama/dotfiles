@@ -65,9 +65,9 @@ function cheat() {
 [ghq] ghq list -p                 フルパスで一覧
 [ghq] ghq root                    ルートディレクトリ表示
 [ghq] ghq create <repo>           新規リポジトリ作成
-[gwq] gwq add <branch>            既存branchからworktree作成
-[gwq] gwq add -b <branch>         新規branch + worktree作成
-[gwq] gwq add -i                  fzfでbranch選択して作成
+[gwq] gwq add <branch>            既存branchからworktree作成 (自動cd)
+[gwq] gwq add -b <branch>         新規branch + worktree作成 (自動cd)
+[gwq] gwq add -i                  fzfでbranch選択して作成 (自動cd)
 [gwq] gwq add -s <branch>         作成後そのディレクトリに留まる
 [gwq] gwq list                    現在リポジトリのworktree一覧
 [gwq] gwq list -g                 全worktree一覧

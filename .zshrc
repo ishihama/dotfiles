@@ -210,7 +210,7 @@ function gwq-tmux() {
     gwq-tmux-exec "$session_name" "$worktree"
 }
 
-# gwq wrapper: add -i でorigin/プレフィックスを自動除去
+# gwq wrapper: add -i でorigin/プレフィックスを自動除去 + add後に自動cd
 function gwq() {
     if [[ "$1" == "add" && "$2" == "-i" ]]; then
         # カスタム interactive モード
@@ -222,12 +222,30 @@ function gwq() {
 
         [[ -z "$branch" ]] && return
 
+        local target_branch="$branch"
         if [[ "$branch" == origin/* ]]; then
-            local local_branch="${branch#origin/}"
-            command gwq add -b "$local_branch" "$branch"
+            target_branch="${branch#origin/}"
+            command gwq add -b "$target_branch" "$branch" || return
         else
-            command gwq add "$branch"
+            command gwq add "$branch" || return
         fi
+        # 作成したworktreeに移動
+        local wt_path=$(command gwq get "$target_branch" 2>/dev/null)
+        [[ -n "$wt_path" ]] && cd "$wt_path"
+    elif [[ "$1" == "add" ]]; then
+        command gwq "$@" || return
+        # 引数からブランチ名を推定してworktreeパスを取得
+        local -a args=("$@")
+        local target_branch=""
+        for ((i=1; i<${#args[@]}; i++)); do
+            if [[ "${args[$i]}" == "-b" && $((i+1)) -lt ${#args[@]} ]]; then
+                target_branch="${args[$((i+1))]}"
+                break
+            fi
+        done
+        [[ -z "$target_branch" ]] && target_branch="${args[-1]}"
+        local wt_path=$(command gwq get "$target_branch" 2>/dev/null)
+        [[ -n "$wt_path" ]] && cd "$wt_path"
     else
         command gwq "$@"
     fi
