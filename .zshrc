@@ -189,6 +189,18 @@ function gwq-tmux-exec() {
     fi
 }
 
+function gwq-cd-or-switch() {
+    local wt_path="$1"
+    if [[ -n "$TMUX" ]]; then
+        local dir_name=$(basename "$wt_path")
+        local parent_name=$(basename "$(dirname "$wt_path")")
+        local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
+        gwq-tmux-exec "$session_name" "$wt_path"
+    else
+        cd "$wt_path"
+    fi
+}
+
 function gwq-tmux() {
     local gwq_basedir=$(gwq config get worktree.basedir | /usr/bin/sed "s|^~|$HOME|")
     local worktree_relative=$(
@@ -210,12 +222,24 @@ function gwq-tmux() {
     gwq-tmux-exec "$session_name" "$worktree"
 }
 
+# tmux session切り替え (fzf + preview)
+function tmux-session-fzf() {
+    local session=$(tmux list-sessions -F '#{session_name}' | \
+        fzf --prompt="Session > " \
+            --preview="tmux list-windows -t {} -F '  #{window_index}: #{window_name} [#{pane_current_command}] #{?window_active,(active),}'" \
+            --preview-window=right:50%)
+
+    [[ -z "$session" ]] && return
+
+    tmux switch-client -t "$session"
+}
+
 # gwq wrapper: add -i でorigin/プレフィックスを自動除去 + add後に自動cd
 function gwq() {
     if [[ "$1" == "add" && "$2" == "-i" ]]; then
         # カスタム interactive モード
         local branch=$(git branch -a --sort=-committerdate 2>/dev/null | \
-            command sed 's/^[* ]*//' | \
+            command sed 's/^[*+ ]*//' | \
             command sed 's/remotes\///' | \
             fzf --prompt="Branch > " \
                 --preview='git log --oneline --graph -10 {}')
@@ -229,9 +253,9 @@ function gwq() {
         else
             command gwq add "$branch" || return
         fi
-        # 作成したworktreeに移動
+        # 作成したworktreeに移動 (tmux内なら新セッションに切り替え)
         local wt_path=$(command gwq get "$target_branch" 2>/dev/null)
-        [[ -n "$wt_path" ]] && cd "$wt_path"
+        [[ -n "$wt_path" ]] && gwq-cd-or-switch "$wt_path"
     elif [[ "$1" == "add" ]]; then
         command gwq "$@" || return
         # 引数からブランチ名を推定してworktreeパスを取得
@@ -245,7 +269,7 @@ function gwq() {
         done
         [[ -z "$target_branch" ]] && target_branch="${args[-1]}"
         local wt_path=$(command gwq get "$target_branch" 2>/dev/null)
-        [[ -n "$wt_path" ]] && cd "$wt_path"
+        [[ -n "$wt_path" ]] && gwq-cd-or-switch "$wt_path"
     else
         command gwq "$@"
     fi
@@ -435,7 +459,3 @@ function setup-completions() {
 # ローカル設定 (APIキーなど、gitignore対象)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
 
-# Pokemon (ターミナル起動時にランダム表示)
-if command -v pokemon-go-colorscripts &> /dev/null; then
-    pokemon-go-colorscripts -r -s
-fi
