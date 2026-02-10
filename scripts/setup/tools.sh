@@ -17,6 +17,31 @@ setup_tools() {
         log_skip "delta catppuccin theme already installed"
     fi
 
+    # bat catppuccin theme (needed for delta's syntax-theme)
+    log_info "Setting up bat catppuccin theme..."
+    BAT_THEME_DIR="$(bat --config-dir)/themes"
+    mkdir -p "$BAT_THEME_DIR"
+    if [ ! -f "$BAT_THEME_DIR/Catppuccin Mocha.tmTheme" ]; then
+        log_info "Downloading catppuccin themes for bat..."
+        local base_url="https://github.com/catppuccin/bat/raw/main/themes"
+        local download_ok=true
+        for theme in "Catppuccin Latte" "Catppuccin Frappe" "Catppuccin Macchiato" "Catppuccin Mocha"; do
+            local encoded_theme="${theme// /%20}"
+            if ! curl -sL "$base_url/${encoded_theme}.tmTheme" -o "$BAT_THEME_DIR/${theme}.tmTheme"; then
+                log_warn "Failed to download ${theme}.tmTheme"
+                download_ok=false
+            fi
+        done
+        if $download_ok; then
+            bat cache --build
+            log_success "bat catppuccin themes installed"
+        else
+            log_warn "Some bat themes failed to download"
+        fi
+    else
+        log_skip "bat catppuccin themes already installed"
+    fi
+
     # pokemon-go-colorscripts
     if ! command_exists pokemon-go-colorscripts; then
         if command_exists go; then
