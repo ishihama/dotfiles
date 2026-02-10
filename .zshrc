@@ -161,9 +161,7 @@ function gwq-tmux-widget() {
 
     if [[ -n "$worktree_relative" ]]; then
         local worktree="${gwq_basedir}/${worktree_relative}"
-        local dir_name=$(basename "$worktree")
-        local parent_name=$(basename "$(dirname "$worktree")")
-        local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
+        local session_name=$(gwq-session-name "$worktree")
         BUFFER="gwq-tmux-exec '$session_name' '$worktree'"
         zle accept-line
     fi
@@ -189,12 +187,26 @@ function gwq-tmux-exec() {
     fi
 }
 
+# gwq worktreeパスからセッション名を生成 (owner除去 + ブランチプレフィックス除去)
+function gwq-session-name() {
+    local dir_name=$(basename "$1")
+    if [[ "$dir_name" == *@* ]]; then
+        local repo_part="${dir_name%%@*}"
+        local branch_part="${dir_name#*@}"
+        branch_part="${branch_part#feature-}"
+        branch_part="${branch_part#fix-}"
+        branch_part="${branch_part#bugfix-}"
+        branch_part="${branch_part#hotfix-}"
+        echo "${repo_part}-${branch_part}" | tr './' '--'
+    else
+        echo "$dir_name" | tr './@' '---'
+    fi
+}
+
 function gwq-cd-or-switch() {
     local wt_path="$1"
     if [[ -n "$TMUX" ]]; then
-        local dir_name=$(basename "$wt_path")
-        local parent_name=$(basename "$(dirname "$wt_path")")
-        local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
+        local session_name=$(gwq-session-name "$wt_path")
         gwq-tmux-exec "$session_name" "$wt_path"
     else
         cd "$wt_path"
@@ -215,10 +227,7 @@ function gwq-tmux() {
     [[ -z "$worktree_relative" ]] && return
 
     local worktree="${gwq_basedir}/${worktree_relative}"
-    # ディレクトリ名から owner/repo@branch または owner/repo 形式を取得
-    local dir_name=$(basename "$worktree")
-    local parent_name=$(basename "$(dirname "$worktree")")
-    local session_name=$(echo "${parent_name}-${dir_name}" | tr './@' '---')
+    local session_name=$(gwq-session-name "$worktree")
     gwq-tmux-exec "$session_name" "$worktree"
 }
 
@@ -257,17 +266,28 @@ function gwq() {
         local wt_path=$(command gwq get "$target_branch" 2>/dev/null)
         [[ -n "$wt_path" ]] && gwq-cd-or-switch "$wt_path"
     elif [[ "$1" == "add" ]]; then
-        command gwq "$@" || return
-        # 引数からブランチ名を推定してworktreeパスを取得
-        local -a args=("$@")
+        # -s/--stay を除去 (wrapperで独自にcd/セッション切り替えするため)
+        local -a filtered_args=()
         local target_branch=""
-        for ((i=1; i<${#args[@]}; i++)); do
-            if [[ "${args[$i]}" == "-b" && $((i+1)) -lt ${#args[@]} ]]; then
-                target_branch="${args[$((i+1))]}"
-                break
+        local i=1
+        while [[ $i -le $# ]]; do
+            local arg="${@[$i]}"
+            if [[ "$arg" == "-s" || "$arg" == "--stay" ]]; then
+                ((i++))
+                continue
             fi
+            if [[ "$arg" == "-b" ]]; then
+                filtered_args+=("$arg")
+                ((i++))
+                [[ $i -le $# ]] && { target_branch="${@[$i]}"; filtered_args+=("$target_branch"); }
+                ((i++))
+                continue
+            fi
+            filtered_args+=("$arg")
+            ((i++))
         done
-        [[ -z "$target_branch" ]] && target_branch="${args[-1]}"
+        command gwq "${filtered_args[@]}" || return
+        [[ -z "$target_branch" ]] && target_branch="${filtered_args[-1]}"
         local wt_path=$(command gwq get "$target_branch" 2>/dev/null)
         [[ -n "$wt_path" ]] && gwq-cd-or-switch "$wt_path"
     else
