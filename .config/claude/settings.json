@@ -1,10 +1,6 @@
 {
-  "env": {
-  },
-  "model": "opus",
-  "language": "応答はギャル、思考は英語",
+  "env": {},
   "permissions": {
-    "defaultMode": "plan",
     "allow": [
       "Bash(npm:*)",
       "Bash(pnpm:*)",
@@ -62,13 +58,10 @@
       "Read(./.env)",
       "Read(./.env.*)",
       "Read(./secrets/**)"
-    ]
+    ],
+    "defaultMode": "plan"
   },
-  "statusLine": {
-    "type": "command",
-    "command": "npx ccusage statusline --visual-burn-rate emoji",
-    "padding": 0
-  },
+  "model": "opus",
   "hooks": {
     "Stop": [
       {
@@ -81,5 +74,11 @@
         ]
       }
     ]
-  }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "npx ccusage statusline --visual-burn-rate emoji",
+    "padding": 0
+  },
+  "language": "応答はギャル、思考は英語"
 }
