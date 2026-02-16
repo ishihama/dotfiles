@@ -1,0 +1,31 @@
+customCommands:
+  # PRの一覧を表示
+  - key: "V"
+    description: "View PR list"
+    command: "gh pr list"
+    context: "global"
+    output: terminal
+  # 現在のブランチのPRを表示
+  - key: "v"
+    description: "View PR for current branch"
+    command: "gh pr view --web"
+    context: "localBranches"
+    output: terminal
+  # 選択中のブランチのPRをチェックアウト
+  - key: "C"
+    description: "Checkout PR"
+    command: "gh pr checkout {{.SelectedLocalBranch.Name}}"
+    context: "localBranches"
+    output: terminal
+  # PRを作成
+  - key: "P"
+    description: "Create PR"
+    command: "gh pr create --web"
+    context: "localBranches"
+    output: terminal
+  # PRのdiffを見る
+  - key: "D"
+    description: "View PR diff"
+    command: "gh pr diff"
+    context: "localBranches"
+    output: terminal

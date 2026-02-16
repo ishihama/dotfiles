@@ -17,6 +17,7 @@ CONFIG_DIRS=(
     git
     gitmux
     gwq
+    lazygit
     mise
     nvim
     shell

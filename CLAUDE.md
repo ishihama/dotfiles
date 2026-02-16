@@ -85,6 +85,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/atuin/` - Atuin shell history sync config
 - `.config/ghostty/` - Ghostty terminal emulator config (catppuccin theme, tmux integration keybindings: Cmd+T=prefix, Cmd+N=new window, Cmd+W=close pane, Cmd+1-9=window switch, Cmd+H/J/K/L=pane nav, Cmd+\=vsplit, Cmd+-=hsplit)
 - `.config/gwq/config.toml` - gwq configuration (basedir: `~/repos`)
+- `.config/lazygit/config.yml` - lazygit custom commands (gh PR integration: list, view, checkout, create, diff)
 
 **Package Management**
 - `Brewfile` - Homebrew packages organized by category (Modern CLI tools, Shell & Terminal, Git & GitHub, Languages, Cloud, etc.), casks, Mac App Store apps, VS Code extensions
@@ -124,6 +125,8 @@ dotfiles/
 │   ├── atuin/                   # Atuin shell history
 │   ├── ghostty/                 # Ghostty terminal
 │   ├── gwq/                     # gwq worktree manager
+│   ├── lazygit/                 # lazygit configuration
+│   │   └── config.yml
 │   └── claude/                  # Claude Code settings
 │
 ├── Brewfile                     # Homebrew packages (categorized)
