@@ -8,6 +8,15 @@ set -euo pipefail
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
 SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
+# Parse arguments
+for arg in "$@"; do
+    case "$arg" in
+        --dry-run)
+            export DRY_RUN=true
+            ;;
+    esac
+done
+
 # Load core libraries
 source "$SCRIPTS_DIR/lib/core.sh"
 source "$SCRIPTS_DIR/lib/platform.sh"
@@ -18,6 +27,9 @@ trap 'error_handler $? $LINENO' ERR
 # Main setup function
 main() {
     log_header "Dotfiles Setup"
+    if [ "$DRY_RUN" = true ]; then
+        log_warn "DRY RUN MODE - no changes will be made"
+    fi
     log_info "Platform: $(detect_platform)"
     log_info "Source: $DOTFILES_DIR"
     echo
@@ -35,7 +47,7 @@ main() {
     if [ -f "$SCRIPTS_DIR/validate.sh" ]; then
         "$SCRIPTS_DIR/validate.sh"
     else
-        log_warn "Validation script not found (will be available in Phase 6)"
+        log_warn "Validation script not found"
     fi
 
     # Success
