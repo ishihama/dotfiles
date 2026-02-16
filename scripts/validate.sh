@@ -103,7 +103,7 @@ validate_symlinks() {
 validate_shell_modules() {
     log_section "Shell Modules"
 
-    local modules=(env.sh aliases.sh ghq-tmux.sh gwq-tmux.sh gwq-wrapper.sh fzf-widgets.sh memo.sh completions.sh platform.sh cheat.sh)
+    local modules=(env.sh aliases.sh ghq-tmux.sh gwq-tmux.sh gwq-wrapper.sh gh-wrapper.sh fzf-widgets.sh memo.sh completions.sh platform.sh cheat.sh)
     for module in "${modules[@]}"; do
         validate_item \
             "Shell module: $module" \
