@@ -59,6 +59,11 @@ function cheat() {
 [alias] http            xh
 [alias] vi/vim          nvim
 [alias] lg              lazygit
+[lazygit] V (大文字)       PR: 一覧表示 (global)
+[lazygit] v               PR: ブラウザで表示
+[lazygit] C (大文字)       PR: checkout
+[lazygit] P (大文字)       PR: 作成 (Web)
+[lazygit] D (大文字)       PR: diff表示
 [ghq] ghq get <repo>              clone (github.com/user/repo or user/repo)
 [ghq] ghq get -p <repo>           clone with SSH
 [ghq] ghq list                    一覧表示

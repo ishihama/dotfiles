@@ -1,5 +1,8 @@
 # env.sh - Environment variables, PATH, and tool initialization
 
+# XDG Base Directory
+export XDG_CONFIG_HOME="$HOME/.config"
+
 # Editor (Claude Code's Ctrl+G etc.)
 export EDITOR=nvim
 export VISUAL=nvim
