@@ -7,3 +7,5 @@
 .vscode/
 .env.local
 .envrc.local
+
+**/.claude/settings.local.json
