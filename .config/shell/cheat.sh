@@ -132,6 +132,7 @@ function cheat() {
 [yq] yq '.'                       YAML整形
 [yq] yq '.key'                    キー抽出
 [yq] yq -o json                   YAML→JSON変換
+[gh] (auto)                       repos配下で自動アカウント切替
 [gh] gh pr create                 PR作成
 [gh] gh pr view                   PR表示
 [gh] gh pr checkout <number>      PRをcheckout
