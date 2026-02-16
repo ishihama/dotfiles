@@ -33,7 +33,7 @@ validate_item() {
 
 # Validate symlinks
 validate_symlinks() {
-    log_section "Symlinks"
+    log_section "Symlinks (Root Dotfiles)"
 
     validate_item \
         "~/.zshrc symlinked" \
@@ -41,13 +41,20 @@ validate_symlinks() {
         "Run ./init.sh to create symlinks"
 
     validate_item \
-        "~/.tmux.conf symlinked" \
-        "[ -L ~/.tmux.conf ]" \
+        "~/.editorconfig symlinked" \
+        "[ -L ~/.editorconfig ]" \
+        "Run ./init.sh to create symlinks"
+
+    log_section "Symlinks (XDG Config)"
+
+    validate_item \
+        "~/.config/git symlinked" \
+        "[ -L ~/.config/git ]" \
         "Run ./init.sh to create symlinks"
 
     validate_item \
-        "~/.gitconfig symlinked" \
-        "[ -L ~/.gitconfig ]" \
+        "~/.config/tmux symlinked" \
+        "[ -L ~/.config/tmux ]" \
         "Run ./init.sh to create symlinks"
 
     validate_item \
@@ -56,9 +63,53 @@ validate_symlinks() {
         "Run ./init.sh to create symlinks"
 
     validate_item \
+        "~/.config/shell symlinked" \
+        "[ -L ~/.config/shell ]" \
+        "Run ./init.sh to create symlinks"
+
+    validate_item \
+        "~/.config/mise symlinked" \
+        "[ -L ~/.config/mise ]" \
+        "Run ./init.sh to create symlinks"
+
+    validate_item \
         "~/.config/starship.toml symlinked" \
         "[ -L ~/.config/starship.toml ]" \
         "Run ./init.sh to create symlinks"
+
+    validate_item \
+        "~/.config/gitmux symlinked" \
+        "[ -L ~/.config/gitmux ]" \
+        "Run ./init.sh to create symlinks"
+
+    log_section "Symlinks (Old Paths Should Not Exist)"
+
+    for old_path in ~/.gitconfig ~/.tmux.conf ~/.gitmessage ~/.gitmux.conf ~/.mise.toml; do
+        if [ -L "$old_path" ]; then
+            local target=$(readlink "$old_path")
+            if [[ "$target" == *"dotfiles"* ]]; then
+                log_warn "Old symlink still exists: $old_path -> $target"
+                log_info "  Fix: Run ./init.sh to clean up"
+                ((VALIDATION_FAILED++)) || true
+                continue
+            fi
+        fi
+        log_success "No old symlink: $old_path"
+        ((VALIDATION_PASSED++)) || true
+    done
+}
+
+# Validate shell modules
+validate_shell_modules() {
+    log_section "Shell Modules"
+
+    local modules=(env.sh aliases.sh ghq-tmux.sh gwq-tmux.sh gwq-wrapper.sh fzf-widgets.sh memo.sh completions.sh platform.sh cheat.sh)
+    for module in "${modules[@]}"; do
+        validate_item \
+            "Shell module: $module" \
+            "[ -f ~/.config/shell/$module ]" \
+            "Shell module missing: $module"
+    done
 }
 
 # Validate essential commands
@@ -135,6 +186,11 @@ validate_git_config() {
         "[ -f ~/.gitconfig.local ]" \
         "Run ./init.sh and follow Git setup prompts"
 
+    validate_item \
+        "Git commit template points to XDG path" \
+        "git config --global commit.template | grep -q '.config/git/message'" \
+        "Check ~/.config/git/config commit.template setting"
+
     # Check if Git user is configured (not the INVALID placeholder)
     local git_user_name=$(git config --global user.name 2>/dev/null || echo "")
     if [ "$git_user_name" != "INVALID" ] && [ "$git_user_name" != "" ]; then
@@ -197,6 +253,9 @@ main() {
     echo
 
     validate_symlinks
+    echo
+
+    validate_shell_modules
     echo
 
     validate_commands

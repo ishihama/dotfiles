@@ -2,6 +2,9 @@
 # core.sh - Core utility functions for dotfiles setup
 # Provides logging, error handling, and common utilities
 
+# Dry run mode (set via --dry-run flag in init.sh)
+DRY_RUN=${DRY_RUN:-false}
+
 # Color codes for output
 readonly COLOR_RESET='\033[0m'
 readonly COLOR_RED='\033[0;31m'
@@ -88,8 +91,12 @@ safe_symlink() {
 
     # Create symlink if it doesn't exist or points elsewhere
     if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$source" ]; then
-        ln -sf "$source" "$target"
-        log_success "Linked: $target -> $source"
+        if [ "$DRY_RUN" = true ]; then
+            log_info "[DRY RUN] Would link: $target -> $source"
+        else
+            ln -sf "$source" "$target"
+            log_success "Linked: $target -> $source"
+        fi
     else
         log_skip "Already linked: $target"
     fi
