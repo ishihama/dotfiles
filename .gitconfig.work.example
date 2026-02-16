@@ -1,6 +1,6 @@
 # Work GitHub account settings
 [core]
-	sshCommand = ssh -i ~/.ssh/id_ed25519_work
+	sshCommand = ssh -i ~/.ssh/id_ed25519_work -o IdentitiesOnly=yes
 
 [user]
 	name = Your Work Name
