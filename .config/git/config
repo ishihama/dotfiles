@@ -33,7 +33,7 @@
 [pull]
 	rebase = true
 [commit]
-	template = ~/.gitmessage
+	template = ~/.config/git/message
 [diff]
 	algorithm = histogram
 [merge]
@@ -45,8 +45,8 @@
 [ghq]
 	root = ~/repos
 [credential "https://github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper = 
+	helper =
 	helper = !/opt/homebrew/bin/gh auth git-credential
