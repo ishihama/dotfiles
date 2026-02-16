@@ -1,6 +1,6 @@
 # Personal GitHub account settings
 [core]
-	sshCommand = ssh -i ~/.ssh/id_ed25519_personal
+	sshCommand = ssh -i ~/.ssh/id_ed25519_personal -o IdentitiesOnly=yes
 
 [user]
 	name = Your Name

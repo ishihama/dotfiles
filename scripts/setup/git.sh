@@ -40,7 +40,7 @@ setup_git_account() {
 	email = $git_email
 
 [core]
-	sshCommand = ssh -i $ssh_key_path
+	sshCommand = ssh -i $ssh_key_path -o IdentitiesOnly=yes
 EOF
 
     log_success "Created $config_file"
