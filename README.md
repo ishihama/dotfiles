@@ -1,6 +1,6 @@
 # dotfiles
 
-macOS、Linux、WSL用の個人dotfiles。
+macOS、Linux、WSL用の個人dotfiles。XDG Base Directory仕様に準拠。
 
 ## セットアップ
 
@@ -16,6 +16,9 @@ cd ~/repos/github.com/ishihama/dotfiles
 #    - 仕事用アカウントの有無を選択
 #    - 名前、メール、SSH鍵パスを入力
 #    - .gitconfig.local、.gitconfig.personal、.gitconfig.workが自動生成されます
+
+# 2a. ドライラン (変更のプレビュー)
+./init.sh --dry-run
 
 # 3. セットアップの検証（オプション）
 ./scripts/validate.sh
@@ -34,7 +37,9 @@ nvim
 **自動セットアップ:** `./init.sh` 実行時に `.gitconfig.local` が存在しない場合、対話的にGit設定を作成します。手動で設定ファイルをコピー・編集する必要はありません。
 
 **ファイル構成:**
-- `.gitconfig` - 共通設定（git管理対象）
+- `.config/git/config` - 共通設定（git管理対象）
+- `.config/git/message` - コミットメッセージテンプレート（git管理対象）
+- `.config/git/ignore` - グローバルgitignore（git管理対象）
 - `.gitconfig.local` - `includeIf`設定（git管理**外**、`init.sh`で自動生成）
 - `.gitconfig.personal` / `.gitconfig.work` - 個人情報（git管理**外**、`init.sh`で自動生成）
 - `.gitconfig.personal.example` / `.gitconfig.work.example` - テンプレート（git管理対象、参考用）
@@ -453,33 +458,57 @@ export ANTHROPIC_API_KEY="sk-ant-..."
 ## 構成
 
 ```
-init.sh                        # セットアップオーケストレータ
-scripts/
-  ├── lib/
-  │   ├── core.sh             # コアユーティリティ (ログ、エラーハンドリング)
-  │   └── platform.sh         # プラットフォーム検出
-  ├── setup/
-  │   ├── symlinks.sh         # シンボリックリンク管理
-  │   ├── homebrew.sh         # Homebrewインストール
-  │   ├── shell.sh            # シェル環境セットアップ
-  │   ├── git.sh              # Git設定（対話的自動生成）
-  │   └── tools.sh            # 追加ツール
-  └── validate.sh             # セットアップ検証
-.zshrc                         # メインシェル設定 (共通関数含む)
-.zshrc.local                   # ローカル設定 (gitignore、APIキーなど)
-.zshrc.{osx,linux,wsl}        # プラットフォーム固有設定
-.tmux.conf                     # tmux設定 (prefix: Ctrl+T, CPU/RAM表示, Pokemon)
-.gitconfig                     # Git共通設定 (git管理対象)
-.gitconfig.local               # Git includeIf設定 (git管理外、自動生成)
-.gitconfig.personal.example    # 個人用Gitテンプレート
-.gitconfig.work.example        # 仕事用Gitテンプレート
-Brewfile                       # Homebrewパッケージ
-.config/
-  ├── nvim/                   # Neovim設定 (lazy.nvim, catppuccin, LSP)
-  ├── claude/                 # Claude Code設定
-  ├── ghostty/                # Ghostty設定
-  ├── atuin/                  # Atuin設定
-  ├── gwq/                    # gwq設定 (worktree管理)
-  └── shell/
-      └── cheat.sh            # チートシート関数 (.zshrcから抽出)
+dotfiles/
+├── .zshrc                       # 薄いローダー (~26行, .config/shell/をsource)
+├── .zshrc.{osx,linux,wsl}      # プラットフォーム固有設定
+├── .editorconfig                # エディタ設定 (XDG非対応のため$HOME)
+│
+├── .config/
+│   ├── shell/                   # シェルモジュール (.zshrcからsource)
+│   │   ├── env.sh              # 環境変数 + PATH + ツール初期化
+│   │   ├── aliases.sh          # モダンCLIツールエイリアス
+│   │   ├── ghq-tmux.sh         # ghq+fzf+tmux連携
+│   │   ├── gwq-tmux.sh         # gwq+fzf+tmux連携 + session-fzf
+│   │   ├── gwq-wrapper.sh      # gwqラッパー関数
+│   │   ├── fzf-widgets.sh      # fzfウィジェット (history/branch/file/kill)
+│   │   ├── memo.sh             # memo関数
+│   │   ├── completions.sh      # CLI補完生成
+│   │   ├── platform.sh         # OS判定 + SDKMAN
+│   │   └── cheat.sh            # チートシート関数
+│   ├── git/                     # Git設定 (XDGネイティブ)
+│   │   ├── config              # メインgit設定
+│   │   ├── message             # コミットメッセージテンプレート
+│   │   └── ignore              # グローバルgitignore
+│   ├── tmux/                    # tmux設定 (XDGネイティブ 3.2+)
+│   │   └── tmux.conf
+│   ├── mise/                    # miseバージョンマネージャ (XDGネイティブ)
+│   │   └── config.toml
+│   ├── gitmux/                  # gitmux (tmuxステータスバーにgit表示)
+│   │   └── config.yml
+│   ├── starship.toml            # Starshipプロンプト (XDGネイティブ)
+│   ├── nvim/                    # Neovim設定 (lazy.nvim, catppuccin, LSP)
+│   ├── atuin/                   # Atuin設定
+│   ├── ghostty/                 # Ghostty設定
+│   ├── gwq/                     # gwq設定 (worktree管理)
+│   └── claude/                  # Claude Code設定
+│
+├── Brewfile                     # Homebrewパッケージ (カテゴリ別)
+├── init.sh                      # セットアップオーケストレータ (--dry-run対応)
+├── .gitconfig.personal.example  # 個人用Gitテンプレート
+├── .gitconfig.work.example      # 仕事用Gitテンプレート
+├── CLAUDE.md
+├── README.md
+├── .gitignore
+│
+└── scripts/
+    ├── lib/
+    │   ├── core.sh              # コアユーティリティ (ログ、DRY_RUN対応)
+    │   └── platform.sh          # プラットフォーム検出
+    ├── setup/
+    │   ├── symlinks.sh          # シンボリックリンク (明示的リスト + XDG + 旧リンク清掃)
+    │   ├── homebrew.sh          # Homebrewインストール
+    │   ├── shell.sh             # シェル環境セットアップ
+    │   ├── git.sh               # Git設定（対話的自動生成）
+    │   └── tools.sh             # 追加ツール
+    └── validate.sh              # セットアップ検証 (XDGパス + シェルモジュール + 旧リンク検出)
 ```
