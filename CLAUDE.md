@@ -111,7 +111,11 @@ dotfiles/
 │   │   ├── memo.sh             # memo functions
 │   │   ├── completions.sh      # CLI completion generation
 │   │   ├── platform.sh         # OS detection + SDKMAN
-│   │   └── cheat.sh            # Cheatsheet function
+│   │   ├── cheat.sh            # Cheatsheet function
+│   │   └── bin/                # Standalone scripts for tmux popup
+│   │       ├── ghq-tmux-popup  # ghq popup (no interactive shell)
+│   │       ├── gwq-tmux-popup  # gwq popup (no interactive shell)
+│   │       └── tmux-session-fzf-popup  # session switcher popup
 │   ├── git/                     # Git configuration (XDG native)
 │   │   ├── config              # Main git config
 │   │   ├── message             # Commit message template
@@ -227,6 +231,13 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 - `.zshrc` is a ~26-line loader that sources oh-my-zsh and all shell modules
 - Each module is self-contained with its own functions and keybindings
 - Module load order matters: `env.sh` first (PATH/tools), `platform.sh` last (SDKMAN needs aliases)
+- ZLE widgets (`zle -N`, `bindkey`) are guarded with `[[ -o interactive ]]` so modules can be sourced from non-interactive scripts
+
+**tmux Popup Optimization**
+- tmux popup bindings (prefix+g/w/s) use standalone scripts in `.config/shell/bin/` instead of `zsh -ic`
+- This avoids loading full `.zshrc` (~1.7s startup) by sourcing only the needed shell module
+- Each popup script sets minimal PATH and sources the relevant module directly
+- Shell functions are defined outside the interactive guard so popup scripts can use them
 
 **Git Multi-Account Configuration**
 - **Auto-generation**: `scripts/setup/git.sh` interactively creates Git configs on first run

@@ -1,30 +1,32 @@
 # gwq-tmux.sh - gwq + fzf + tmux integration
 
-# gwq + fzf + tmux: Select worktree and open tmux session
-function gwq-tmux-widget() {
-    zle -I
-    local gwq_basedir=$(gwq config get worktree.basedir | /usr/bin/sed "s|^~|$HOME|")
+# Interactive-only: ZLE widget + keybinding
+if [[ -o interactive ]]; then
+    function gwq-tmux-widget() {
+        zle -I
+        local gwq_basedir=$(gwq config get worktree.basedir | /usr/bin/sed "s|^~|$HOME|")
 
-    local worktree_relative=$(
-        exec < /dev/tty
-        gwq list -g --json 2>/dev/null | \
-            jq -r '.[] | .path' | \
-            /usr/bin/sed "s|^$gwq_basedir/||" | \
-            fzf --prompt="Worktree > " \
-                --preview="git -C '$gwq_basedir'/{} log --oneline -10 --color=always" \
-                --preview-window=right:60%
-    )
+        local worktree_relative=$(
+            exec < /dev/tty
+            gwq list -g --json 2>/dev/null | \
+                jq -r '.[] | .path' | \
+                /usr/bin/sed "s|^$gwq_basedir/||" | \
+                fzf --prompt="Worktree > " \
+                    --preview="git -C '$gwq_basedir'/{} log --oneline -10 --color=always" \
+                    --preview-window=right:60%
+        )
 
-    if [[ -n "$worktree_relative" ]]; then
-        local worktree="${gwq_basedir}/${worktree_relative}"
-        local session_name=$(gwq-session-name "$worktree")
-        BUFFER="gwq-tmux-exec '$session_name' '$worktree'"
-        zle accept-line
-    fi
-    zle reset-prompt
-}
-zle -N gwq-tmux-widget
-bindkey '^W' gwq-tmux-widget
+        if [[ -n "$worktree_relative" ]]; then
+            local worktree="${gwq_basedir}/${worktree_relative}"
+            local session_name=$(gwq-session-name "$worktree")
+            BUFFER="gwq-tmux-exec '$session_name' '$worktree'"
+            zle accept-line
+        fi
+        zle reset-prompt
+    }
+    zle -N gwq-tmux-widget
+    bindkey '^W' gwq-tmux-widget
+fi
 
 function gwq-tmux-exec() {
     local session_name="$1"

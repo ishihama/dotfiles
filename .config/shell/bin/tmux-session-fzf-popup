@@ -1,0 +1,5 @@
+#!/usr/bin/env zsh
+# Standalone script for tmux popup (avoids slow interactive shell startup)
+export PATH="/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+source "${XDG_CONFIG_HOME:-$HOME/.config}/shell/gwq-tmux.sh"
+tmux-session-fzf
