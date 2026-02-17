@@ -22,3 +22,6 @@ Brewfile.lock.json
 
 # Neovim
 # (lazy-lock.json is tracked for reproducibility)
+
+# tmux plugins (installed by TPM)
+.config/tmux/plugins/
