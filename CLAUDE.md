@@ -89,7 +89,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/lazygit/config.yml` - lazygit custom commands (gh PR integration: list, view, checkout, create, diff)
 
 **Package Management**
-- `Brewfile` - Homebrew packages organized by category (Modern CLI tools, Shell & Terminal, Git & GitHub, Languages, Cloud, etc.), casks, Mac App Store apps, VS Code extensions
+- `Brewfile` - Homebrew packages organized by category (Modern CLI tools, Shell & Terminal, Git & GitHub, Languages, Cloud, etc.), casks, Mac App Store apps
 
 ## Directory Structure
 

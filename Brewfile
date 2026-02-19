@@ -162,7 +162,6 @@ cask "microsoft-word"
 cask "rancher"
 cask "slack"
 cask "slack-cli"
-cask "visual-studio-code"
 cask "zoom"
 
 # ===========================================
@@ -173,29 +172,3 @@ mas "Microsoft Excel", id: 462058435
 mas "Microsoft PowerPoint", id: 462062816
 mas "Numbers", id: 409203825
 mas "Pages", id: 409201541
-
-# ===========================================
-# VS Code Extensions
-# ===========================================
-vscode "arjun.swagger-viewer"
-vscode "bierner.markdown-mermaid"
-vscode "dbaeumer.vscode-eslint"
-vscode "denoland.vscode-deno"
-vscode "eamodio.gitlens"
-vscode "editorconfig.editorconfig"
-vscode "esbenp.prettier-vscode"
-vscode "figma.figma-vscode-extension"
-vscode "github.vscode-github-actions"
-vscode "gruntfuggly.todo-tree"
-vscode "marp-team.marp-vscode"
-vscode "ms-azuretools.vscode-containers"
-vscode "ms-azuretools.vscode-docker"
-vscode "ms-ceintl.vscode-language-pack-ja"
-vscode "ms-playwright.playwright"
-vscode "ms-vscode-remote.remote-containers"
-vscode "redhat.vscode-yaml"
-vscode "streetsidesoftware.code-spell-checker"
-vscode "styled-components.vscode-styled-components"
-vscode "stylelint.vscode-stylelint"
-vscode "yoavbls.pretty-ts-errors"
-vscode "yzane.markdown-pdf"
