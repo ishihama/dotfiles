@@ -8,9 +8,9 @@ if [[ -o interactive ]]; then
 
         local worktree_relative=$(
             exec < /dev/tty
-            gwq list -g --json 2>/dev/null | \
-                jq -r '.[] | .path' | \
+            /usr/bin/find "$gwq_basedir" -maxdepth 4 -type d -name '*@*' 2>/dev/null | \
                 /usr/bin/sed "s|^$gwq_basedir/||" | \
+                sort | \
                 fzf --prompt="Worktree > " \
                     --preview="git -C '$gwq_basedir'/{} log --oneline -10 --color=always" \
                     --preview-window=right:60%
@@ -74,9 +74,9 @@ function gwq-cd-or-switch() {
 function gwq-tmux() {
     local gwq_basedir=$(gwq config get worktree.basedir | /usr/bin/sed "s|^~|$HOME|")
     local worktree_relative=$(
-        gwq list -g --json 2>/dev/null | \
-            jq -r '.[] | .path' | \
+        /usr/bin/find "$gwq_basedir" -maxdepth 4 -type d -name '*@*' 2>/dev/null | \
             /usr/bin/sed "s|^$gwq_basedir/||" | \
+            sort | \
             fzf --prompt="Worktree > " \
                 --preview="git -C '$gwq_basedir'/{} log --oneline -10 --color=always" \
                 --preview-window=right:50%
