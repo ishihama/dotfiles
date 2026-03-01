@@ -11,12 +11,10 @@ $hostname\
 $directory\
 $git_branch\
 $git_status\
-$nodejs\
 $python\
 $golang\
 $rust\
 $terraform\
-$docker_context\
 $cmd_duration\
 $character"""
 
@@ -39,10 +37,6 @@ format = "[$symbol $branch]($style) "
 style = "#f9e2af"
 format = '([$all_status$ahead_behind]($style) )'
 
-[nodejs]
-symbol = " "
-format = "[$symbol($version )]($style)"
-
 [python]
 symbol = " "
 format = "[$symbol($version )]($style)"
@@ -58,11 +52,6 @@ format = "[$symbol($version )]($style)"
 [terraform]
 symbol = "󱁢 "
 format = "[$symbol($version )]($style)"
-
-[docker_context]
-symbol = " "
-format = "[$symbol$context]($style) "
-only_with_files = true
 
 [cmd_duration]
 min_time = 2000
