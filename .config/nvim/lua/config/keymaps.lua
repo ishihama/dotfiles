@@ -72,3 +72,6 @@ keymap("n", "[d", vim.diagnostic.goto_prev, opts)
 keymap("n", "]d", vim.diagnostic.goto_next, opts)
 keymap("n", "<Leader>d", vim.diagnostic.open_float, opts)
 keymap("n", "<Leader>dl", "<cmd>Telescope diagnostics<CR>", opts)
+
+-- Markdown preview
+keymap("n", "<Leader>mp", "<cmd>MarkdownPreviewToggle<CR>", { desc = "Markdown Preview" })
