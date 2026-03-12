@@ -216,7 +216,16 @@ return {
         { "<Leader>d", group = "Diagnostic" },
         { "<Leader>b", group = "Buffer" },
         { "<Leader>t", group = "Toggle" },
+        { "<Leader>m", group = "Markdown" },
       },
     },
+  },
+
+  -- Markdown preview with Mermaid support
+  {
+    "iamcco/markdown-preview.nvim",
+    cmd = { "MarkdownPreviewToggle", "MarkdownPreview", "MarkdownPreviewStop" },
+    ft = "markdown",
+    build = function() vim.fn["mkdp#util#install"]() end,
   },
 }
