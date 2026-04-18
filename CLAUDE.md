@@ -178,6 +178,7 @@ dotfiles/
 
 **Modern CLI Tool Aliases**
 - All defined in `.config/shell/aliases.sh` - traditional commands aliased to modern alternatives (cat->bat, ls->eza, grep->rg, find->fd, ps->procs, du->dust, df->duf, sed->sd, top->btop, http->xh, vi/vim->nvim)
+- Guarded with `[[ -o interactive ]] || return 0` at the top — non-interactive shells (Claude Code's Bash tool, CI scripts) see the real commands, so `grep -P`, `find -name`, `ps aux` etc. behave as documented
 - Important: SDKMAN init in `.config/shell/platform.sh` temporarily unaliases `find` to avoid conflicts, then restores it
 
 ## Git Commit Conventions
@@ -231,7 +232,7 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 - `.zshrc` is a ~26-line loader that sources oh-my-zsh and all shell modules
 - Each module is self-contained with its own functions and keybindings
 - Module load order matters: `env.sh` first (PATH/tools), `platform.sh` last (SDKMAN needs aliases)
-- ZLE widgets (`zle -N`, `bindkey`) are guarded with `[[ -o interactive ]]` so modules can be sourced from non-interactive scripts
+- ZLE widgets (`zle -N`, `bindkey`) and `aliases.sh` are guarded with `[[ -o interactive ]]` so modules can be sourced from non-interactive scripts (e.g. Claude Code's Bash tool) without side effects
 
 **tmux Popup Optimization**
 - tmux popup bindings (prefix+g/w/s) use standalone scripts in `.config/shell/bin/` instead of `zsh -ic`
