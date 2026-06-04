@@ -9,6 +9,9 @@ Personal dotfiles repository for macOS (primary), with Linux and WSL support. Ma
 ## Setup Commands
 
 ```bash
+# New Mac bootstrap - checks Xcode CLT, clones to ~/repos/github.com/ishihama/dotfiles, runs init.sh
+curl -fsSL https://raw.githubusercontent.com/ishihama/dotfiles/main/bootstrap.sh | bash
+
 # Initial installation - modular setup with interactive Git configuration
 ./init.sh
 
