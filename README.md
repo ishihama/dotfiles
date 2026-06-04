@@ -23,6 +23,8 @@ curl -fsSL https://raw.githubusercontent.com/ishihama/dotfiles/main/bootstrap.sh
 - 仕事用アカウントの有無を選択
 - 名前、メール、SSH鍵パスを入力
 - `.gitconfig.local`、`.gitconfig.personal`、`.gitconfig.work` が自動生成されます
+- SSH鍵が無ければその場で生成（ssh-keygen）→ GitHubへの登録（gh ssh-key add）まで対話で完結
+- Git設定済みでもSSH鍵が無い場合は、`./init.sh` 再実行で鍵の生成・登録だけ実行できます
 
 ### 手動でクローンする場合
 
@@ -46,28 +48,26 @@ cd ~/repos/github.com/ishihama/dotfiles
 
 ### init.sh実行後の手動ステップ
 
-`init.sh` では自動化できない手順:
+SSH鍵の生成・GitHub登録は `init.sh` 中に対話で完結します（スキップした場合は `./init.sh` 再実行）。残りの手順:
 
 ```bash
-# 1. SSH鍵を生成（無い場合。init.sh中のGit設定で指定したパスに合わせる）
-ssh-keygen -t ed25519 -C "personal@example.com" -f ~/.ssh/id_ed25519_personal
-# 仕事用アカウントを設定した場合
-ssh-keygen -t ed25519 -C "work@example.com" -f ~/.ssh/id_ed25519_work
-
-# 2. GitHub CLIで認証（ブラウザ認証）して公開鍵を登録
-gh auth login
-gh ssh-key add ~/.ssh/id_ed25519_personal.pub --title "$(hostname)-personal"
-# 仕事用アカウントは gh auth login で再ログインしてから
-# gh ssh-key add ~/.ssh/id_ed25519_work.pub --title "$(hostname)-work"
-
-# 3. シェルを再読み込み
+# 1. シェルを再読み込み
 exec zsh
 
-# 4. Neovimを起動（初回はlazy.nvimがプラグイン自動インストール）
+# 2. Neovimを起動（初回はlazy.nvimがプラグイン自動インストール）
 nvim
 
-# 5. セットアップの検証
+# 3. セットアップの検証
 ./scripts/validate.sh
+```
+
+SSH鍵を手動でセットアップする場合:
+
+```bash
+ssh-keygen -t ed25519 -C "personal@example.com" -f ~/.ssh/id_ed25519_personal
+gh auth login
+gh ssh-key add ~/.ssh/id_ed25519_personal.pub --title "$(hostname)-personal"
+# 仕事用は gh auth login で再ログイン後に id_ed25519_work を同様に登録
 ```
 
 任意の追加設定:
