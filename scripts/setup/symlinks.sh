@@ -13,6 +13,7 @@ ROOT_DOTFILES=(
 # .config directories to symlink as whole directories
 CONFIG_DIRS=(
     atuin
+    claude
     ghostty
     git
     gitmux
@@ -63,10 +64,19 @@ setup_symlinks() {
         fi
     done
 
-    # Claude Code settings
-    if [ -d "$DOTFILES_DIR/.config/claude" ]; then
+    # Claude Code reads its config from ~/.claude/settings.json (not ~/.config/claude/),
+    # so we additionally symlink settings.json there. The rest of .config/claude/
+    # (hooks/, bin/) is symlinked via CONFIG_DIRS above.
+    if [ -f "$DOTFILES_DIR/.config/claude/settings.json" ]; then
         mkdir -p "$HOME/.claude"
         safe_symlink "$DOTFILES_DIR/.config/claude/settings.json" "$HOME/.claude/settings.json"
+    fi
+
+    # SSH config (personal + Include ~/.ssh/config.local for per-machine/work entries)
+    if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
+        mkdir -p "$HOME/.ssh"
+        chmod 700 "$HOME/.ssh"
+        safe_symlink "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config"
     fi
 
     # Clean up old symlinks from pre-XDG layout
