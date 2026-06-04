@@ -23,5 +23,11 @@ source "$SHELL_CONFIG/completions.sh"
 source "$SHELL_CONFIG/cheat.sh"
 source "$SHELL_CONFIG/platform.sh"
 
+# AsyncAPI CLI autocomplete (installer appends an absolute-path version; kept portable here)
+ASYNCAPI_AC_ZSH_SETUP_PATH="$HOME/Library/Caches/@asyncapi/cli/autocomplete/zsh_setup"
+[[ -f "$ASYNCAPI_AC_ZSH_SETUP_PATH" ]] && source "$ASYNCAPI_AC_ZSH_SETUP_PATH"
+
+# NOTE: Rancher Desktop PATH is handled in env.sh ($HOME/.rd/bin) - do not duplicate here
+
 # Local settings (API keys etc., gitignored)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
