@@ -4,30 +4,84 @@ macOS、Linux、WSL用の個人dotfiles。XDG Base Directory仕様に準拠。
 
 ## セットアップ
 
+### 新しいMacの場合（推奨）
+
+まっさらなMacではコマンド1行でセットアップを開始できます。SSH鍵やghqは不要（HTTPSでクローンされます）:
+
 ```bash
-# 1. リポジトリをクローン
-ghq get https://github.com/YOUR_USERNAME/dotfiles
+curl -fsSL https://raw.githubusercontent.com/ishihama/dotfiles/main/bootstrap.sh | bash
+```
+
+`bootstrap.sh` が以下を自動で行います:
+
+1. Xcode Command Line Toolsの確認（無ければインストーラを起動 → 完了後に再実行）
+2. リポジトリを `~/repos/github.com/ishihama/dotfiles` にHTTPSクローン（ghq root / Git includeIf のパス構造に一致）
+3. `init.sh` を実行（シンボリックリンク、Homebrew、パッケージ、oh-my-zsh、Git設定、追加ツール）
+
+`init.sh` 中のGit設定は対話式です:
+- GitHubユーザー名を入力
+- 仕事用アカウントの有無を選択
+- 名前、メール、SSH鍵パスを入力
+- `.gitconfig.local`、`.gitconfig.personal`、`.gitconfig.work` が自動生成されます
+
+### 手動でクローンする場合
+
+クローン先は `~/repos/github.com/{owner}/{repo}` 構造が必須です（ghq rootとGitの`includeIf`によるアカウント切替がこのパスに依存しています）:
+
+```bash
+# 1. リポジトリをクローン（新しいMacではSSH鍵が無いのでHTTPSで）
+mkdir -p ~/repos/github.com/ishihama
+git clone https://github.com/ishihama/dotfiles.git ~/repos/github.com/ishihama/dotfiles
 cd ~/repos/github.com/ishihama/dotfiles
 
-# 2. init.shを実行 (シンボリックリンク、oh-my-zsh、Homebrew、パッケージ、gh拡張、Git設定を自動セットアップ)
+# セットアップ済み環境ならghqでもOK
+# ghq get https://github.com/ishihama/dotfiles
+
+# 2. init.shを実行
 ./init.sh
-# ↑ Git設定が対話的に行われます。
-#    - GitHubユーザー名を入力
-#    - 仕事用アカウントの有無を選択
-#    - 名前、メール、SSH鍵パスを入力
-#    - .gitconfig.local、.gitconfig.personal、.gitconfig.workが自動生成されます
 
 # 2a. ドライラン (変更のプレビュー)
 ./init.sh --dry-run
+```
 
-# 3. セットアップの検証（オプション）
-./scripts/validate.sh
+### init.sh実行後の手動ステップ
 
-# 4. シェルを再読み込み
-source ~/.zshrc
+`init.sh` では自動化できない手順:
 
-# 5. Neovimを起動（初回はプラグイン自動インストール）
+```bash
+# 1. SSH鍵を生成（無い場合。init.sh中のGit設定で指定したパスに合わせる）
+ssh-keygen -t ed25519 -C "personal@example.com" -f ~/.ssh/id_ed25519_personal
+# 仕事用アカウントを設定した場合
+ssh-keygen -t ed25519 -C "work@example.com" -f ~/.ssh/id_ed25519_work
+
+# 2. GitHub CLIで認証（ブラウザ認証）して公開鍵を登録
+gh auth login
+gh ssh-key add ~/.ssh/id_ed25519_personal.pub --title "$(hostname)-personal"
+# 仕事用アカウントは gh auth login で再ログインしてから
+# gh ssh-key add ~/.ssh/id_ed25519_work.pub --title "$(hostname)-work"
+
+# 3. シェルを再読み込み
+exec zsh
+
+# 4. Neovimを起動（初回はlazy.nvimがプラグイン自動インストール）
 nvim
+
+# 5. セットアップの検証
+./scripts/validate.sh
+```
+
+任意の追加設定:
+
+```bash
+# atuin: シェル履歴をマシン間で同期する場合
+atuin login
+
+# masアプリ（Keynote等）: App Storeにサインイン後に再実行
+brew bundle --file=Brewfile
+
+# マシン固有の設定（どちらもgit管理外）
+# ~/.zshrc.local      - APIキーなどの環境変数
+# ~/.ssh/config.local - マシン固有のSSH設定
 ```
 
 ### Git設定の詳細
@@ -493,6 +547,7 @@ dotfiles/
 │   └── claude/                  # Claude Code設定
 │
 ├── Brewfile                     # Homebrewパッケージ (カテゴリ別)
+├── bootstrap.sh                 # 新Mac用エントリポイント (curl一発でclone + init.sh)
 ├── init.sh                      # セットアップオーケストレータ (--dry-run対応)
 ├── .gitconfig.personal.example  # 個人用Gitテンプレート
 ├── .gitconfig.work.example      # 仕事用Gitテンプレート
