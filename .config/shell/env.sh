@@ -37,6 +37,10 @@ export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
 # Rust
 export PATH="$HOME/.cargo/bin:$PATH"
 
+# Claude Code helpers (claude-screensaver etc.)
+export PATH="$HOME/.config/claude/bin:$PATH"
+export CLAUDE_SCREENSAVER_FONT=broadway
+
 ### MANAGED BY RANCHER DESKTOP START (DO NOT EDIT)
 export PATH="$HOME/.rd/bin:$PATH"
 ### MANAGED BY RANCHER DESKTOP END (DO NOT EDIT)

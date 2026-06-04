@@ -138,6 +138,7 @@ brew "redis"
 # Documentation & Presentation
 # ===========================================
 brew "gibo"          # .gitignore generator
+brew "figlet"        # ASCII art text (claude-screensaver)
 brew "glow"          # markdown renderer
 brew "hyperfine"     # benchmarking
 brew "pstree"        # process tree
