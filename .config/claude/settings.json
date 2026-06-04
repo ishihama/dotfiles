@@ -72,6 +72,28 @@
   },
   "model": "opus[1m]",
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/update-state.sh session_start"
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/update-state.sh prompt_submit"
+          }
+        ]
+      }
+    ],
     "Stop": [
       {
         "matcher": "",
@@ -79,6 +101,54 @@
           {
             "type": "command",
             "command": "afplay /System/Library/Sounds/Blow.aiff"
+          },
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/update-state.sh stop"
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/update-state.sh notification"
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/update-state.sh session_end"
+          }
+        ]
+      }
+    ],
+    "WorktreeCreate": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/worktree-create.sh"
+          }
+        ]
+      }
+    ],
+    "WorktreeRemove": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/worktree-remove.sh"
           }
         ]
       }
@@ -90,5 +160,6 @@
     "padding": 0
   },
   "language": "応答はギャル、思考は英語",
+  "theme": "dark-ansi",
   "effortLevel": "high"
 }

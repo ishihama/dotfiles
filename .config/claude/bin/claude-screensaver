@@ -1,0 +1,412 @@
+#!/usr/bin/env bash
+# claude-screensaver - Display Claude Code session status with figlet
+#
+# Reads state files written by ~/.config/claude/hooks/update-state.sh and
+# renders a "screensaver-like" view so you can tell at a glance what each
+# Claude session is doing across multiple desktops.
+#
+# Usage:
+#   claude-screensaver                  # auto-pick best session, poll every 1s
+#   claude-screensaver --once           # render one frame and exit
+#   claude-screensaver --all            # show summary of every session
+#   claude-screensaver --session <id>   # show specific session by id
+#   claude-screensaver --cwd <path>     # show session matching this cwd
+#
+# Auto-selection prefers a session whose cwd matches $PWD, otherwise the most
+# recently updated session. The --once flag works with --all too.
+
+# Minimal PATH for tmux popup environment (mirrors .config/shell/bin/*-popup)
+export PATH="/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin"
+
+STATE_DIR="${HOME}/.local/state/claude/sessions"
+STALE_AFTER=3600   # seconds
+
+# ---------- argument parsing ----------
+LOOP="true"
+SHOW_ALL="false"
+SELECTOR_TYPE=""
+SELECTOR_VALUE=""
+
+while [ $# -gt 0 ]; do
+    case "$1" in
+        --once)    LOOP="false";        shift ;;
+        --all)     SHOW_ALL="true";     shift ;;
+        --session) SELECTOR_TYPE="session"; SELECTOR_VALUE="$2"; shift 2 ;;
+        --cwd)     SELECTOR_TYPE="cwd";     SELECTOR_VALUE="$2"; shift 2 ;;
+        -h|--help)
+            sed -n '2,17p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *) shift ;;
+    esac
+done
+
+# ---------- Catppuccin Mocha palette (matches tmux/Ghostty) ----------
+C_TEXT=$'\033[38;2;205;214;244m'
+C_BLUE=$'\033[38;2;137;180;250m'
+C_GREEN=$'\033[38;2;166;227;161m'
+C_RED=$'\033[38;2;243;139;168m'
+C_YELLOW=$'\033[38;2;249;226;175m'
+C_MAUVE=$'\033[38;2;203;166;247m'
+C_DIM=$'\033[2m'
+C_BOLD=$'\033[1m'
+C_RESET=$'\033[0m'
+
+# Catppuccin Mocha palette for project-name coloring, derived by hashing the
+# project name so the same project always gets the same color across desktops
+# and different projects get visually distinct colors. Red is intentionally
+# excluded because it is reserved for the WAITING status indicator.
+PROJECT_PALETTE=(
+    $'\033[38;2;137;180;250m'   # blue
+    $'\033[38;2;166;227;161m'   # green
+    $'\033[38;2;203;166;247m'   # mauve
+    $'\033[38;2;249;226;175m'   # yellow
+    $'\033[38;2;245;194;231m'   # pink
+    $'\033[38;2;148;226;213m'   # teal
+    $'\033[38;2;250;179;135m'   # peach
+    $'\033[38;2;137;220;235m'   # sky
+    $'\033[38;2;180;190;254m'   # lavender
+    $'\033[38;2;166;209;137m'   # soft green
+    $'\033[38;2;116;199;236m'   # soft sky
+    $'\033[38;2;238;212;159m'   # warm yellow
+)
+
+# Cursor / screen control for flicker-free updates.
+# Strategy: enter alternate screen + hide cursor on startup, then on each
+# frame jump to home (no full clear), append \033[K to every printed line
+# (so leftover chars on shrinking lines are erased), and finish with \033[J
+# (clear from cursor to end of screen) to wipe any extra lines below.
+HOME_POS=$'\033[H'
+EOL=$'\033[K'         # erase from cursor to end of line
+EOS=$'\033[J'         # erase from cursor to end of screen
+CURSOR_HIDE=$'\033[?25l'
+CURSOR_SHOW=$'\033[?25h'
+ALT_ON=$'\033[?1049h'
+ALT_OFF=$'\033[?1049l'
+
+# ---------- helpers ----------
+
+# Deterministically pick a color from $PROJECT_PALETTE based on the input
+# string. Same input → same color every time; different inputs → different
+# colors (modulo palette size). Uses md5 for even distribution.
+color_from_string() {
+    local str="$1"
+    local hash
+    # Prefer shasum (always in /usr/bin on macOS and Linux, so it resolves
+    # under the script's minimal PATH). Fall back through md5 variants which
+    # live in /sbin on macOS and may not be on PATH, and finally to a
+    # byte-sum approximation if nothing is available.
+    if command -v shasum >/dev/null 2>&1; then
+        hash=$(printf '%s' "$str" | shasum 2>/dev/null | awk '{print $1}')
+    elif command -v md5 >/dev/null 2>&1; then
+        hash=$(printf '%s' "$str" | md5 2>/dev/null)
+    elif command -v md5sum >/dev/null 2>&1; then
+        hash=$(printf '%s' "$str" | md5sum 2>/dev/null | awk '{print $1}')
+    fi
+    if [ -z "$hash" ]; then
+        hash=$(printf '%s' "$str" | od -An -vtu1 | tr -d ' \n' | head -c 8)
+    fi
+    # Take first 4 hex chars as an integer, modulo palette size.
+    local num=$((0x${hash:0:4}))
+    local idx=$((num % ${#PROJECT_PALETTE[@]}))
+    printf '%s' "${PROJECT_PALETTE[$idx]}"
+}
+
+# Figure out the usable terminal width. `tput cols` is unreliable inside
+# freshly-spawned tmux popups (may return 80 before the pty geometry settles),
+# so we prefer explicit overrides and tmux's own client_width.
+effective_width() {
+    local w
+    if [ -n "$CLAUDE_SCREENSAVER_COLUMNS" ]; then
+        printf '%s\n' "$CLAUDE_SCREENSAVER_COLUMNS"
+        return
+    fi
+    if [ -n "$TMUX" ]; then
+        w=$(tmux display-message -p '#{client_width}' 2>/dev/null)
+        if [ -n "$w" ] && [ "$w" -gt 0 ] 2>/dev/null; then
+            printf '%s\n' "$w"
+            return
+        fi
+    fi
+    w=$(tput cols 2>/dev/null)
+    if [ -n "$w" ] && [ "$w" -gt 0 ] 2>/dev/null; then
+        printf '%s\n' "$w"
+        return
+    fi
+    printf '%s\n' "${COLUMNS:-80}"
+}
+
+# List state files newest first (no array dependency for sh-portability of the
+# loop body, even though we're bash).
+list_state_files() {
+    [ -d "$STATE_DIR" ] || return 0
+    ls -t "$STATE_DIR"/*.json 2>/dev/null
+}
+
+pick_state_file() {
+    local files
+    files=$(list_state_files)
+    [ -z "$files" ] && return 1
+
+    case "$SELECTOR_TYPE" in
+        session)
+            local target="${STATE_DIR}/${SELECTOR_VALUE}.json"
+            [ -f "$target" ] && printf '%s\n' "$target" && return 0
+            return 1
+            ;;
+        cwd)
+            while IFS= read -r f; do
+                local file_cwd
+                file_cwd=$(jq -r '.cwd // empty' "$f" 2>/dev/null)
+                if [ "$file_cwd" = "$SELECTOR_VALUE" ]; then
+                    printf '%s\n' "$f"
+                    return 0
+                fi
+            done <<< "$files"
+            return 1
+            ;;
+        "")
+            # Auto-pick: session whose cwd matches $PWD, else most recent
+            while IFS= read -r f; do
+                local file_cwd
+                file_cwd=$(jq -r '.cwd // empty' "$f" 2>/dev/null)
+                if [ "$file_cwd" = "$PWD" ]; then
+                    printf '%s\n' "$f"
+                    return 0
+                fi
+            done <<< "$files"
+            printf '%s\n' "$(printf '%s\n' "$files" | head -n1)"
+            return 0
+            ;;
+    esac
+    return 1
+}
+
+format_duration() {
+    local s="$1"
+    if [ "$s" -lt 0 ]; then s=0; fi
+    if   [ "$s" -lt 60 ];   then printf '%ds' "$s"
+    elif [ "$s" -lt 3600 ]; then printf '%dm %ds' "$((s / 60))" "$((s % 60))"
+    else                         printf '%dh %dm' "$((s / 3600))" "$(((s % 3600) / 60))"
+    fi
+}
+
+big_text() {
+    local text="$1"
+    # Preferred font (configured by env/arg, default broadway). The function
+    # tries this first, then falls back to progressively narrower fonts if the
+    # rendered output is wider than the available terminal width.
+    local preferred="${2:-${CLAUDE_SCREENSAVER_FONT:-broadway}}"
+    local width
+    width=$(effective_width)
+    [ -z "$width" ] || [ "$width" -le 0 ] 2>/dev/null && width=80
+
+    if ! command -v figlet >/dev/null 2>&1; then
+        printf '%s%s\n' "$text" "$EOL"
+        return
+    fi
+
+    # Adaptive chain: configured font → progressively narrower options → plain.
+    # We feed figlet a huge `-w` so it never wraps internally; then we measure
+    # the real output width and accept the first font that fits horizontally.
+    local chain=("$preferred" poison colossal big standard)
+    local font out max_w
+    for font in "${chain[@]}"; do
+        out=$(figlet -w 999 -f "$font" "$text" 2>/dev/null) || continue
+        [ -z "$out" ] && continue
+        max_w=$(printf '%s\n' "$out" | awk '{ if (length > m) m = length } END { print m+0 }')
+        if [ "$max_w" -le "$width" ]; then
+            printf '%s\n' "$out" | awk -v eol="$EOL" '{print $0 eol}'
+            return
+        fi
+    done
+    # Nothing in the chain fits — print plain text rather than a broken wrap.
+    printf '%s%s\n' "$text" "$EOL"
+}
+
+# ---------- renderers ----------
+
+render_session() {
+    local state_file="$1"
+    local now
+    now=$(date +%s)
+
+    printf '%s' "$HOME_POS"
+
+    if [ -z "$state_file" ] || [ ! -f "$state_file" ]; then
+        printf '%s%sNo active Claude sessions%s%s\n' "$C_DIM" "$C_TEXT" "$C_RESET" "$EOL"
+        printf '%s' "$EOS"
+        return
+    fi
+
+    local project status cwd last_prompt last_notification updated_at last_idle_at age
+    project=$(jq -r '.project // "unknown"' "$state_file" 2>/dev/null)
+    status=$(jq -r '.status // "idle"' "$state_file" 2>/dev/null)
+    cwd=$(jq -r '.cwd // ""' "$state_file" 2>/dev/null)
+    last_prompt=$(jq -r '.last_prompt // ""' "$state_file" 2>/dev/null)
+    last_notification=$(jq -r '.last_notification // ""' "$state_file" 2>/dev/null)
+    updated_at=$(jq -r '.updated_at // 0' "$state_file" 2>/dev/null)
+    last_idle_at=$(jq -r '.last_idle_at // 0' "$state_file" 2>/dev/null)
+    age=$((now - updated_at))
+
+    # Deterministic project color — same project name always yields the same
+    # color, different projects get distinct colors. Applied to the big ASCII
+    # art; status labels (● IDLE / ● WORKING / ▶ INPUT NEEDED) keep their
+    # status-coded colors so the user can still tell at a glance what state
+    # the session is in.
+    local project_color
+    project_color=$(color_from_string "$project")
+
+    if [ "$age" -gt "$STALE_AFTER" ]; then
+        status="stale"
+    fi
+
+    case "$status" in
+        idle)
+            local idle_for=$((now - last_idle_at))
+            printf '%s%s' "$project_color" "$C_BOLD"
+            big_text "$project"
+            printf '%s%s\n' "$C_RESET" "$EOL"
+            printf '%s● IDLE%s  %sfor %s%s%s\n%s\n' \
+                "$C_GREEN" "$C_RESET" "$C_DIM" "$(format_duration "$idle_for")" "$C_RESET" "$EOL" "$EOL"
+            if [ -n "$last_prompt" ]; then
+                printf '%sLast task:%s%s\n' "$C_DIM" "$C_RESET" "$EOL"
+                printf '  %s%s%s%s\n%s\n' "$C_TEXT" "$last_prompt" "$C_RESET" "$EOL" "$EOL"
+            fi
+            printf '%s%s%s%s\n' "$C_DIM" "$cwd" "$C_RESET" "$EOL"
+            ;;
+
+        working)
+            printf '%s%s● WORKING%s  %s%s%s  %s(%s ago)%s%s\n%s\n' \
+                "$C_BLUE" "$C_BOLD" "$C_RESET" \
+                "$project_color" "$project" "$C_RESET" \
+                "$C_DIM" "$(format_duration "$age")" "$C_RESET" "$EOL" "$EOL"
+            printf '%s%s' "$project_color" "$C_BOLD"
+            big_text "$project"
+            printf '%s%s\n' "$C_RESET" "$EOL"
+            if [ -n "$last_prompt" ]; then
+                printf '%sCurrent task:%s%s\n' "$C_DIM" "$C_RESET" "$EOL"
+                printf '  %s%s%s%s\n%s\n' "$C_TEXT" "$last_prompt" "$C_RESET" "$EOL" "$EOL"
+            fi
+            printf '%s%s%s%s\n' "$C_DIM" "$cwd" "$C_RESET" "$EOL"
+            ;;
+
+        waiting)
+            # Project name BIG first in its hash-color so it's identifiable
+            # from across desktops. The red alert comes from the INPUT NEEDED
+            # label below, not the project color.
+            printf '%s%s' "$project_color" "$C_BOLD"
+            big_text "$project"
+            printf '%s%s\n' "$C_RESET" "$EOL"
+            # Strong "INPUT NEEDED" alert label (red stays reserved for this)
+            printf '%s%s▶ INPUT NEEDED ◀%s%s\n%s\n' \
+                "$C_RED" "$C_BOLD" "$C_RESET" "$EOL" "$EOL"
+            if [ -n "$last_notification" ]; then
+                printf '%s%s%s%s\n%s\n' "$C_YELLOW" "$last_notification" "$C_RESET" "$EOL" "$EOL"
+            fi
+            if [ -n "$last_prompt" ]; then
+                printf '%sLast task:%s%s\n' "$C_DIM" "$C_RESET" "$EOL"
+                printf '  %s%s%s%s\n%s\n' "$C_TEXT" "$last_prompt" "$C_RESET" "$EOL" "$EOL"
+            fi
+            printf '%s%s%s%s\n' "$C_DIM" "$cwd" "$C_RESET" "$EOL"
+            ;;
+
+        stale)
+            printf '%s' "$C_DIM"
+            big_text "$project"
+            printf '%s%s\n' "$C_RESET" "$EOL"
+            printf '%s● STALE  (no update for %s)%s%s\n%s\n' \
+                "$C_DIM" "$(format_duration "$age")" "$C_RESET" "$EOL" "$EOL"
+            if [ -n "$last_prompt" ]; then
+                printf '%sLast task:%s%s\n' "$C_DIM" "$C_RESET" "$EOL"
+                printf '  %s%s%s%s\n%s\n' "$C_DIM" "$last_prompt" "$C_RESET" "$EOL" "$EOL"
+            fi
+            printf '%s%s%s%s\n' "$C_DIM" "$cwd" "$C_RESET" "$EOL"
+            ;;
+    esac
+
+    # Wipe any leftover lines from a previous (taller) render
+    printf '%s' "$EOS"
+}
+
+render_all() {
+    printf '%s' "$HOME_POS"
+    printf '%s%sClaude Sessions%s%s\n%s\n' "$C_BOLD" "$C_MAUVE" "$C_RESET" "$EOL" "$EOL"
+
+    local files
+    files=$(list_state_files)
+    if [ -z "$files" ]; then
+        printf '%s%sNo active sessions%s%s\n' "$C_DIM" "$C_TEXT" "$C_RESET" "$EOL"
+        printf '%s' "$EOS"
+        return
+    fi
+
+    local now
+    now=$(date +%s)
+    while IFS= read -r f; do
+        local project status cwd updated_at age age_fmt
+        project=$(jq -r '.project // "unknown"' "$f" 2>/dev/null)
+        status=$(jq -r '.status // "idle"' "$f" 2>/dev/null)
+        cwd=$(jq -r '.cwd // ""' "$f" 2>/dev/null)
+        updated_at=$(jq -r '.updated_at // 0' "$f" 2>/dev/null)
+        age=$((now - updated_at))
+        age_fmt=$(format_duration "$age")
+
+        if [ "$age" -gt "$STALE_AFTER" ]; then
+            printf '  %s● %s — stale (%s)%s%s\n' "$C_DIM" "$project" "$age_fmt" "$C_RESET" "$EOL"
+        else
+            case "$status" in
+                idle)
+                    printf '  %s● %s%s  %sidle %s%s%s\n' \
+                        "$C_GREEN" "$project" "$C_RESET" "$C_DIM" "$age_fmt" "$C_RESET" "$EOL" ;;
+                working)
+                    printf '  %s● %s%s  %sworking %s%s%s\n' \
+                        "$C_BLUE" "$project" "$C_RESET" "$C_DIM" "$age_fmt" "$C_RESET" "$EOL" ;;
+                waiting)
+                    printf '  %s● %s%s  %sWAITING%s  %s%s%s%s\n' \
+                        "$C_RED" "$project" "$C_RESET" \
+                        "$C_BOLD" "$C_RESET" \
+                        "$C_DIM" "$age_fmt" "$C_RESET" "$EOL" ;;
+                *)
+                    printf '  %s● %s%s  %s%s %s%s%s\n' \
+                        "$C_TEXT" "$project" "$C_RESET" "$C_DIM" "$status" "$age_fmt" "$C_RESET" "$EOL" ;;
+            esac
+        fi
+        printf '    %s%s%s%s\n' "$C_DIM" "$cwd" "$C_RESET" "$EOL"
+    done <<< "$files"
+
+    printf '%s' "$EOS"
+}
+
+render_once() {
+    if [ "$SHOW_ALL" = "true" ]; then
+        render_all
+    else
+        local state_file
+        state_file=$(pick_state_file) || true
+        render_session "$state_file"
+    fi
+}
+
+# ---------- main ----------
+
+cleanup() {
+    # Restore terminal: show cursor, leave alt screen, reset colors
+    printf '%s%s%s' "$CURSOR_SHOW" "$ALT_OFF" "$C_RESET"
+}
+
+if [ "$LOOP" = "false" ]; then
+    # Single-shot mode: no alt screen, just render and exit
+    trap 'printf "%s" "$C_RESET"; exit 0' INT TERM
+    render_once
+else
+    # Loop mode: enter alternate screen + hide cursor for flicker-free display.
+    # EXIT trap covers normal exit, signals, and errors with a single cleanup.
+    printf '%s%s' "$ALT_ON" "$CURSOR_HIDE"
+    trap cleanup EXIT
+    trap 'exit 0' INT TERM
+    while true; do
+        render_once
+        sleep 1
+    done
+fi
