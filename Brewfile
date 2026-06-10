@@ -1,9 +1,7 @@
 # ===========================================
 # Taps
 # ===========================================
-tap "auth0/auth0-cli"
 tap "d-kuro/tap"
-tap "homeport/tap"
 tap "k1low/tap"
 tap "sdkman/tap"
 tap "shopify/shopify"
@@ -30,7 +28,6 @@ brew "pwgen"
 # ===========================================
 brew "bat"           # cat replacement
 brew "btop"          # top replacement
-brew "choose-rust"   # cut replacement
 brew "duf"           # df replacement
 brew "dust"          # du replacement
 brew "eza"           # ls replacement
@@ -84,9 +81,7 @@ brew "sdkman/tap/sdkman-cli" # JVM version manager
 # Cloud & Infrastructure
 # ===========================================
 brew "awscli"
-brew "terraform"     # managed via mise
-brew "terraformer"
-brew "tflint"
+# terraform / tflint は mise (config.toml) で管理
 
 # ===========================================
 # Containers & Orchestration
@@ -96,21 +91,13 @@ brew "tflint"
 # ===========================================
 # Networking & Security
 # ===========================================
-brew "arp-scan"
 brew "gnupg"
-brew "httpie"
-brew "iftop"
-brew "mkcert"
-brew "nmap"
-brew "rclone"
 
 # ===========================================
 # Media & Processing
 # ===========================================
 brew "ffmpeg"
 brew "imagemagick"
-brew "mecab"
-brew "tesseract"
 
 # ===========================================
 # Mobile Development
@@ -145,12 +132,6 @@ brew "k1low/tap/mo"  # markdown viewer (.mdをブラウザで開く)
 brew "hyperfine"     # benchmarking
 brew "pstree"        # process tree
 brew "tldr"          # simplified man pages
-
-# ===========================================
-# Third-party CLI
-# ===========================================
-brew "auth0/auth0-cli/auth0"
-brew "homeport/tap/dyff"
 
 # ===========================================
 # Casks (GUI Applications)
