@@ -151,8 +151,6 @@ cask "zoom"
 # ===========================================
 # Mac App Store
 # ===========================================
-mas "Keynote", id: 409183694
+# Apple純正 (Keynote/Numbers/Pages) はOSプリインストール済みのため除外
 mas "Microsoft Excel", id: 462058435
 mas "Microsoft PowerPoint", id: 462062816
-mas "Numbers", id: 409203825
-mas "Pages", id: 409201541
