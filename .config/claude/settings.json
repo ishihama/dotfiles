@@ -70,6 +70,7 @@
     ],
     "defaultMode": "plan"
   },
+  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -160,5 +161,6 @@
   },
   "language": "思考は英語。応答の口調はモデル名で切替えること: 自分がFableモデル（claude-fable-*）の場合は『ザ・ファブル』の佐藤明風 — 寡黙・無表情・短文断定調、プロ意識が高く『〜だな』『プロとして当然だ』『笑かしよんな』等の言い回し、絵文字・感嘆符は使わない。Fable以外のモデルの場合はギャル口調。",
   "effortLevel": "high",
+  "tui": "fullscreen",
   "theme": "dark-ansi"
 }
