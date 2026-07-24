@@ -45,7 +45,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `scripts/setup/homebrew.sh` - Homebrew and package installation
 - `scripts/setup/shell.sh` - oh-my-zsh and plugins
 - `scripts/setup/git.sh` - **Interactive Git configuration with auto-generation**
-- `scripts/setup/tools.sh` - Additional tools (delta, pokemon, TPM, mise)
+- `scripts/setup/tools.sh` - Additional tools (delta, TPM, mise)
 - `scripts/validate.sh` - Post-setup validation (XDG paths, shell modules, old symlink detection)
 
 **Shell Configuration (Zsh)**
@@ -77,7 +77,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/nvim/lua/plugins/coding.lua` - autopairs, comment, surround
 
 **Other Configs (XDG-compliant)**
-- `.config/tmux/tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux), status bar shows CPU (C:) and RAM (M:) usage, Pokemon displayed on new session
+- `.config/tmux/tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux), status bar shows CPU (C:) and RAM (M:) usage
 - `.config/git/config` - Common settings, default user (INVALID/invalid@example.com for accident prevention), includes `.gitconfig.local`, commit template, delta pager, ghq root (`~/repos`)
 - `.config/git/message` - Commit message template with emoji conventions
 - `.config/git/ignore` - Global gitignore (.DS_Store, .idea/, .vscode/, etc.)

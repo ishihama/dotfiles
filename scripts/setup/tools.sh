@@ -1,5 +1,5 @@
 #!/bin/bash
-# tools.sh - Install additional tools (delta, pokemon, TPM, mise)
+# tools.sh - Install additional tools (delta, TPM, mise)
 # Extracted from init.sh lines 99-130, 163-176
 
 setup_tools() {
@@ -40,23 +40,6 @@ setup_tools() {
         fi
     else
         log_skip "bat catppuccin themes already installed"
-    fi
-
-    # pokemon-go-colorscripts
-    if ! command_exists pokemon-go-colorscripts; then
-        if command_exists go; then
-            log_info "Installing pokemon-go-colorscripts..."
-            if go install github.com/scottmckendry/pokemon-go-colorscripts@latest; then
-                log_success "pokemon-go-colorscripts installed"
-            else
-                log_warn "Failed to install pokemon-go-colorscripts"
-            fi
-        else
-            log_warn "Go not found. Skipping pokemon-go-colorscripts installation."
-            log_info "Install Go first, then run: go install github.com/scottmckendry/pokemon-go-colorscripts@latest"
-        fi
-    else
-        log_skip "pokemon-go-colorscripts already installed"
     fi
 
     # TPM (Tmux Plugin Manager)

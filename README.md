@@ -175,18 +175,6 @@ git config user.email  # → 仕事用メールアドレスが表示される
 - バッテリー残量 (🔋放電中/⚡充電中)
 - 日時
 
-### Pokemon表示
-
-ターミナル起動時と新規tmuxセッション作成時にランダムでポケモンを表示。
-- `pokemon-go-colorscripts -r -s` (ランダム、色違い)
-
-**インストール** (Go必須):
-```bash
-go install github.com/scottmckendry/pokemon-go-colorscripts@latest
-```
-
-`init.sh` 実行時に自動インストールされる（Go がある場合）。
-
 ## ghq + fzf + tmux ワークフロー
 
 `Ctrl+G`でリポジトリ選択してtmuxセッションを作成/アタッチ。
