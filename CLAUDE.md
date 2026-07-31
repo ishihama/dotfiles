@@ -89,6 +89,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/atuin/` - Atuin shell history sync config
 - `.config/ghostty/` - Ghostty terminal emulator config (catppuccin theme, tmux integration keybindings: Cmd+T=prefix, Cmd+N=new window, Cmd+W=close pane, Cmd+1-9=window switch, Cmd+H/J/K/L=pane nav, Cmd+\=vsplit, Cmd+-=hsplit)
 - `.config/gwq/config.toml` - gwq configuration (basedir: `~/repos`)
+- `.config/hammerspoon/init.lua` - Hammerspoon config (Space-crossing window focus for claude-status jump; symlinked to both `~/.config/hammerspoon` and `~/.hammerspoon`)
 - `.config/lazygit/config.yml` - lazygit custom commands (gh PR integration: list, view, checkout, create, diff)
 
 **Package Management**
@@ -184,7 +185,7 @@ dotfiles/
 - Claude Code hooks (`.config/claude/hooks/update-state.sh`) record each session's state (working/waiting/idle) plus its tmux session/window/pane to `~/.local/state/claude/sessions/*.json`
 - `.config/claude/bin/claude-status` renders the state: `bar` (status-right counts, refreshed instantly via `tmux refresh-client -S` from the hook), `watch` (sidebar pane loop), `sessions` (per-tmux-session glyphs for fzf), `jump` (switch to highest-priority session)
 - `prefix+a` toggles a sidebar pane (`.config/shell/bin/claude-sidebar-toggle`) listing all Claude sessions with state glyph (🔔 waiting for input / ⚙ working / ✓ idle), age, `window.pane` location (distinguishes multiple Claude instances inside one tmux session), and last prompt/notification; keys `1-9` jump to that session's pane, `q` closes it
-- `prefix+u` jumps to the highest-priority Claude session (waiting > working > idle). Target window resolution: (1) a client already attached to the target session → raise that OS window via System Events title matching; (2) a client showing another session of the same worktree (`git rev-parse --show-toplevel` match) → switch that client to the target session and raise it (supports multiple tmux sessions per worktree); (3) otherwise switch the current client. Disable window raising with `CLAUDE_JUMP_FOCUS_DISABLED=1`
+- `prefix+u` jumps to the highest-priority Claude session (waiting > working > idle). Target window resolution: (1) a client already attached to the target session → raise that OS window (falls back to switching the current client if raising fails); (2) a client showing another session of the same worktree (`git rev-parse --show-toplevel` match) → raise that window first, then switch that client to the target session (supports multiple tmux sessions per worktree); (3) otherwise switch the current client. Window raising prefers Hammerspoon (`hs` CLI + `.config/hammerspoon/init.lua`) which crosses virtual desktops (Spaces) via `hs.spaces`; without it, System Events AXRaise is used (current Space only — the accessibility API cannot enumerate windows on other Spaces). Disable with `CLAUDE_JUMP_FOCUS_DISABLED=1`
 - `tmux-session-fzf` (prefix+s) shows the same glyphs next to session names
 - The Notification hook also posts to macOS Notification Center (injection-safe via `osascript` argv; disable with `CLAUDE_NOTIFY_DISABLED=1`)
 - Stale state files (>24h) are cleaned automatically; state detection is hook-based (exact), unlike herdr's screen-scraping heuristics

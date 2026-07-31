@@ -140,6 +140,7 @@ cask "android-studio"
 cask "gcloud-cli"
 cask "ghostty"
 cask "google-chrome"
+cask "hammerspoon"   # Space越しウィンドウフォーカス (claude-status jump)
 cask "intellij-idea-ce"
 cask "microsoft-word"
 cask "rancher"

@@ -18,6 +18,7 @@ CONFIG_DIRS=(
     git
     gitmux
     gwq
+    hammerspoon
     lazygit
     mise
     nvim
@@ -70,6 +71,12 @@ setup_symlinks() {
     if [ -f "$DOTFILES_DIR/.config/claude/settings.json" ]; then
         mkdir -p "$HOME/.claude"
         safe_symlink "$DOTFILES_DIR/.config/claude/settings.json" "$HOME/.claude/settings.json"
+    fi
+
+    # Hammerspoon reads ~/.hammerspoon/init.lua (XDG非対応バージョンがあるため
+    # ~/.config/hammerspoon に加えて ~/.hammerspoon もリンクする)
+    if [ -d "$DOTFILES_DIR/.config/hammerspoon" ]; then
+        safe_symlink "$DOTFILES_DIR/.config/hammerspoon" "$HOME/.hammerspoon"
     fi
 
     # SSH config (personal + Include ~/.ssh/config.local for per-machine/work entries)

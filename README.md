@@ -183,11 +183,16 @@ Claude Codeのhooksが各セッションの状態を `~/.local/state/claude/sess
 - **ステータスバー**: 状態別カウントを常時表示。hooks経由で即時更新
 - **サイドバー** (`prefix+a`): 全Claudeセッションの状態・経過時間・最後のプロンプト/通知を一覧表示。同一tmuxセッション内に複数のClaudeがいる場合も `セッション名 window.pane` 表記で区別できる。開くとフォーカスがサイドバーに移り、数字キー `1-9` でそのClaudeのpaneにジャンプ、`q` または再度 `prefix+a` で閉じる
 - **ジャンプ** (`prefix+u`): 最優先のClaudeセッション (🔔入力待ち優先) に一発で切り替え。サイドバーの数字キージャンプも同様。切り替え先の決め方:
-  1. 対象セッションを表示中のGhosttyウィンドウがあればそのウィンドウを前面化
+  1. 対象セッションを表示中のGhosttyウィンドウがあればそのウィンドウを前面化 (前面化できないときは現在のウィンドウ内で切り替え)
   2. なければ、同じリポジトリ (worktree) の別セッションを表示中のウィンドウを探し、そのウィンドウ側をセッション切り替えして前面化 (1 worktree内に複数tmuxセッションを作る運用向け)
   3. どちらもなければ現在のウィンドウ内でswitch-client
 
   前面化は初回にmacOSのオートメーション許可が必要。`CLAUDE_JUMP_FOCUS_DISABLED=1` で無効化
+
+  **仮想デスクトップ (Space) 対応**: macOSのアクセシビリティAPIは現在のSpaceのウィンドウしか列挙できないため、別デスクトップへの前面化には**Hammerspoonが必要** (`brew install --cask hammerspoon`、Brewfileに含まれる)。セットアップ:
+  1. Hammerspoon.appを起動し、アクセシビリティ権限を許可、「Launch at login」を有効化
+  2. 設定は `~/.hammerspoon` (dotfilesの `.config/hammerspoon/` へのsymlink) が自動で読まれ、`hs` CLIも自動インストールされる
+  3. Hammerspoonがない場合は従来のSystem Events方式 (同一Space内のみ) に自動フォールバック
 - **セッション切替** (`prefix+s`): fzfの一覧に状態グリフを表示
 - **macOS通知**: Claudeが入力待ちになると通知センターに表示 (`CLAUDE_NOTIFY_DISABLED=1` で無効化)
 
