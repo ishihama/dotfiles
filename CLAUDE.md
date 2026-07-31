@@ -53,10 +53,10 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/shell/env.sh` - Environment variables, PATH (Homebrew/Go/Flutter/Android/Rust/Rancher), tool initialization (mise, direnv, zoxide, atuin, starship)
 - `.config/shell/aliases.sh` - Modern CLI tool aliases (cat->bat, ls->eza, grep->rg, find->fd, etc.) + lazygit
 - `.config/shell/ghq-tmux.sh` - ghq+fzf+tmux integration (Ctrl+G or tmux prefix+g)
-- `.config/shell/gwq-tmux.sh` - gwq+fzf+tmux integration (Ctrl+W or tmux prefix+w) + tmux-session-fzf
+- `.config/shell/gwq-tmux.sh` - gwq+fzf+tmux integration (Ctrl+X w or tmux prefix+w) + tmux-session-fzf
 - `.config/shell/gwq-wrapper.sh` - gwq wrapper function (add -i interactive, auto-cd after add)
 - `.config/shell/gh-wrapper.sh` - gh CLI auto-switch account based on repos directory (uses `~/.config/gh/account-map`)
-- `.config/shell/fzf-widgets.sh` - fzf widgets: history(Ctrl+R), git-branch(Ctrl+B), file-search(Ctrl+F), process-kill(Ctrl+K)
+- `.config/shell/fzf-widgets.sh` - fzf widgets under the `Ctrl+X` prefix: git-branch(Ctrl+X b), file-search(Ctrl+X f), process-kill(Ctrl+X k). History search (Ctrl+R) belongs to atuin (initialized in `env.sh`) and is deliberately not bound here. The widgets live under `Ctrl+X` so the standard zsh emacs keymap keeps `^W`/`^B`/`^F`/`^K`
 - `.config/shell/memo.sh` - memo/memo-search functions
 - `.config/shell/completions.sh` - setup-completions function for CLI completion generation
 - `.config/shell/platform.sh` - OS detection, platform-specific config loading, SDKMAN initialization
@@ -91,6 +91,12 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/gwq/config.toml` - gwq configuration (basedir: `~/repos`)
 - `.config/hammerspoon/init.lua` - Hammerspoon config (Space-crossing window focus for claude-status jump; symlinked to both `~/.config/hammerspoon` and `~/.hammerspoon`)
 - `.config/lazygit/config.yml` - lazygit custom commands (gh PR integration: list, view, checkout, create, diff)
+
+**Claude Code Permissions (`.config/claude/settings.json`)**
+- `permissions.deny` only constrains the **Read tool**. It does not and cannot stop `cat`, `rg`, `bat`, `head` or `xxd` from reading the same file, and those are all on the allow list. Treat the deny entries as guard rails against accidental reads, not as a security boundary
+- Entries that reach arbitrary command execution without a prompt were removed from the allow list: `find`, `env`, `command`, `time`, `make` (`env sh -c …`, `find -exec sh -c …`, `make -f /dev/stdin`). `find` is redundant anyway since `fd` is allowed
+- `npm`/`pnpm`/`yarn`/`go`/`cargo`/`deno`/`gh`/`mise` remain allowed and offer equivalent escapes (lifecycle scripts, `go run`, `build.rs`). This is a deliberate trade for daily usability — do not add entries of this class without weighing that
+- `defaultMode: "plan"` does not gate Bash commands that are already on the allow list
 
 **Package Management**
 - `Brewfile` - Homebrew packages organized by category (Modern CLI tools, Shell & Terminal, Git & GitHub, Languages, Cloud, etc.), casks, Mac App Store apps
@@ -175,7 +181,7 @@ dotfiles/
 - Behavior differs inside/outside tmux (switch-client vs attach-session)
 - Defined in `.config/shell/ghq-tmux.sh`
 
-**gwq + fzf + tmux (`Ctrl+W` or tmux prefix+w)**
+**gwq + fzf + tmux (`Ctrl+X w` or tmux prefix+w)**
 - Selects worktree from gwq list with fzf preview (git log)
 - Creates/attaches tmux session named `{repo}-{branch}` (dots and slashes replaced with dashes)
 - Enables parallel development across branches with separate Claude Code instances
@@ -188,7 +194,10 @@ dotfiles/
 - `prefix+u` jumps to the highest-priority Claude session (waiting > working > idle). Target window resolution: (1) a client already attached to the target session → raise that OS window (falls back to switching the current client if raising fails); (2) a client showing another session of the same worktree (`git rev-parse --show-toplevel` match) → raise that window first, then switch that client to the target session (supports multiple tmux sessions per worktree); (3) otherwise switch the current client. Window raising prefers Hammerspoon (`hs` CLI + `.config/hammerspoon/init.lua`) which crosses virtual desktops (Spaces) via `hs.spaces`; without it, System Events AXRaise is used (current Space only — the accessibility API cannot enumerate windows on other Spaces). Disable with `CLAUDE_JUMP_FOCUS_DISABLED=1`
 - `tmux-session-fzf` (prefix+s) shows the same glyphs next to session names
 - The Notification hook also posts to macOS Notification Center (injection-safe via `osascript` argv; disable with `CLAUDE_NOTIFY_DISABLED=1`)
-- Stale state files (>24h) are cleaned automatically; state detection is hook-based (exact), unlike herdr's screen-scraping heuristics
+- Stale state files (>24h) and orphaned `*.json.tmp.*` are cleaned automatically, rate-limited to once per hour via `.last-cleanup`; state detection is hook-based (exact), unlike herdr's screen-scraping heuristics
+- State writes are serialized with a directory lock and promoted only after `jq -e .` accepts the result, so concurrent hooks cannot lose an update or install a half-written document. A file that is nonetheless unparsable is moved aside as `*.json.broken` rather than blanking the display for every session
+- `~/.local/state/claude/sessions/` is created 700 and its files 600: they hold `cwd` and prompt text
+- Values read back from state files are treated as untrusted: `updated_at` is integer-checked before arithmetic, and the session name passed to `hs -c` is escaped byte-by-byte into a Lua literal
 
 **Modern CLI Tool Aliases**
 - All defined in `.config/shell/aliases.sh` - traditional commands aliased to modern alternatives (cat->bat, ls->eza, grep->rg, find->fd, ps->procs, du->dust, df->duf, sed->sd, top->btop, http->xh, vi/vim->nvim)
@@ -228,7 +237,7 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 - Core utilities (`scripts/lib/core.sh`) provide logging, error handling, symlink management, and DRY_RUN support
 - Platform detection (`scripts/lib/platform.sh`) handles macOS/Linux/WSL differences
 - Validation script (`scripts/validate.sh`) checks setup completeness including XDG paths and shell modules
-- `init.sh --dry-run` previews all changes without modifying the filesystem
+- `init.sh --dry-run` previews changes without modifying the filesystem. Every side effect must go through `run_cmd` or an `is_dry_run` guard in `scripts/lib/core.sh`; modules that cannot be meaningfully previewed (Homebrew, oh-my-zsh, the interactive Git setup, tool downloads) return early and print what they would have done. Regression test: run it against a throwaway `HOME` containing a real config directory and confirm the directory survives
 
 **Symlink Management**
 - `scripts/lib/core.sh` contains `safe_symlink()` function that backs up existing files with timestamp
@@ -250,7 +259,7 @@ Note: The existing commit history uses `:memo:` for documentation, not `:books:`
 
 **tmux Popup Optimization**
 - tmux popup bindings (prefix+g/w/s) use standalone scripts in `.config/shell/bin/` instead of `zsh -ic`
-- This avoids loading full `.zshrc` (~1.7s startup) by sourcing only the needed shell module
+- This avoids loading the full `.zshrc` by sourcing only the needed shell module (measured startup is ~0.25s; the popup path stays well under that)
 - Each popup script sets minimal PATH and sources the relevant module directly
 - Shell functions are defined outside the interactive guard so popup scripts can use them
 
