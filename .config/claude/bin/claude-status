@@ -31,17 +31,11 @@ cleanup_stale() {
     find "$STATE_DIR" -name '*.json' -mmin +1440 -delete 2>/dev/null
 }
 
-state_files() {
-    ls "$STATE_DIR"/*.json 2>/dev/null
-}
-
 # 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で
 # TSV出力: status \t project \t tmux_session \t updated_at \t message
 rows() {
-    local files
-    files=$(state_files)
-    [ -z "$files" ] && return 0
-    # shellcheck disable=SC2086
+    set -- "$STATE_DIR"/*.json
+    [ -e "$1" ] || return 0
     jq -rs '
         def prio: {waiting: 0, working: 1, idle: 2}[.] // 3;
         map({
@@ -56,7 +50,7 @@ rows() {
         | .[]
         | [.status, .project, .tmux_session, (.updated_at | tostring), .message]
         | @tsv
-    ' $files 2>/dev/null
+    ' "$@" 2>/dev/null
 }
 
 fmt_age() {
@@ -89,6 +83,8 @@ color_for() {
 
 render_list() {
     local width=${1:-44}
+    # 極端に狭いpaneでも substring が負数にならないよう下限を設ける
+    [ "$width" -ge 20 ] 2>/dev/null || width=20
     local now total=0 cw=0 cn=0 ci=0
     now=$(date +%s)
 
@@ -165,10 +161,8 @@ EOF
 
 # tmuxセッションごとに最優先状態 (waiting > working > idle) のグリフを返す
 render_sessions() {
-    local files
-    files=$(state_files)
-    [ -z "$files" ] && return 0
-    # shellcheck disable=SC2086
+    set -- "$STATE_DIR"/*.json
+    [ -e "$1" ] || return 0
     jq -rs '
         def prio: {waiting: 0, working: 1, idle: 2}[.] // 3;
         def glyph: {waiting: "🔔", working: "⚙", idle: "✓"}[.] // "✓";
@@ -177,7 +171,7 @@ render_sessions() {
         | .[]
         | [.[0].tmux_session, (map(.status // "idle") | min_by(prio) | glyph)]
         | @tsv
-    ' $files 2>/dev/null
+    ' "$@" 2>/dev/null
 }
 
 mkdir -p "$STATE_DIR" 2>/dev/null
