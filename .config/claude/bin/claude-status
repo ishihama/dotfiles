@@ -33,9 +33,21 @@ C_DIM=$'\033[38;2;127;132;156m'       # overlay1
 C_BOLD=$'\033[1m'
 C_RESET=$'\033[0m'
 
-# 異常終了で残った1日以上前の状態ファイルを掃除
+# 異常終了で残った1日以上前の状態ファイルを掃除。
+# bar は status-interval ごと、watch は2秒ごとに起動するため、毎回 find -delete を
+# 走らせると update-state.sh の mv と競合しつつ無駄なI/Oを生む。スタンプファイルで
+# 1時間に1回までに制限する。
+CLEANUP_STAMP="${STATE_DIR}/.last-cleanup"
 cleanup_stale() {
+    [ -d "$STATE_DIR" ] || return 0
+    if [ -f "$CLEANUP_STAMP" ] && [ -z "$(find "$CLEANUP_STAMP" -mmin +60 2>/dev/null)" ]; then
+        return 0
+    fi
+    : > "$CLEANUP_STAMP" 2>/dev/null
     find "$STATE_DIR" -name '*.json' -mmin +1440 -delete 2>/dev/null
+    # hook が mv 前に死ぬと *.json.tmp.PID が残り、*.json にマッチしないため
+    # 永久に溜まる
+    find "$STATE_DIR" -name '*.json.tmp.*' -mmin +60 -delete 2>/dev/null
 }
 
 # 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
@@ -47,9 +59,35 @@ cleanup_stale() {
 # 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
 ROW_SEP=$'\x1f'
 
+# 壊れた状態ファイルを退避する。
+# jq -s は複数ファイルのうち1つでもパースに失敗すると全体が空出力で終わるため、
+# 1個の壊れたファイルで status bar・サイドバー・fzfグリフが全セッション分
+# 消える。高速パス (jq 1回) が失敗したときだけ1ファイルずつ検証して隔離する。
+quarantine_broken() {
+    local f
+    for f in "$STATE_DIR"/*.json; do
+        [ -e "$f" ] || continue
+        jq -e . "$f" >/dev/null 2>&1 && continue
+        mv "$f" "${f}.broken" 2>/dev/null
+    done
+}
+
 rows() {
     set -- "$STATE_DIR"/*.json
     [ -e "$1" ] || return 0
+    local out
+    out=$(rows_jq "$@")
+    if [ -z "$out" ]; then
+        quarantine_broken
+        set -- "$STATE_DIR"/*.json
+        [ -e "$1" ] || return 0
+        out=$(rows_jq "$@")
+    fi
+    [ -n "$out" ] && printf '%s\n' "$out"
+    return 0
+}
+
+rows_jq() {
     jq -rs '
         def prio: {waiting: 0, working: 1, idle: 2}[.] // 3;
         map({
@@ -59,7 +97,8 @@ rows() {
             tmux_window: (.tmux_window // ""),
             tmux_pane: (.tmux_pane // ""),
             tmux_pane_index: (.tmux_pane_index // ""),
-            updated_at: (.updated_at // 0),
+            # 数値以外が入っていても sort_by(-.updated_at) が落ちないように丸める
+            updated_at: (.updated_at | if type == "number" then . else 0 end),
             message: ((.last_prompt // "") as $lp
                       | (.first_prompt // "") as $fp
                       | (if ($lp | length) < 16 and $fp != "" and $fp != $lp
@@ -87,15 +126,26 @@ rows() {
 # 2. なければ System Events でAXRaise (現在のSpaceのウィンドウしか発見できない)
 # 初回はmacOSのオートメーション/アクセシビリティ許可ダイアログが出る。
 # 無効化: CLAUDE_JUMP_FOCUS_DISABLED=1
+# 任意のバイト列をLua文字列リテラルの中身へ変換する (\DDD の10進エスケープ)。
+# クォート・改行・バックスラッシュを含む入力でもLua構文を壊せない。
+lua_escape() {
+    # awk は使わない: macOS の awk は printf の出力に含まれる \NNN を
+    # 再度エスケープとして解釈してしまい、\045 が "%" に化ける
+    printf '%s' "$1" | od -An -tu1 -v | tr -s ' ' '\n' | grep . | \
+        while IFS= read -r b; do printf '\\%03d' "$b"; done
+}
+
 raise_window_for_session() {
     local sess=$1
     [ -z "$sess" ] && return 1
     [ "${CLAUDE_JUMP_FOCUS_DISABLED:-0}" = "1" ] && return 1
     local prefix="${sess}: "
     if command -v hs >/dev/null 2>&1; then
-        local esc out
-        esc=$(printf '%s' "$prefix" | sed 's/\\/\\\\/g; s/"/\\"/g')
-        out=$(hs -c "claudeFocusGhosttyWindow(\"$esc\")" 2>/dev/null)
+        local out
+        # hs -c は文字列をLuaとして評価するため、セッション名の埋め込みは
+        # 実質 eval になる。sed 2つの手書きエスケープではなく全バイトを
+        # 10進エスケープしてリテラル化する (AppleScript側は argv 渡しで安全)。
+        out=$(hs -c "claudeFocusGhosttyWindow(\"$(lua_escape "$prefix")\")" 2>/dev/null)
         [ "$out" = "true" ] && return 0
     fi
     command -v osascript >/dev/null 2>&1 || return 1
@@ -164,12 +214,27 @@ EOF
 jump_to() {
     local tsess=$1 twin=$2 tpane=$3
     [ -z "$tsess" ] && return 1
-    # window/pane選択はセッション単位の状態なので、どのクライアントで表示していても効く
-    [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
-    [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
-    if tmux list-clients -F '#{client_session}' 2>/dev/null | grep -qx "$tsess"; then
+
+    # セッションが生きていなければ何もしない。hook は SIGKILL や
+    # tmux kill-session では発火しないため、状態ファイルは死んだセッションを
+    # 24時間指し続ける。"=" は前方一致/fnmatch ではなく厳密一致を強制する。
+    tmux has-session -t "=$tsess" 2>/dev/null || return 1
+
+    # window/pane選択はセッション単位の状態なので、どのクライアントで表示していても効く。
+    # pane ID はtmuxサーバ再起動でリセットされるので、対象セッションに属することを
+    # 確認してから選択する。確認せずに select-pane すると無関係なウィンドウの
+    # アクティブpaneを書き換えてしまう。
+    [ -n "$twin" ] && tmux select-window -t "=${tsess}:${twin}" 2>/dev/null
+    if [ -n "$tpane" ] && tmux list-panes -s -t "=$tsess" -F '#{pane_id}' 2>/dev/null \
+            | grep -qxF "$tpane"; then
+        tmux select-pane -t "$tpane" 2>/dev/null
+    fi
+
+    # grep -qxF: セッション名を正規表現ではなくリテラルとして扱う
+    # (foo.bar が無関係な fooxbar にマッチしていた)
+    if tmux list-clients -F '#{client_session}' 2>/dev/null | grep -qxF "$tsess"; then
         raise_window_for_session "$tsess" && return 0
-        tmux switch-client -t "$tsess" 2>/dev/null || return 1
+        tmux switch-client -t "=$tsess" 2>/dev/null || return 1
         return 0
     fi
     local sib scsess
@@ -178,9 +243,9 @@ $(find_sibling_client "$tsess")
 EOF
     if [ -n "$sib" ]; then
         raise_window_for_session "$scsess"
-        tmux switch-client -c "$sib" -t "$tsess" 2>/dev/null && return 0
+        tmux switch-client -c "$sib" -t "=$tsess" 2>/dev/null && return 0
     fi
-    tmux switch-client -t "$tsess" 2>/dev/null || return 1
+    tmux switch-client -t "=$tsess" 2>/dev/null || return 1
     return 0
 }
 
@@ -194,7 +259,21 @@ render_jump() {
     done <<EOF
 $(rows)
 EOF
+    # 全部失敗したときに無反応だと未バインドのキーと区別がつかない。
+    # 死んだセッションしか残っていない場合 (hook は SIGKILL では発火しない) に
+    # ここへ来る。
+    tmux display-message "claude-status: no live Claude session to jump to" 2>/dev/null
     return 1
+}
+
+# 状態ファイル由来の値を算術で使う前に整数であることを確認する。
+# bash の $(( )) は変数の「内容」を再帰評価するため、updated_at に
+# a[$(cmd)] のような文字列が書き込まれていると任意コマンドが実行される。
+as_int() {
+    case "$1" in
+        ''|*[!0-9]*) printf '0' ;;
+        *)           printf '%s' "$1" ;;
+    esac
 }
 
 fmt_age() {
@@ -267,7 +346,7 @@ render_list() {
             loc=" ${twin}${tpidx:+.$tpidx}"
         fi
         local age glyph color idx=""
-        age=$(fmt_age $((now - updated)))
+        age=$(fmt_age $((now - $(as_int "$updated"))))
         glyph=$(glyph_for "$status")
         color=$(color_for "$status")
         if [ "$total" -le 9 ] && [ -n "$tsess" ]; then
@@ -330,7 +409,7 @@ $(jq -r '[
 EOF
     local now age glyph color branch
     now=$(date +%s)
-    age=$(fmt_age $((now - ${updated:-0})))
+    age=$(fmt_age $((now - $(as_int "${updated:-0}"))))
     glyph=$(glyph_for "$status")
     color=$(color_for "$status")
     branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
@@ -374,8 +453,14 @@ EOF
 
 watch_loop() {
     tput civis 2>/dev/null
-    # 終了時: カーソル復帰 + サイドバーpane記録を掃除 (トグルの状態と整合させる)
-    trap 'tput cnorm 2>/dev/null; tmux set-option -wu @claude_sidebar_pane 2>/dev/null' EXIT
+    # 終了時: カーソル復帰 + サイドバーpane記録を掃除 (トグルの状態と整合させる)。
+    # 記録が「自分のpane」を指しているときだけ消す。prefix+a 連打で
+    # 「旧watcherの終了」が「新サイドバーの登録」より後に走ると、生きている
+    # サイドバーの記録を消してしまい、次のトグルが2枚目を開いて1枚目が
+    # 閉じられなくなる。
+    trap 'tput cnorm 2>/dev/null
+          [ "$(tmux show-option -wqv @claude_sidebar_pane 2>/dev/null)" = "${TMUX_PANE:-}" ] \
+              && tmux set-option -wu @claude_sidebar_pane 2>/dev/null' EXIT
     # 全消去(\033[2J)は一瞬白くなってちらつくため、ホーム(\033[H)から
     # 行末消去付きで上書きし、最後に余った下部だけ消す(\033[J)
     EOL=$'\033[K'
@@ -439,6 +524,19 @@ EOF
 render_sessions() {
     set -- "$STATE_DIR"/*.json
     [ -e "$1" ] || return 0
+    local out
+    out=$(sessions_jq "$@")
+    if [ -z "$out" ]; then
+        quarantine_broken
+        set -- "$STATE_DIR"/*.json
+        [ -e "$1" ] || return 0
+        out=$(sessions_jq "$@")
+    fi
+    [ -n "$out" ] && printf '%s\n' "$out"
+    return 0
+}
+
+sessions_jq() {
     jq -rs '
         def prio: {waiting: 0, working: 1, idle: 2}[.] // 3;
         def glyph: {waiting: "🔔", working: "⚙", idle: "✓"}[.] // "✓";

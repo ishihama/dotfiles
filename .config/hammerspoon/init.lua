@@ -47,12 +47,27 @@ function claudeFocusGhosttyWindow(titlePrefix)
             local ok, spaces = pcall(hs.spaces.windowSpaces, win)
             if ok and spaces and #spaces > 0
                 and spaces[1] ~= hs.spaces.focusedSpace() then
-                pcall(hs.spaces.gotoSpace, spaces[1])
-                -- Space切り替えアニメーション中のfocus失敗を避ける
-                hs.timer.usleep(300000)
+                -- hs.spaces.gotoSpace は private API のラッパで、Reduce Motion
+                -- 無効時やフルスクリーンSpaceでは普通に失敗する。失敗を握り潰すと
+                -- 呼び出し元 (claude-status) が「前面化できた」と誤解して
+                -- switch-client のフォールバックを飛ばし、prefix+u が無反応になる。
+                local moved = pcall(hs.spaces.gotoSpace, spaces[1])
+                if not moved then return false end
+                -- Space切り替えアニメーション中のfocus失敗を避ける。
+                -- usleep はHammerspoonの唯一のスレッドを止めてしまうため、
+                -- 切り替え完了をポーリングで待つ。
+                local deadline = hs.timer.secondsSinceEpoch() + 1.0
+                while hs.spaces.focusedSpace() ~= spaces[1]
+                    and hs.timer.secondsSinceEpoch() < deadline do
+                    hs.timer.usleep(20000)
+                end
+                if hs.spaces.focusedSpace() ~= spaces[1] then return false end
             end
-            win:focus()
-            return true
+            -- win:focus() の戻り値を見る。タイトル一致だけで true を返すと、
+            -- 実際にはフォーカスできていないのに成功扱いになる。
+            local focused = win:focus()
+            if focused == false then return false end
+            return hs.window.focusedWindow() == win
         end
     end
     return false
