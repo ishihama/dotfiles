@@ -35,7 +35,8 @@ cleanup_stale() {
 # 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
 # フィールド: status / project / tmux_session / tmux_window / tmux_pane /
 #             tmux_pane_index / updated_at / message / note
-# message は最後のプロンプト (=何の作業か)。note は入力待ち時の通知メッセージ
+# message は最後のプロンプト (=何の作業か)。
+# note は状態に応じた補足: 入力待ち→通知メッセージ、待機→Claudeの最後の返答
 # 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
 ROW_SEP=$'\x1f'
 
@@ -53,7 +54,9 @@ rows() {
             tmux_pane_index: (.tmux_pane_index // ""),
             updated_at: (.updated_at // 0),
             message: (.last_prompt // "" | gsub("[\\x00-\\x1f]"; " ")),
-            note: ((if .status == "waiting" then .last_notification else "" end)
+            note: ((if .status == "waiting" then .last_notification
+                    elif .status == "idle" then .last_reply
+                    else "" end)
                    // "" | gsub("[\\x00-\\x1f]"; " "))
         })
         | sort_by([(.status | prio), -.updated_at])
@@ -266,7 +269,10 @@ render_list() {
             body="${body}     ${C_DIM}${message:0:$((width - 7))}${C_RESET}${EOL}"$'\n'
         fi
         if [ -n "$note" ]; then
-            body="${body}     ${C_WAITING}${note:0:$((width - 7))}${C_RESET}${EOL}"$'\n'
+            # 入力待ちの通知は黄色で目立たせ、待機セッションの最後の返答は控えめに
+            local ncolor=$C_DIM
+            [ "$status" = "waiting" ] && ncolor=$C_WAITING
+            body="${body}     ${ncolor}${note:0:$((width - 7))}${C_RESET}${EOL}"$'\n'
         fi
         body="${body}${EOL}"$'\n'
     done <<EOF
