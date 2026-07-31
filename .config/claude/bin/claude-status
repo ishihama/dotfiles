@@ -33,7 +33,8 @@ cleanup_stale() {
 }
 
 # 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
-# フィールド: status / project / tmux_session / tmux_window / tmux_pane / updated_at / message
+# フィールド: status / project / tmux_session / tmux_window / tmux_pane /
+#             tmux_pane_index / updated_at / message
 # 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
 ROW_SEP=$'\x1f'
 
@@ -48,6 +49,7 @@ rows() {
             tmux_session: (.tmux_session // ""),
             tmux_window: (.tmux_window // ""),
             tmux_pane: (.tmux_pane // ""),
+            tmux_pane_index: (.tmux_pane_index // ""),
             updated_at: (.updated_at // 0),
             message: ((if .status == "waiting" then .last_notification else .last_prompt end)
                       // "" | gsub("[\\x00-\\x1f]"; " "))
@@ -55,25 +57,62 @@ rows() {
         | sort_by([(.status | prio), -.updated_at])
         | .[]
         | [.status, .project, .tmux_session, .tmux_window, .tmux_pane,
-           (.updated_at | tostring), .message]
+           .tmux_pane_index, (.updated_at | tostring), .message]
         | join("\u001f")
     ' "$@" 2>/dev/null
 }
 
+# 対象セッションを既に表示しているtmuxクライアント (=別のGhosttyウィンドウ) が
+# あれば、そのOSウィンドウを前面化する。tmuxがウィンドウタイトルを
+# "セッション名: ディレクトリ" に設定している (set-titles-string) ことを利用して
+# System Events でタイトル前方一致のGhosttyウィンドウをAXRaiseする。
+# 初回はmacOSのオートメーション許可ダイアログが出る。
+# 無効化: CLAUDE_JUMP_FOCUS_DISABLED=1
+focus_client_window() {
+    local tsess=$1
+    [ "${CLAUDE_JUMP_FOCUS_DISABLED:-0}" = "1" ] && return 1
+    command -v osascript >/dev/null 2>&1 || return 1
+    # 対象セッションにアタッチ中のクライアントがなければ対象外
+    tmux list-clients -F '#{client_session}' 2>/dev/null | grep -qx "$tsess" || return 1
+    osascript - "$tsess" <<'APPLESCRIPT' >/dev/null 2>&1
+on run argv
+    set target to (item 1 of argv) & ": "
+    tell application "System Events"
+        tell process "Ghostty"
+            repeat with w in windows
+                if name of w starts with target then
+                    perform action "AXRaise" of w
+                    set frontmost to true
+                    return
+                end if
+            end repeat
+        end tell
+    end tell
+    error "no matching window"
+end run
+APPLESCRIPT
+}
+
 # 指定のtmux位置に切り替える (セッション → window → pane の順で絞り込み)
+# 対象セッションが別のGhosttyウィンドウに表示されていればウィンドウごと前面化し、
+# なければ現在のクライアントをswitch-clientで切り替える
 jump_to() {
     local tsess=$1 twin=$2 tpane=$3
     [ -z "$tsess" ] && return 1
-    tmux switch-client -t "$tsess" 2>/dev/null || return 1
+    # window/pane選択はセッション単位の状態なので、どのクライアントで表示していても効く
     [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
     [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
+    if focus_client_window "$tsess"; then
+        return 0
+    fi
+    tmux switch-client -t "$tsess" 2>/dev/null || return 1
     return 0
 }
 
 # 最優先セッション (🔔入力待ち > ⚙作業中 > ✓待機) にジャンプ
 render_jump() {
-    local status project tsess twin tpane updated message
-    while IFS="$ROW_SEP" read -r status project tsess twin tpane updated message; do
+    local status project tsess twin tpane tpidx updated message
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message; do
         [ -z "$status" ] && continue
         [ -z "$tsess" ] && continue
         jump_to "$tsess" "$twin" "$tpane" && return 0
@@ -126,8 +165,8 @@ render_list() {
     TARGETS=()
 
     local body=""
-    local status project tsess twin tpane updated message
-    while IFS="$ROW_SEP" read -r status project tsess twin tpane updated message; do
+    local status project tsess twin tpane tpidx updated message
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message; do
         [ -z "$status" ] && continue
         total=$((total + 1))
         case "$status" in
@@ -135,7 +174,23 @@ render_list() {
             waiting) cn=$((cn + 1)) ;;
             *)       ci=$((ci + 1)) ;;
         esac
+        # 表示名はtmuxセッション名を優先。ただしセッション名からプロジェクトが
+        # 判別できない場合 (例: Ghostty既定の "main" セッション) はプロジェクト名を併記
         local name=${tsess:-$project}
+        if [ -n "$tsess" ] && [ -n "$project" ] && [ "$project" != "?" ]; then
+            local tsess_lc project_lc
+            tsess_lc=$(printf '%s' "$tsess" | tr '[:upper:]' '[:lower:]')
+            project_lc=$(printf '%s' "$project" | tr '[:upper:]' '[:lower:]')
+            if [[ "$tsess_lc" != *"$project_lc"* ]]; then
+                name="${tsess}:${project}"
+            fi
+        fi
+        # 同一tmuxセッション内で複数Claudeを走らせても区別できるよう
+        # window.pane 位置を併記 (例: "ishihama-dotfiles 2.1")
+        local loc=""
+        if [ -n "$twin" ]; then
+            loc=" ${twin}${tpidx:+.$tpidx}"
+        fi
         local age glyph color idx=""
         age=$(fmt_age $((now - updated)))
         glyph=$(glyph_for "$status")
@@ -146,7 +201,7 @@ render_list() {
         else
             idx="  "
         fi
-        body="${body} ${idx}${color}${glyph} ${name:0:$((width - 14))}${C_RESET} ${C_DIM}(${age})${C_RESET}${EOL}"$'\n'
+        body="${body} ${idx}${color}${glyph} ${name:0:$((width - 14))}${C_RESET}${C_DIM}${loc} (${age})${C_RESET}${EOL}"$'\n'
         if [ -n "$message" ]; then
             body="${body}     ${C_DIM}${message:0:$((width - 7))}${C_RESET}${EOL}"$'\n'
         fi
