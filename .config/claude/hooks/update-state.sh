@@ -5,7 +5,7 @@
 # for the claude-status display script (tmux sidebar / status bar).
 #
 # Usage: update-state.sh <event_type>
-#   events: session_start | prompt_submit | stop | notification | session_end
+#   events: session_start | prompt_submit | stop | notification | tool_use | session_end
 #
 # Reads Claude Code hook input as JSON on stdin. Always exits 0 so a failure
 # here can never break Claude.
@@ -133,6 +133,27 @@ case "$EVENT" in
                 project: $project,
                 status: "waiting",
                 last_notification: $msg,
+                updated_at: $now
+            }' > "$TMP_FILE" 2>/dev/null
+        ;;
+
+    tool_use)
+        # PostToolUse: プラン承認・パーミッション許可のダイアログ応答には
+        # hookイベントが存在しないため、承認後にツールが実行された時点で
+        # waiting → working に戻す。既にworkingなら書き込みを省略
+        # (PostToolUseは全ツール実行ごとに発火するため無駄な書き込みを避ける)
+        CUR_STATUS=$(printf '%s' "$EXISTING" | jq -r '.status // ""' 2>/dev/null)
+        [ "$CUR_STATUS" = "working" ] && exit 0
+        printf '%s' "$EXISTING" | jq \
+            --arg sid "$SESSION_ID" \
+            --arg cwd "$CWD" \
+            --arg project "$PROJECT" \
+            --argjson now "$NOW" \
+            '. + {
+                session_id: $sid,
+                cwd: $cwd,
+                project: $project,
+                status: "working",
                 updated_at: $now
             }' > "$TMP_FILE" 2>/dev/null
         ;;
