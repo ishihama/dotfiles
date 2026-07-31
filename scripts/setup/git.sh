@@ -158,6 +158,19 @@ EOF
 }
 
 setup_git() {
+    # This module is interactive and writes ~/.gitconfig.*, generates SSH keys
+    # and uploads them to GitHub - none of which can be meaningfully previewed.
+    if is_dry_run; then
+        if [ -f "$HOME/.gitconfig.local" ]; then
+            log_info "[DRY RUN] ~/.gitconfig.local exists; would offer to reconfigure"
+        else
+            log_info "[DRY RUN] would prompt for Git accounts and write ~/.gitconfig.local,"
+            log_info "[DRY RUN]   ~/.gitconfig.personal, ~/.gitconfig.work, ~/.config/gh/account-map"
+            log_info "[DRY RUN]   and offer to generate an SSH key and register it with GitHub"
+        fi
+        return 0
+    fi
+
     # Check if .gitconfig.local already exists
     if [ -f "$HOME/.gitconfig.local" ]; then
         log_skip "Git configuration already exists at ~/.gitconfig.local"

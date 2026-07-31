@@ -2,7 +2,9 @@
 # init.sh - Dotfiles setup orchestrator
 # This script coordinates the setup process using modular scripts
 
-set -euo pipefail
+# -E so the ERR trap below is inherited by shell functions; without it
+# error_handler never fires.
+set -Eeuo pipefail
 
 # Determine script directory
 DOTFILES_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -41,19 +43,27 @@ main() {
     run_setup_module "git" "Configuring Git"
     run_setup_module "tools" "Installing additional tools"
 
-    # Validation
+    # Validation. A failing check is worth reporting, but it must not swallow
+    # the summary and next-steps output below.
     echo
     log_section "Validation"
+    local validation_rc=0
     if [ -f "$SCRIPTS_DIR/validate.sh" ]; then
-        "$SCRIPTS_DIR/validate.sh"
+        "$SCRIPTS_DIR/validate.sh" || validation_rc=$?
     else
         log_warn "Validation script not found"
     fi
 
-    # Success
     echo
-    log_success "Setup complete!"
+    if [ "$validation_rc" -ne 0 ]; then
+        log_warn "Setup finished, but some validations failed (see above)"
+    elif is_dry_run; then
+        log_success "Dry run complete - no changes were made"
+    else
+        log_success "Setup complete!"
+    fi
     print_next_steps
+    return "$validation_rc"
 }
 
 # Print helpful next steps

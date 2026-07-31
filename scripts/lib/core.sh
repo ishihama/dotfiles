@@ -59,16 +59,78 @@ command_exists() {
     command -v "$1" >/dev/null 2>&1
 }
 
+# True when --dry-run was passed to init.sh
+is_dry_run() {
+    [ "$DRY_RUN" = true ]
+}
+
+# Run a command, or describe it when in dry-run mode.
+# Usage: run_cmd rm -rf "$target"
+# NOTE: this takes a plain argv - it cannot carry shell redirections or pipes.
+#       Guard those with `is_dry_run` at the call site instead.
+run_cmd() {
+    if is_dry_run; then
+        log_info "[DRY RUN] would run: $*"
+        return 0
+    fi
+    "$@"
+}
+
+# Download a remote installer to a temp file and echo its path.
+# The caller is responsible for removing the file.
+#
+# This exists because `sh -c "$(curl -fsSL ...)"` succeeds silently when the
+# download fails: the command substitution collapses to an empty string and
+# `sh -c ""` exits 0, so the caller happily reports success.
+fetch_installer() {
+    local url=$1
+    local tmp
+    tmp=$(mktemp) || return 1
+
+    if ! curl -fsSL "$url" -o "$tmp"; then
+        log_error "Download failed: $url"
+        rm -f "$tmp"
+        return 1
+    fi
+
+    if [ ! -s "$tmp" ]; then
+        log_error "Downloaded an empty file: $url"
+        rm -f "$tmp"
+        return 1
+    fi
+
+    printf '%s\n' "$tmp"
+}
+
 # Create a timestamped backup of a file or directory
 backup_path() {
     local path=$1
-    if [ -e "$path" ]; then
-        local timestamp=$(date +%Y%m%d%H%M%S)
-        local backup_path="${path}.backup.${timestamp}"
-        cp -r "$path" "$backup_path"
-        log_info "Backed up $path to $backup_path"
+    [ -e "$path" ] || return 1
+
+    if is_dry_run; then
+        log_info "[DRY RUN] would back up: $path"
         return 0
     fi
+
+    local timestamp
+    timestamp=$(date +%Y%m%d%H%M%S)
+    local dest="${path}.backup.${timestamp}"
+
+    # Two backups of the same target within one second must not nest inside
+    # each other, so keep looking until we find a free name.
+    local n=1
+    while [ -e "$dest" ]; do
+        dest="${path}.backup.${timestamp}.${n}"
+        n=$((n + 1))
+    done
+
+    # -P keeps symlinks inside the tree as symlinks instead of dereferencing them
+    if cp -RP "$path" "$dest"; then
+        log_info "Backed up $path to $dest"
+        return 0
+    fi
+
+    log_error "Failed to back up $path"
     return 1
 }
 
@@ -83,23 +145,41 @@ safe_symlink() {
         return 1
     fi
 
-    # If target exists and is not a symlink to source
-    if [ -e "$target" ] && [ "$(readlink "$target")" != "$source" ]; then
-        backup_path "$target"
-        rm -rf "$target"
+    # Already pointing where we want it
+    if [ -L "$target" ] && [ "$(readlink "$target")" = "$source" ]; then
+        log_skip "Already linked: $target"
+        return 0
     fi
 
-    # Create symlink if it doesn't exist or points elsewhere
-    if [ ! -L "$target" ] || [ "$(readlink "$target")" != "$source" ]; then
-        if [ "$DRY_RUN" = true ]; then
-            log_info "[DRY RUN] Would link: $target -> $source"
+    # Something else occupies the target. Clear it out first - but never in
+    # dry-run mode, which must leave the filesystem exactly as it found it.
+    if [ -e "$target" ] || [ -L "$target" ]; then
+        if [ -L "$target" ]; then
+            # A symlink carries no data of its own, so replace it without a backup
+            if is_dry_run; then
+                log_info "[DRY RUN] would replace symlink: $target -> $(readlink "$target")"
+            else
+                rm -f "$target"
+            fi
         else
-            ln -sf "$source" "$target"
-            log_success "Linked: $target -> $source"
+            if is_dry_run; then
+                log_info "[DRY RUN] would back up and remove: $target"
+            else
+                backup_path "$target" || return 1
+                rm -rf "$target"
+            fi
         fi
-    else
-        log_skip "Already linked: $target"
     fi
+
+    if is_dry_run; then
+        log_info "[DRY RUN] would link: $target -> $source"
+        return 0
+    fi
+
+    # -n so that a leftover symlink-to-directory is replaced rather than
+    # having the new link created inside it
+    ln -sfn "$source" "$target"
+    log_success "Linked: $target -> $source"
 }
 
 # Ask for user confirmation (returns 0 for yes, 1 for no)
@@ -157,4 +237,5 @@ run_setup_module() {
 
 # Export functions for use in other scripts
 export -f log_header log_section log_info log_success log_warn log_error log_skip
-export -f error_handler command_exists backup_path safe_symlink confirm run_setup_module
+export -f error_handler command_exists is_dry_run run_cmd fetch_installer
+export -f backup_path safe_symlink confirm run_setup_module
