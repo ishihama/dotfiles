@@ -91,10 +91,22 @@ function gwq-tmux() {
 
 # tmux session switcher (fzf + preview)
 function tmux-session-fzf() {
+    # Claude Code状態グリフ (⚙作業中 / 🔔入力待ち / ✓待機) を先頭列に付与
+    local states="$("$HOME/.config/claude/bin/claude-status" sessions 2>/dev/null)"
     local session=$(tmux list-sessions -F '#{session_name}' | \
+        awk -v states="$states" '
+            BEGIN {
+                n = split(states, lines, "\n")
+                for (i = 1; i <= n; i++) {
+                    split(lines[i], kv, "\t")
+                    if (kv[1] != "") glyph[kv[1]] = kv[2]
+                }
+            }
+            { printf "%s\t%s\n", ($0 in glyph ? glyph[$0] : " "), $0 }' | \
         fzf --prompt="Session > " \
-            --preview="tmux list-windows -t {} -F '  #{window_index}: #{window_name} [#{pane_current_command}] #{?window_active,(active),}'" \
-            --preview-window=right:50%)
+            --delimiter='\t' \
+            --preview="tmux list-windows -t {2} -F '  #{window_index}: #{window_name} [#{pane_current_command}] #{?window_active,(active),}'" \
+            --preview-window=right:50% | cut -f2)
 
     [[ -z "$session" ]] && return
 

@@ -1,0 +1,240 @@
+#!/usr/bin/env bash
+# claude-status - Claude Code セッション状態表示 (herdr風)
+#
+# .config/claude/hooks/update-state.sh が hooks 経由で書き込む
+# ~/.local/state/claude/sessions/*.json を読んで表示する。
+#
+# Usage:
+#   claude-status bar       # tmux status-right 用の状態別カウント (#[fg=..]付き)
+#   claude-status list      # サイドバー1画面分を描画
+#   claude-status watch     # list をループ描画 (サイドバーpane用、q で終了)
+#   claude-status sessions  # "tmux_session<TAB>glyph" 一覧 (fzf装飾用)
+#   claude-status jump      # 最優先セッション (🔔入力待ち優先) にジャンプ (tmux prefix+u)
+
+export PATH="/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+
+STATE_DIR="${HOME}/.local/state/claude/sessions"
+
+GLYPH_WORKING="⚙"
+GLYPH_WAITING="🔔"
+GLYPH_IDLE="✓"
+
+# Catppuccin Mocha
+C_WORKING=$'\033[38;2;137;180;250m'   # blue
+C_WAITING=$'\033[38;2;249;226;175m'   # yellow
+C_IDLE=$'\033[38;2;108;112;134m'      # overlay0
+C_DIM=$'\033[38;2;127;132;156m'       # overlay1
+C_BOLD=$'\033[1m'
+C_RESET=$'\033[0m'
+
+# 異常終了で残った1日以上前の状態ファイルを掃除
+cleanup_stale() {
+    find "$STATE_DIR" -name '*.json' -mmin +1440 -delete 2>/dev/null
+}
+
+# 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
+# フィールド: status / project / tmux_session / tmux_window / tmux_pane / updated_at / message
+# 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
+ROW_SEP=$'\x1f'
+
+rows() {
+    set -- "$STATE_DIR"/*.json
+    [ -e "$1" ] || return 0
+    jq -rs '
+        def prio: {waiting: 0, working: 1, idle: 2}[.] // 3;
+        map({
+            status: (.status // "idle"),
+            project: (.project // "?"),
+            tmux_session: (.tmux_session // ""),
+            tmux_window: (.tmux_window // ""),
+            tmux_pane: (.tmux_pane // ""),
+            updated_at: (.updated_at // 0),
+            message: ((if .status == "waiting" then .last_notification else .last_prompt end)
+                      // "" | gsub("[\\x00-\\x1f]"; " "))
+        })
+        | sort_by([(.status | prio), -.updated_at])
+        | .[]
+        | [.status, .project, .tmux_session, .tmux_window, .tmux_pane,
+           (.updated_at | tostring), .message]
+        | join("\u001f")
+    ' "$@" 2>/dev/null
+}
+
+# 指定のtmux位置に切り替える (セッション → window → pane の順で絞り込み)
+jump_to() {
+    local tsess=$1 twin=$2 tpane=$3
+    [ -z "$tsess" ] && return 1
+    tmux switch-client -t "$tsess" 2>/dev/null || return 1
+    [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
+    [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
+    return 0
+}
+
+# 最優先セッション (🔔入力待ち > ⚙作業中 > ✓待機) にジャンプ
+render_jump() {
+    local status project tsess twin tpane updated message
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane updated message; do
+        [ -z "$status" ] && continue
+        [ -z "$tsess" ] && continue
+        jump_to "$tsess" "$twin" "$tpane" && return 0
+    done <<EOF
+$(rows)
+EOF
+    return 1
+}
+
+fmt_age() {
+    local s=$1
+    [ "$s" -lt 0 ] && s=0
+    if [ "$s" -lt 60 ]; then
+        printf '%ds' "$s"
+    elif [ "$s" -lt 3600 ]; then
+        printf '%dm' $((s / 60))
+    else
+        printf '%dh%02dm' $((s / 3600)) $(((s % 3600) / 60))
+    fi
+}
+
+glyph_for() {
+    case "$1" in
+        working) printf '%s' "$GLYPH_WORKING" ;;
+        waiting) printf '%s' "$GLYPH_WAITING" ;;
+        *)       printf '%s' "$GLYPH_IDLE" ;;
+    esac
+}
+
+color_for() {
+    case "$1" in
+        working) printf '%s' "$C_WORKING" ;;
+        waiting) printf '%s' "$C_WAITING" ;;
+        *)       printf '%s' "$C_IDLE" ;;
+    esac
+}
+
+# サイドバー描画。ジャンプ先を TARGETS[n] ("session \t window \t pane") に記録する
+TARGETS=()
+
+render_list() {
+    local width=${1:-44}
+    # 極端に狭いpaneでも substring が負数にならないよう下限を設ける
+    [ "$width" -ge 20 ] 2>/dev/null || width=20
+    local now total=0 cw=0 cn=0 ci=0
+    now=$(date +%s)
+    TARGETS=()
+
+    local body=""
+    local status project tsess twin tpane updated message
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane updated message; do
+        [ -z "$status" ] && continue
+        total=$((total + 1))
+        case "$status" in
+            working) cw=$((cw + 1)) ;;
+            waiting) cn=$((cn + 1)) ;;
+            *)       ci=$((ci + 1)) ;;
+        esac
+        local name=${tsess:-$project}
+        local age glyph color idx=""
+        age=$(fmt_age $((now - updated)))
+        glyph=$(glyph_for "$status")
+        color=$(color_for "$status")
+        if [ "$total" -le 9 ] && [ -n "$tsess" ]; then
+            TARGETS[$total]="${tsess}"$'\t'"${twin}"$'\t'"${tpane}"
+            idx="${C_DIM}${total}${C_RESET} "
+        else
+            idx="  "
+        fi
+        body="${body} ${idx}${color}${glyph} ${name:0:$((width - 14))}${C_RESET} ${C_DIM}(${age})${C_RESET}"$'\n'
+        if [ -n "$message" ]; then
+            body="${body}     ${C_DIM}${message:0:$((width - 7))}${C_RESET}"$'\n'
+        fi
+        body="${body}"$'\n'
+    done <<EOF
+$(rows)
+EOF
+
+    printf ' %sClaude Code sessions%s\n' "$C_BOLD" "$C_RESET"
+    printf ' %s%s %d  %s%s %d  %s%s %d%s\n' \
+        "$C_WAITING" "$GLYPH_WAITING" "$cn" \
+        "$C_WORKING" "$GLYPH_WORKING" "$cw" \
+        "$C_IDLE" "$GLYPH_IDLE" "$ci" "$C_RESET"
+    printf ' %s%s%s\n\n' "$C_DIM" "──────────────────────────" "$C_RESET"
+
+    if [ "$total" -eq 0 ]; then
+        printf ' %s(no active sessions)%s\n' "$C_DIM" "$C_RESET"
+    else
+        printf '%s' "$body"
+    fi
+}
+
+watch_loop() {
+    tput civis 2>/dev/null
+    trap 'tput cnorm 2>/dev/null' EXIT
+    local key target
+    while :; do
+        printf '\033[H\033[2J'
+        render_list "$(tput cols 2>/dev/null || echo 44)"
+        printf ' %s1-9: jump  q: close%s\n' "$C_DIM" "$C_RESET"
+        key=""
+        read -r -t 2 -n 1 key 2>/dev/null
+        case "$key" in
+            q) break ;;
+            [1-9])
+                target="${TARGETS[$key]:-}"
+                if [ -n "$target" ]; then
+                    jump_to "${target%%$'\t'*}" \
+                            "$(printf '%s' "$target" | cut -f2)" \
+                            "$(printf '%s' "$target" | cut -f3)"
+                fi
+                ;;
+        esac
+    done
+}
+
+render_bar() {
+    local cw=0 cn=0 ci=0
+    local status _rest
+    while IFS="$ROW_SEP" read -r status _rest; do
+        case "$status" in
+            working) cw=$((cw + 1)) ;;
+            waiting) cn=$((cn + 1)) ;;
+            idle)    ci=$((ci + 1)) ;;
+        esac
+    done <<EOF
+$(rows)
+EOF
+    local seg=""
+    [ "$cn" -gt 0 ] && seg="${seg}#[fg=#f9e2af]${GLYPH_WAITING}${cn} "
+    [ "$cw" -gt 0 ] && seg="${seg}#[fg=#89b4fa]${GLYPH_WORKING}${cw} "
+    [ "$ci" -gt 0 ] && seg="${seg}#[fg=#6c7086]${GLYPH_IDLE}${ci} "
+    printf '%s' "$seg"
+}
+
+# tmuxセッションごとに最優先状態 (waiting > working > idle) のグリフを返す
+render_sessions() {
+    set -- "$STATE_DIR"/*.json
+    [ -e "$1" ] || return 0
+    jq -rs '
+        def prio: {waiting: 0, working: 1, idle: 2}[.] // 3;
+        def glyph: {waiting: "🔔", working: "⚙", idle: "✓"}[.] // "✓";
+        map(select(.tmux_session != null and .tmux_session != ""))
+        | group_by(.tmux_session)
+        | .[]
+        | [.[0].tmux_session, (map(.status // "idle") | min_by(prio) | glyph)]
+        | @tsv
+    ' "$@" 2>/dev/null
+}
+
+mkdir -p "$STATE_DIR" 2>/dev/null
+cleanup_stale
+
+case "${1:-list}" in
+    bar)      render_bar ;;
+    list)     render_list "$(tput cols 2>/dev/null || echo 44)" ;;
+    watch)    watch_loop ;;
+    sessions) render_sessions ;;
+    jump)     render_jump ;;
+    *)
+        echo "Usage: claude-status [bar|list|watch|sessions|jump]" >&2
+        exit 1
+        ;;
+esac
