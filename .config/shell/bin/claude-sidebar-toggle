@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Claude状態サイドバーのトグル (tmux prefix+a)
 # 現在のwindowの右端に claude-status watch のpaneを開閉する
-export PATH="/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+export PATH="/opt/homebrew/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin:$PATH"
 
 pane=$(tmux show-option -wqv @claude_sidebar_pane)
 if [ -n "$pane" ] && tmux list-panes -F '#{pane_id}' | grep -qx "$pane"; then

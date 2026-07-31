@@ -19,7 +19,9 @@ if [[ -o interactive ]]; then
             local repo_path="${ghq_root}/${repo}"
             local session_name
             session_name=$(echo "$repo" | awk -F'/' '{print $(NF-1)"-"$NF}' | tr '.' '-')
-            BUFFER="ghq-tmux-exec '$session_name' '$repo_path'"
+            # ${(q)} quoting: repo paths come from on-disk directory names and
+            # may contain quotes or $(...), which zle accept-line would execute.
+            BUFFER="ghq-tmux-exec ${(q)session_name} ${(q)repo_path}"
             zle accept-line
         fi
         zle reset-prompt
@@ -32,14 +34,17 @@ function ghq-tmux-exec() {
     local session_name="$1"
     local repo_path="$2"
 
-    if ! tmux has-session -t "$session_name" 2>/dev/null; then
-        tmux new-session -d -s "$session_name" -c "$repo_path"
+    # "=" forces an exact match. Without it tmux resolves -t by prefix/fnmatch,
+    # so has-session -t api succeeds when only api-server exists and we end up
+    # switching into an unrelated repository.
+    if ! tmux has-session -t "=$session_name" 2>/dev/null; then
+        tmux new-session -d -s "$session_name" -c "$repo_path" || return 1
     fi
 
     if [[ -n "$TMUX" ]]; then
-        tmux switch-client -t "$session_name"
+        tmux switch-client -t "=$session_name"
     elif [[ -t 0 ]]; then
-        tmux attach-session -t "$session_name"
+        tmux attach-session -t "=$session_name"
     else
         echo "Session '$session_name' created. Run: tmux attach -t '$session_name'"
     fi

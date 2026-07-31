@@ -1,19 +1,25 @@
 # platform.sh - OS detection, platform-specific config, SDKMAN
 
 # OS Type
-if [ "$(uname)" = 'Darwin' ]; then
-    source ${HOME}/.zshrc.osx
-elif [ "$(uname)" = 'Linux' ]; then
-    source ${HOME}/.zshrc.linux
-else
-    echo "Unknown OS Type....."
-fi
+case "$(uname)" in
+    Darwin) [[ -f "${HOME}/.zshrc.osx" ]] && source "${HOME}/.zshrc.osx" ;;
+    Linux)  [[ -f "${HOME}/.zshrc.linux" ]] && source "${HOME}/.zshrc.linux" ;;
+    *)      print -u2 "platform.sh: unknown OS type $(uname)" ;;
+esac
 
 autoload -U +X bashcompinit && bashcompinit
 
 # SDKMAN (via Homebrew)
-# Temporarily unalias find (SDKMAN init script uses find -type)
-unalias find 2>/dev/null
-export SDKMAN_DIR=$(brew --prefix sdkman-cli)/libexec
-[[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]] && source "${SDKMAN_DIR}/bin/sdkman-init.sh"
-alias find='fd'  # Restore
+if command -v brew >/dev/null 2>&1; then
+    export SDKMAN_DIR="$(brew --prefix sdkman-cli 2>/dev/null)/libexec"
+    if [[ -s "${SDKMAN_DIR}/bin/sdkman-init.sh" ]]; then
+        # The SDKMAN init script calls `find -type`, which breaks against the
+        # find->fd alias, so drop it for the duration and restore afterwards.
+        # aliases.sh only defines it in interactive shells, so only restore it
+        # there - otherwise this would reintroduce the alias that non-interactive
+        # shells (Claude Code's Bash tool, CI scripts) rely on not existing.
+        unalias find 2>/dev/null
+        source "${SDKMAN_DIR}/bin/sdkman-init.sh"
+        [[ -o interactive ]] && alias find='fd'
+    fi
+fi
