@@ -1,8 +1,8 @@
 -- lazy.nvim bootstrap and plugin setup
 
 local lazypath = vim.fn.stdpath("data") .. "/lazy/lazy.nvim"
-if not vim.loop.fs_stat(lazypath) then
-  vim.fn.system({
+if not vim.uv.fs_stat(lazypath) then
+  local out = vim.fn.system({
     "git",
     "clone",
     "--filter=blob:none",
@@ -10,6 +10,16 @@ if not vim.loop.fs_stat(lazypath) then
     "--branch=stable",
     lazypath,
   })
+  -- Without this an offline first launch fails later with an opaque
+  -- "module 'lazy' not found" instead of naming the real cause.
+  if vim.v.shell_error ~= 0 then
+    vim.api.nvim_echo({
+      { "Failed to clone lazy.nvim:\n", "ErrorMsg" },
+      { out, "WarningMsg" },
+      { "\nCheck your network connection and restart Neovim.", "WarningMsg" },
+    }, true, {})
+    return
+  end
 end
 vim.opt.rtp:prepend(lazypath)
 

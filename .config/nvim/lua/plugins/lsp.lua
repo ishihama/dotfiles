@@ -54,20 +54,30 @@ return {
         },
         float = {
           border = "rounded",
-          source = "always",
+          -- boolean since 0.10; the string form "always" is deprecated
+          source = true,
         },
-        signs = true,
+        -- Sign text must be configured here. The old vim.fn.sign_define
+        -- ("DiagnosticSignError" etc.) route is ignored by current Neovim,
+        -- so these icons never actually appeared in the gutter.
+        signs = {
+          text = {
+            [vim.diagnostic.severity.ERROR] = " ",
+            [vim.diagnostic.severity.WARN] = " ",
+            [vim.diagnostic.severity.HINT] = " ",
+            [vim.diagnostic.severity.INFO] = " ",
+          },
+          numhl = {
+            [vim.diagnostic.severity.ERROR] = "DiagnosticSignError",
+            [vim.diagnostic.severity.WARN] = "DiagnosticSignWarn",
+            [vim.diagnostic.severity.HINT] = "DiagnosticSignHint",
+            [vim.diagnostic.severity.INFO] = "DiagnosticSignInfo",
+          },
+        },
         underline = true,
         update_in_insert = false,
         severity_sort = true,
       })
-
-      -- Diagnostic signs
-      local signs = { Error = " ", Warn = " ", Hint = " ", Info = " " }
-      for type, icon in pairs(signs) do
-        local hl = "DiagnosticSign" .. type
-        vim.fn.sign_define(hl, { text = icon, texthl = hl, numhl = hl })
-      end
 
       -- LSP keymaps (set on LspAttach)
       vim.api.nvim_create_autocmd("LspAttach", {
@@ -112,7 +122,11 @@ return {
         rust_analyzer = {
           settings = {
             ["rust-analyzer"] = {
-              checkOnSave = {
+              -- Current rust-analyzer expects a boolean here and takes the
+              -- command from check.command. The old table form is rejected,
+              -- so clippy-on-save silently never ran.
+              checkOnSave = true,
+              check = {
                 command = "clippy",
               },
             },
