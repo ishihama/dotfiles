@@ -9,6 +9,7 @@
 #   claude-status list      # サイドバー1画面分を描画
 #   claude-status watch     # list をループ描画 (サイドバーpane用、q で終了)
 #   claude-status sessions  # "tmux_session<TAB>glyph" 一覧 (fzf装飾用)
+#   claude-status jump      # 最優先セッション (🔔入力待ち優先) にジャンプ (tmux prefix+u)
 
 export PATH="/opt/homebrew/bin:/usr/bin:/bin:$PATH"
 
@@ -31,8 +32,11 @@ cleanup_stale() {
     find "$STATE_DIR" -name '*.json' -mmin +1440 -delete 2>/dev/null
 }
 
-# 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で
-# TSV出力: status \t project \t tmux_session \t updated_at \t message
+# 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
+# フィールド: status / project / tmux_session / tmux_window / tmux_pane / updated_at / message
+# 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
+ROW_SEP=$'\x1f'
+
 rows() {
     set -- "$STATE_DIR"/*.json
     [ -e "$1" ] || return 0
@@ -42,15 +46,41 @@ rows() {
             status: (.status // "idle"),
             project: (.project // "?"),
             tmux_session: (.tmux_session // ""),
+            tmux_window: (.tmux_window // ""),
+            tmux_pane: (.tmux_pane // ""),
             updated_at: (.updated_at // 0),
             message: ((if .status == "waiting" then .last_notification else .last_prompt end)
-                      // "" | gsub("[\n\t]"; " "))
+                      // "" | gsub("[\\x00-\\x1f]"; " "))
         })
         | sort_by([(.status | prio), -.updated_at])
         | .[]
-        | [.status, .project, .tmux_session, (.updated_at | tostring), .message]
-        | @tsv
+        | [.status, .project, .tmux_session, .tmux_window, .tmux_pane,
+           (.updated_at | tostring), .message]
+        | join("\u001f")
     ' "$@" 2>/dev/null
+}
+
+# 指定のtmux位置に切り替える (セッション → window → pane の順で絞り込み)
+jump_to() {
+    local tsess=$1 twin=$2 tpane=$3
+    [ -z "$tsess" ] && return 1
+    tmux switch-client -t "$tsess" 2>/dev/null || return 1
+    [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
+    [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
+    return 0
+}
+
+# 最優先セッション (🔔入力待ち > ⚙作業中 > ✓待機) にジャンプ
+render_jump() {
+    local status project tsess twin tpane updated message
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane updated message; do
+        [ -z "$status" ] && continue
+        [ -z "$tsess" ] && continue
+        jump_to "$tsess" "$twin" "$tpane" && return 0
+    done <<EOF
+$(rows)
+EOF
+    return 1
 }
 
 fmt_age() {
@@ -81,16 +111,20 @@ color_for() {
     esac
 }
 
+# サイドバー描画。ジャンプ先を TARGETS[n] ("session \t window \t pane") に記録する
+TARGETS=()
+
 render_list() {
     local width=${1:-44}
     # 極端に狭いpaneでも substring が負数にならないよう下限を設ける
     [ "$width" -ge 20 ] 2>/dev/null || width=20
     local now total=0 cw=0 cn=0 ci=0
     now=$(date +%s)
+    TARGETS=()
 
     local body=""
-    local status project tsess updated message
-    while IFS=$'\t' read -r status project tsess updated message; do
+    local status project tsess twin tpane updated message
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane updated message; do
         [ -z "$status" ] && continue
         total=$((total + 1))
         case "$status" in
@@ -99,13 +133,19 @@ render_list() {
             *)       ci=$((ci + 1)) ;;
         esac
         local name=${tsess:-$project}
-        local age glyph color
+        local age glyph color idx=""
         age=$(fmt_age $((now - updated)))
         glyph=$(glyph_for "$status")
         color=$(color_for "$status")
-        body="${body} ${color}${glyph} ${name:0:$((width - 12))}${C_RESET} ${C_DIM}(${age})${C_RESET}"$'\n'
+        if [ "$total" -le 9 ] && [ -n "$tsess" ]; then
+            TARGETS[$total]="${tsess}"$'\t'"${twin}"$'\t'"${tpane}"
+            idx="${C_DIM}${total}${C_RESET} "
+        else
+            idx="  "
+        fi
+        body="${body} ${idx}${color}${glyph} ${name:0:$((width - 14))}${C_RESET} ${C_DIM}(${age})${C_RESET}"$'\n'
         if [ -n "$message" ]; then
-            body="${body}   ${C_DIM}${message:0:$((width - 5))}${C_RESET}"$'\n'
+            body="${body}     ${C_DIM}${message:0:$((width - 7))}${C_RESET}"$'\n'
         fi
         body="${body}"$'\n'
     done <<EOF
@@ -129,21 +169,31 @@ EOF
 watch_loop() {
     tput civis 2>/dev/null
     trap 'tput cnorm 2>/dev/null' EXIT
-    local key
+    local key target
     while :; do
         printf '\033[H\033[2J'
         render_list "$(tput cols 2>/dev/null || echo 44)"
-        printf ' %sq: close%s\n' "$C_DIM" "$C_RESET"
+        printf ' %s1-9: jump  q: close%s\n' "$C_DIM" "$C_RESET"
         key=""
         read -r -t 2 -n 1 key 2>/dev/null
-        [ "$key" = "q" ] && break
+        case "$key" in
+            q) break ;;
+            [1-9])
+                target="${TARGETS[$key]:-}"
+                if [ -n "$target" ]; then
+                    jump_to "${target%%$'\t'*}" \
+                            "$(printf '%s' "$target" | cut -f2)" \
+                            "$(printf '%s' "$target" | cut -f3)"
+                fi
+                ;;
+        esac
     done
 }
 
 render_bar() {
     local cw=0 cn=0 ci=0
     local status _rest
-    while IFS=$'\t' read -r status _rest; do
+    while IFS="$ROW_SEP" read -r status _rest; do
         case "$status" in
             working) cw=$((cw + 1)) ;;
             waiting) cn=$((cn + 1)) ;;
@@ -182,8 +232,9 @@ case "${1:-list}" in
     list)     render_list "$(tput cols 2>/dev/null || echo 44)" ;;
     watch)    watch_loop ;;
     sessions) render_sessions ;;
+    jump)     render_jump ;;
     *)
-        echo "Usage: claude-status [bar|list|watch|sessions]" >&2
+        echo "Usage: claude-status [bar|list|watch|sessions|jump]" >&2
         exit 1
         ;;
 esac

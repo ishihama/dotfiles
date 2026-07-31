@@ -168,6 +168,20 @@ if [ -n "$TMUX" ] && [ -n "$TMUX_PANE" ] && [ -s "$STATE_FILE" ]; then
     tmux refresh-client -S 2>/dev/null
 fi
 
+# 入力待ち (許可プロンプト等) になったらmacOS通知センターに表示する。
+# 引数渡し (on run argv) なのでメッセージ内の引用符での注入は起きない。
+# 無効化: CLAUDE_NOTIFY_DISABLED=1
+if [ "$EVENT" = "notification" ] \
+   && [ "${CLAUDE_NOTIFY_DISABLED:-0}" != "1" ] \
+   && command -v osascript >/dev/null 2>&1; then
+    osascript \
+        -e 'on run argv' \
+        -e 'display notification (item 1 of argv) with title (item 2 of argv)' \
+        -e 'end run' \
+        "${MESSAGE:-Waiting for input}" "Claude Code: ${PROJECT}" \
+        >/dev/null 2>&1 &
+fi
+
 # After a Stop event, schedule a screensaver popup if the session stays idle.
 # Detach fully so Claude Code's hook executor does not wait on us.
 #

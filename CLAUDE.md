@@ -182,9 +182,11 @@ dotfiles/
 
 **Claude Code Status Display (herdr-style, `prefix+a`)**
 - Claude Code hooks (`.config/claude/hooks/update-state.sh`) record each session's state (working/waiting/idle) plus its tmux session/window/pane to `~/.local/state/claude/sessions/*.json`
-- `.config/claude/bin/claude-status` renders the state: `bar` (status-right counts, refreshed instantly via `tmux refresh-client -S` from the hook), `watch` (sidebar pane loop), `sessions` (per-tmux-session glyphs for fzf)
-- `prefix+a` toggles a sidebar pane (`.config/shell/bin/claude-sidebar-toggle`) listing all Claude sessions with state glyph (🔔 waiting for input / ⚙ working / ✓ idle), age, and last prompt/notification; `q` closes it
+- `.config/claude/bin/claude-status` renders the state: `bar` (status-right counts, refreshed instantly via `tmux refresh-client -S` from the hook), `watch` (sidebar pane loop), `sessions` (per-tmux-session glyphs for fzf), `jump` (switch to highest-priority session)
+- `prefix+a` toggles a sidebar pane (`.config/shell/bin/claude-sidebar-toggle`) listing all Claude sessions with state glyph (🔔 waiting for input / ⚙ working / ✓ idle), age, and last prompt/notification; keys `1-9` jump to that session's pane, `q` closes it
+- `prefix+u` jumps to the highest-priority Claude session (waiting > working > idle)
 - `tmux-session-fzf` (prefix+s) shows the same glyphs next to session names
+- The Notification hook also posts to macOS Notification Center (injection-safe via `osascript` argv; disable with `CLAUDE_NOTIFY_DISABLED=1`)
 - Stale state files (>24h) are cleaned automatically; state detection is hook-based (exact), unlike herdr's screen-scraping heuristics
 
 **Modern CLI Tool Aliases**
