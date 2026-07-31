@@ -60,13 +60,50 @@ rows() {
     ' "$@" 2>/dev/null
 }
 
+# 対象セッションを既に表示しているtmuxクライアント (=別のGhosttyウィンドウ) が
+# あれば、そのOSウィンドウを前面化する。tmuxがウィンドウタイトルを
+# "セッション名: ディレクトリ" に設定している (set-titles-string) ことを利用して
+# System Events でタイトル前方一致のGhosttyウィンドウをAXRaiseする。
+# 初回はmacOSのオートメーション許可ダイアログが出る。
+# 無効化: CLAUDE_JUMP_FOCUS_DISABLED=1
+focus_client_window() {
+    local tsess=$1
+    [ "${CLAUDE_JUMP_FOCUS_DISABLED:-0}" = "1" ] && return 1
+    command -v osascript >/dev/null 2>&1 || return 1
+    # 対象セッションにアタッチ中のクライアントがなければ対象外
+    tmux list-clients -F '#{client_session}' 2>/dev/null | grep -qx "$tsess" || return 1
+    osascript - "$tsess" <<'APPLESCRIPT' >/dev/null 2>&1
+on run argv
+    set target to (item 1 of argv) & ": "
+    tell application "System Events"
+        tell process "Ghostty"
+            repeat with w in windows
+                if name of w starts with target then
+                    perform action "AXRaise" of w
+                    set frontmost to true
+                    return
+                end if
+            end repeat
+        end tell
+    end tell
+    error "no matching window"
+end run
+APPLESCRIPT
+}
+
 # 指定のtmux位置に切り替える (セッション → window → pane の順で絞り込み)
+# 対象セッションが別のGhosttyウィンドウに表示されていればウィンドウごと前面化し、
+# なければ現在のクライアントをswitch-clientで切り替える
 jump_to() {
     local tsess=$1 twin=$2 tpane=$3
     [ -z "$tsess" ] && return 1
-    tmux switch-client -t "$tsess" 2>/dev/null || return 1
+    # window/pane選択はセッション単位の状態なので、どのクライアントで表示していても効く
     [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
     [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
+    if focus_client_window "$tsess"; then
+        return 0
+    fi
+    tmux switch-client -t "$tsess" 2>/dev/null || return 1
     return 0
 }
 
