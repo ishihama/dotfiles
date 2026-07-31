@@ -135,7 +135,17 @@ render_list() {
             waiting) cn=$((cn + 1)) ;;
             *)       ci=$((ci + 1)) ;;
         esac
+        # 表示名はtmuxセッション名を優先。ただしセッション名からプロジェクトが
+        # 判別できない場合 (例: Ghostty既定の "main" セッション) はプロジェクト名を併記
         local name=${tsess:-$project}
+        if [ -n "$tsess" ] && [ -n "$project" ] && [ "$project" != "?" ]; then
+            local tsess_lc project_lc
+            tsess_lc=$(printf '%s' "$tsess" | tr '[:upper:]' '[:lower:]')
+            project_lc=$(printf '%s' "$project" | tr '[:upper:]' '[:lower:]')
+            if [[ "$tsess_lc" != *"$project_lc"* ]]; then
+                name="${tsess}:${project}"
+            fi
+        fi
         local age glyph color idx=""
         age=$(fmt_age $((now - updated)))
         glyph=$(glyph_for "$status")
