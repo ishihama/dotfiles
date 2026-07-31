@@ -88,16 +88,32 @@ case "$EVENT" in
         ;;
 
     stop)
+        # トランスクリプト末尾からClaudeの最後の返答を抽出する
+        # (サイドバーで「何と言って終わったか」を表示するため)。
+        # tail -c で切れた先頭の不完全なJSON行は tail -n +2 で捨てる
+        TRANSCRIPT=$(jget '.transcript_path')
+        LAST_REPLY=""
+        if [ -n "$TRANSCRIPT" ] && [ -f "$TRANSCRIPT" ]; then
+            # jq内で改行を潰して1メッセージ=1行にしてから最後の行を取る
+            LAST_REPLY=$(tail -c 200000 "$TRANSCRIPT" 2>/dev/null | tail -n +2 | \
+                jq -r 'select(.type == "assistant")
+                       | [.message.content[]? | select(.type == "text") | .text]
+                       | join(" ")
+                       | gsub("\\s+"; " ") | sub("^ "; "") | sub(" $"; "")' 2>/dev/null | \
+                grep -v '^$' | tail -1 | head -c 200)
+        fi
         printf '%s' "$EXISTING" | jq \
             --arg sid "$SESSION_ID" \
             --arg cwd "$CWD" \
             --arg project "$PROJECT" \
+            --arg reply "$LAST_REPLY" \
             --argjson now "$NOW" \
             '. + {
                 session_id: $sid,
                 cwd: $cwd,
                 project: $project,
                 status: "idle",
+                last_reply: $reply,
                 updated_at: $now,
                 last_idle_at: $now
             }' > "$TMP_FILE" 2>/dev/null
