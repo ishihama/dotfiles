@@ -34,7 +34,8 @@ cleanup_stale() {
 
 # 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
 # フィールド: status / project / tmux_session / tmux_window / tmux_pane /
-#             tmux_pane_index / updated_at / message
+#             tmux_pane_index / updated_at / message / note
+# message は最後のプロンプト (=何の作業か)。note は入力待ち時の通知メッセージ
 # 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
 ROW_SEP=$'\x1f'
 
@@ -51,13 +52,14 @@ rows() {
             tmux_pane: (.tmux_pane // ""),
             tmux_pane_index: (.tmux_pane_index // ""),
             updated_at: (.updated_at // 0),
-            message: ((if .status == "waiting" then .last_notification else .last_prompt end)
-                      // "" | gsub("[\\x00-\\x1f]"; " "))
+            message: (.last_prompt // "" | gsub("[\\x00-\\x1f]"; " ")),
+            note: ((if .status == "waiting" then .last_notification else "" end)
+                   // "" | gsub("[\\x00-\\x1f]"; " "))
         })
         | sort_by([(.status | prio), -.updated_at])
         | .[]
         | [.status, .project, .tmux_session, .tmux_window, .tmux_pane,
-           .tmux_pane_index, (.updated_at | tostring), .message]
+           .tmux_pane_index, (.updated_at | tostring), .message, .note]
         | join("\u001f")
     ' "$@" 2>/dev/null
 }
@@ -169,8 +171,8 @@ EOF
 
 # 最優先セッション (🔔入力待ち > ⚙作業中 > ✓待機) にジャンプ
 render_jump() {
-    local status project tsess twin tpane tpidx updated message
-    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message; do
+    local status project tsess twin tpane tpidx updated message note
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message note; do
         [ -z "$status" ] && continue
         [ -z "$tsess" ] && continue
         jump_to "$tsess" "$twin" "$tpane" && return 0
@@ -223,8 +225,8 @@ render_list() {
     TARGETS=()
 
     local body=""
-    local status project tsess twin tpane tpidx updated message
-    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message; do
+    local status project tsess twin tpane tpidx updated message note
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message note; do
         [ -z "$status" ] && continue
         total=$((total + 1))
         case "$status" in
@@ -262,6 +264,9 @@ render_list() {
         body="${body} ${idx}${color}${glyph} ${name:0:$((width - 14))}${C_RESET}${C_DIM}${loc} (${age})${C_RESET}${EOL}"$'\n'
         if [ -n "$message" ]; then
             body="${body}     ${C_DIM}${message:0:$((width - 7))}${C_RESET}${EOL}"$'\n'
+        fi
+        if [ -n "$note" ]; then
+            body="${body}     ${C_WAITING}${note:0:$((width - 7))}${C_RESET}${EOL}"$'\n'
         fi
         body="${body}${EOL}"$'\n'
     done <<EOF
