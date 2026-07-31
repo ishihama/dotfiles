@@ -126,7 +126,6 @@ brew "redis"
 # Documentation & Presentation
 # ===========================================
 brew "gibo"          # .gitignore generator
-brew "figlet"        # ASCII art text (claude-screensaver)
 brew "glow"          # markdown renderer
 brew "k1low/tap/mo"  # markdown viewer (.mdをブラウザで開く)
 brew "hyperfine"     # benchmarking

@@ -137,7 +137,7 @@ dotfiles/
 │   ├── gwq/                     # gwq worktree manager
 │   ├── lazygit/                 # lazygit configuration
 │   │   └── config.yml
-│   └── claude/                  # Claude Code settings (hooks: state tracking, bin: claude-status/claude-screensaver)
+│   └── claude/                  # Claude Code settings (hooks: state tracking, bin: claude-status)
 │
 ├── Brewfile                     # Homebrew packages (categorized)
 ├── init.sh                      # Setup orchestrator (--dry-run support)
