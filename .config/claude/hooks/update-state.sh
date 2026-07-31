@@ -5,7 +5,7 @@
 # for the claude-status display script (tmux sidebar / status bar).
 #
 # Usage: update-state.sh <event_type>
-#   events: session_start | prompt_submit | stop | notification | session_end
+#   events: session_start | prompt_submit | stop | notification | tool_use | session_end
 #
 # Reads Claude Code hook input as JSON on stdin. Always exits 0 so a failure
 # here can never break Claude.
@@ -85,9 +85,21 @@ if [ "$EVENT" = "session_end" ]; then
 fi
 
 case "$EVENT" in
-    session_start|prompt_submit|stop|notification) ;;
+    session_start|prompt_submit|stop|notification|tool_use) ;;
     *) exit 0 ;;
 esac
+
+# tool_use comes from PostToolUse, which fires on EVERY tool call. Its only job
+# is to flip waiting -> working after a plan/permission dialog is approved
+# (those approvals have no hook event of their own). Bail out early when the
+# session is already working, before taking the lock or touching tmux, so the
+# hot path stays a single jq read.
+if [ "$EVENT" = "tool_use" ]; then
+    [ -f "$STATE_FILE" ] || exit 0
+    if [ "$(jq -r '.status // ""' "$STATE_FILE" 2>/dev/null)" = "working" ]; then
+        exit 0
+    fi
+fi
 
 acquire_lock || exit 0
 
@@ -159,9 +171,13 @@ printf '%s' "$EXISTING" | jq \
                              else $prev.first_prompt end)
       elif $event == "stop" then
           . + {status: "idle", last_reply: $reply, last_idle_at: $now}
-      else
+      elif $event == "tool_use" then
+          # Approval came through: back to working, leaving last_prompt and
+          # last_notification as they were
+          . + {status: "working"}
+      elif $event == "notification" then
           . + {status: "waiting", last_notification: $msg}
-      end
+      else . end
     | if $tp != "" then . + {transcript_path: $tp} else . end
     | if $tsess != "" then
           . + {tmux_session: $tsess, tmux_window: $twin,

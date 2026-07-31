@@ -120,6 +120,17 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$HOME/.config/claude/hooks/update-state.sh tool_use"
+          }
+        ]
+      }
+    ],
     "SessionEnd": [
       {
         "matcher": "",
