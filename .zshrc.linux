@@ -3,20 +3,19 @@ export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
 export MANPATH="/home/linuxbrew/.linuxbrew/share/man:$MANPATH"
 export INFOPATH="/home/linuxbrew/.linuxbrew/share/info:$INFOPATH"
 
-alias open=xdg-open
-alias pbcopy='xsel --clipboard --input'
+# Interactive-only aliases, matching the guard in .config/shell/aliases.sh so
+# non-interactive shells keep seeing the real commands.
+if [[ -o interactive ]]; then
+    alias open=xdg-open
+    alias pbcopy='xsel --clipboard --input'
+    alias ls='ls -F --color'
+fi
 
-# ls color
-alias ls='ls -F --color'
+# NOTE: Ctrl+R is owned by atuin (see .config/shell/env.sh). The fzf history
+# widget that used to live here was overriding it.
 
-# fzf
-function select-history() {
-    BUFFER=$(\history -n -r 1 | fzf --no-sort +m --query "$LBUFFER" --prompt="History > ")
-    CURSOR=$#BUFFER
-}
-zle -N select-history
-bindkey '^r' select-history
-
-if [[ "$(uname -r)" =~ Microsoft ]]; then
-    source ${HOME}/.zshrc.wsl
+# WSL detection. WSL2 reports the kernel release lowercase
+# ("5.15.x-microsoft-standard-WSL2"), so match case-insensitively.
+if [[ "${(L)$(uname -r)}" == *microsoft* ]] && [[ -f "${HOME}/.zshrc.wsl" ]]; then
+    source "${HOME}/.zshrc.wsl"
 fi

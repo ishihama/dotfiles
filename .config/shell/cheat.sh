@@ -21,11 +21,11 @@ function cheat() {
 [tmux] prefix [         コピーモード (vi)
 [tmux] prefix x         pane閉じる
 [shell] Ctrl+G          ghq-tmux (リポジトリ選択)
-[shell] Ctrl+W          gwq-tmux (worktree選択)
-[shell] Ctrl+R          履歴検索 (atuin/fzf)
-[shell] Ctrl+B          git branch切り替え
-[shell] Ctrl+F          ファイル検索→nvim
-[shell] Ctrl+K          プロセスkill
+[shell] Ctrl+X w        gwq-tmux (worktree選択)
+[shell] Ctrl+R          履歴検索 (atuin)
+[shell] Ctrl+X b        git branch切り替え
+[shell] Ctrl+X f        ファイル検索→nvim
+[shell] Ctrl+X k        プロセスkill
 [ghostty] Cmd+T         tmux prefix (Ctrl+T)
 [ghostty] Cmd+N         新規window (tmux)
 [ghostty] Cmd+W         pane閉じる (tmux)
@@ -153,7 +153,6 @@ function cheat() {
 [direnv] direnv allow             .envrc有効化
 [direnv] direnv deny              .envrc無効化
 [yazi] yazi                       ファイルマネージャ起動
-[yazi] y                          yazi + cd連携 (終了時にcd)
 EOF
 )
     if [[ -n "$selected" ]]; then
