@@ -77,7 +77,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/nvim/lua/plugins/coding.lua` - autopairs, comment, surround
 
 **Other Configs (XDG-compliant)**
-- `.config/tmux/tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux), status bar shows CPU (C:) and RAM (M:) usage
+- `.config/tmux/tmux.conf` - Prefix is `C-t` (not default `C-b`), vim-style pane navigation (h/j/k/l), vim-style pane resize (H/J/K/L), `|` for vertical split, `-` for horizontal split, mouse enabled, clipboard integration via pbcopy, popup bindings: prefix+g (ghq-tmux), prefix+w (gwq-tmux), prefix+a (Claude status sidebar toggle), status bar shows Claude Code session states (🔔/⚙/✓), CPU (C:) and RAM (M:) usage
 - `.config/git/config` - Common settings, default user (INVALID/invalid@example.com for accident prevention), includes `.gitconfig.local`, commit template, delta pager, ghq root (`~/repos`)
 - `.config/git/message` - Commit message template with emoji conventions
 - `.config/git/ignore` - Global gitignore (.DS_Store, .idea/, .vscode/, etc.)
@@ -118,7 +118,8 @@ dotfiles/
 │   │   └── bin/                # Standalone scripts for tmux popup
 │   │       ├── ghq-tmux-popup  # ghq popup (no interactive shell)
 │   │       ├── gwq-tmux-popup  # gwq popup (no interactive shell)
-│   │       └── tmux-session-fzf-popup  # session switcher popup
+│   │       ├── tmux-session-fzf-popup  # session switcher popup
+│   │       └── claude-sidebar-toggle   # Claude status sidebar toggle (prefix+a)
 │   ├── git/                     # Git configuration (XDG native)
 │   │   ├── config              # Main git config
 │   │   ├── message             # Commit message template
@@ -136,7 +137,7 @@ dotfiles/
 │   ├── gwq/                     # gwq worktree manager
 │   ├── lazygit/                 # lazygit configuration
 │   │   └── config.yml
-│   └── claude/                  # Claude Code settings
+│   └── claude/                  # Claude Code settings (hooks: state tracking, bin: claude-status/claude-screensaver)
 │
 ├── Brewfile                     # Homebrew packages (categorized)
 ├── init.sh                      # Setup orchestrator (--dry-run support)
@@ -178,6 +179,13 @@ dotfiles/
 - Creates/attaches tmux session named `{repo}-{branch}` (dots and slashes replaced with dashes)
 - Enables parallel development across branches with separate Claude Code instances
 - Defined in `.config/shell/gwq-tmux.sh`
+
+**Claude Code Status Display (herdr-style, `prefix+a`)**
+- Claude Code hooks (`.config/claude/hooks/update-state.sh`) record each session's state (working/waiting/idle) plus its tmux session/window/pane to `~/.local/state/claude/sessions/*.json`
+- `.config/claude/bin/claude-status` renders the state: `bar` (status-right counts, refreshed instantly via `tmux refresh-client -S` from the hook), `watch` (sidebar pane loop), `sessions` (per-tmux-session glyphs for fzf)
+- `prefix+a` toggles a sidebar pane (`.config/shell/bin/claude-sidebar-toggle`) listing all Claude sessions with state glyph (🔔 waiting for input / ⚙ working / ✓ idle), age, and last prompt/notification; `q` closes it
+- `tmux-session-fzf` (prefix+s) shows the same glyphs next to session names
+- Stale state files (>24h) are cleaned automatically; state detection is hook-based (exact), unlike herdr's screen-scraping heuristics
 
 **Modern CLI Tool Aliases**
 - All defined in `.config/shell/aliases.sh` - traditional commands aliased to modern alternatives (cat->bat, ls->eza, grep->rg, find->fd, ps->procs, du->dust, df->duf, sed->sd, top->btop, http->xh, vi/vim->nvim)

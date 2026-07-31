@@ -133,6 +133,8 @@ case "$EVENT" in
             rm -f "$_pid_file"
         fi
         rm -f "$STATE_FILE" 2>/dev/null
+        # ステータスバーのClaudeセグメントを即時更新
+        [ -n "$TMUX" ] && tmux refresh-client -S 2>/dev/null
         exit 0
         ;;
 
@@ -146,6 +148,24 @@ if [ -s "$TMP_FILE" ]; then
     mv "$TMP_FILE" "$STATE_FILE" 2>/dev/null
 else
     rm -f "$TMP_FILE" 2>/dev/null
+fi
+
+# tmux内で動作している場合、Claudeが動いているtmux上の位置を状態に記録し、
+# ステータスバーのClaudeセグメント (claude-status bar) を即時更新する。
+# tmux_session はサイドバー表示とセッション切替fzfの状態グリフに使われる。
+if [ -n "$TMUX" ] && [ -n "$TMUX_PANE" ] && [ -s "$STATE_FILE" ]; then
+    T_SESSION=$(tmux display-message -t "$TMUX_PANE" -p '#{session_name}' 2>/dev/null)
+    T_WINDOW=$(tmux display-message -t "$TMUX_PANE" -p '#{window_index}' 2>/dev/null)
+    if [ -n "$T_SESSION" ]; then
+        if jq --arg tsess "$T_SESSION" --arg twin "$T_WINDOW" --arg tpane "$TMUX_PANE" \
+            '. + {tmux_session: $tsess, tmux_window: $twin, tmux_pane: $tpane}' \
+            "$STATE_FILE" > "$TMP_FILE" 2>/dev/null && [ -s "$TMP_FILE" ]; then
+            mv "$TMP_FILE" "$STATE_FILE" 2>/dev/null
+        else
+            rm -f "$TMP_FILE" 2>/dev/null
+        fi
+    fi
+    tmux refresh-client -S 2>/dev/null
 fi
 
 # After a Stop event, schedule a screensaver popup if the session stays idle.
