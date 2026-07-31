@@ -110,6 +110,28 @@ ensure_ssh_key() {
     fi
 }
 
+# Prompt until a non-empty answer that passes an optional validator is given.
+# Always uses `read -r` so a backslash in a name is not eaten.
+#   prompt_value <varname> <prompt> [validator_regex] [error_message]
+prompt_value() {
+    local __var=$1 __prompt=$2 __pattern=${3:-} __err=${4:-Invalid value.}
+    local __input
+    while true; do
+        printf '%s' "$__prompt"
+        read -r __input
+        if [ -z "$__input" ]; then
+            echo "Value cannot be empty."
+            continue
+        fi
+        if [ -n "$__pattern" ] && ! printf '%s' "$__input" | grep -Eq "$__pattern"; then
+            echo "$__err"
+            continue
+        fi
+        printf -v "$__var" '%s' "$__input"
+        return 0
+    done
+}
+
 setup_git_account() {
     local account_type=$1  # "personal" or "work"
     local config_file="$HOME/.gitconfig.$account_type"
@@ -117,29 +139,28 @@ setup_git_account() {
     echo
     log_section "Setting up $account_type Git account"
 
-    # Prompt for name
-    echo -n "Name for $account_type commits: "
-    read git_name
-    while [ -z "$git_name" ]; do
-        echo "Name cannot be empty."
-        echo -n "Name for $account_type commits: "
-        read git_name
-    done
-
-    # Prompt for email
-    echo -n "Email for $account_type commits: "
-    read git_email
-    while [ -z "$git_email" ]; do
-        echo "Email cannot be empty."
-        echo -n "Email for $account_type commits: "
-        read git_email
-    done
+    # git config treats # and ; as comment starters and a trailing backslash as
+    # a line continuation, so a name containing them silently corrupts the file.
+    local git_name git_email ssh_key_path
+    prompt_value git_name "Name for $account_type commits: " \
+        '^[^#;\\]*[^#;\\[:space:]][^#;\\]*$' \
+        "Name cannot contain # ; or \\."
+    prompt_value git_email "Email for $account_type commits: " \
+        '^[^[:space:]#;\\]+@[^[:space:]#;\\]+\.[^[:space:]#;\\]+$' \
+        "Enter a valid email address."
 
     # Prompt for SSH key path
     local default_ssh_key="$HOME/.ssh/id_ed25519_$account_type"
-    echo -n "SSH key path (default: $default_ssh_key): "
-    read ssh_key_path
+    printf 'SSH key path (default: %s): ' "$default_ssh_key"
+    read -r ssh_key_path
     ssh_key_path=${ssh_key_path:-$default_ssh_key}
+    # Expand a leading ~ ourselves: read does not, and ssh-keygen would happily
+    # create a directory literally named "~" in the current directory.
+    ssh_key_path="${ssh_key_path/#\~/$HOME}"
+
+    # Back up an existing account config even when ~/.gitconfig.local is absent
+    # (an aborted earlier run leaves exactly that state)
+    [ -f "$config_file" ] && backup_path "$config_file"
 
     # Create the config file
     cat > "$config_file" <<EOF
@@ -195,37 +216,29 @@ setup_git() {
         return 0
     fi
 
-    # Prompt for GitHub username
+    # GitHub owner names go into an includeIf gitdir: pattern, so restrict them
+    # to what GitHub actually allows. A name with a space or quote produces a
+    # pattern that never matches, and commits then go out as the INVALID
+    # placeholder user with no visible error.
+    local gh_name_re='^[A-Za-z0-9]([A-Za-z0-9-]{0,37}[A-Za-z0-9])?$'
+    local gh_name_err="Use letters, digits and hyphens only (max 39 characters)."
+
+    local github_username work_org work_gh_username=""
     echo
-    echo -n "Enter your GitHub username (for personal repos): "
-    read github_username
-    while [ -z "$github_username" ]; do
-        echo "GitHub username cannot be empty."
-        echo -n "Enter your GitHub username (for personal repos): "
-        read github_username
-    done
+    prompt_value github_username \
+        "Enter your GitHub username (for personal repos): " \
+        "$gh_name_re" "$gh_name_err"
 
     # Prompt for work account
     local has_work_account=false
-    local work_gh_username=""
     echo
     if confirm "Do you have a work account?" "n"; then
         has_work_account=true
-        echo -n "Enter work organization name: "
-        read work_org
-        while [ -z "$work_org" ]; do
-            echo "Organization name cannot be empty."
-            echo -n "Enter work organization name: "
-            read work_org
-        done
-
-        echo -n "Enter your work GitHub username (for gh CLI): "
-        read work_gh_username
-        while [ -z "$work_gh_username" ]; do
-            echo "GitHub username cannot be empty."
-            echo -n "Enter your work GitHub username (for gh CLI): "
-            read work_gh_username
-        done
+        prompt_value work_org "Enter work organization name: " \
+            "$gh_name_re" "$gh_name_err"
+        prompt_value work_gh_username \
+            "Enter your work GitHub username (for gh CLI): " \
+            "$gh_name_re" "$gh_name_err"
     fi
 
     # Set up personal account
@@ -240,9 +253,14 @@ setup_git() {
     echo
     log_section "Creating .gitconfig.local"
 
+    # Overwrites any hand-added third includeIf; back it up so it is recoverable
+    [ -f "$HOME/.gitconfig.local" ] && backup_path "$HOME/.gitconfig.local"
+
     cat > "$HOME/.gitconfig.local" <<EOF
 # Auto-generated by dotfiles setup
 # This file is NOT tracked in the dotfiles repository
+# Re-running ./init.sh rewrites it; the previous version is kept as
+# .gitconfig.local.backup.<timestamp>
 
 # Personal repositories: ~/repos/github.com/$github_username/
 [includeIf "gitdir:~/repos/github.com/$github_username/"]
@@ -277,6 +295,10 @@ EOF
     log_section "Creating gh account-map"
     mkdir -p "$HOME/.config/gh"
     local account_map="$HOME/.config/gh/account-map"
+
+    # Same as .gitconfig.local: this is rewritten wholesale, so keep a copy of
+    # any manually added mappings
+    [ -f "$account_map" ] && backup_path "$account_map"
 
     cat > "$account_map" <<EOF
 # Auto-generated by dotfiles setup

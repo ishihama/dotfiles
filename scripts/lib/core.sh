@@ -194,18 +194,25 @@ confirm() {
         yn_prompt="[y/N]"
     fi
 
+    # Read a whole line, not a single character. With `-n 1` a user typing
+    # "yes<Enter>" leaves "es" in the buffer, which the next `read` in the
+    # caller silently consumes as its answer.
+    local reply
     while true; do
-        read -p "$prompt $yn_prompt " -n 1 -r
-        echo
-
-        # If empty response, use default
-        if [ -z "$REPLY" ]; then
+        printf '%s %s ' "$prompt" "$yn_prompt"
+        if ! read -r reply; then
+            echo
             [ "$default" = "y" ] && return 0 || return 1
         fi
 
-        case "$REPLY" in
-            [Yy]) return 0 ;;
-            [Nn]) return 1 ;;
+        # If empty response, use default
+        if [ -z "$reply" ]; then
+            [ "$default" = "y" ] && return 0 || return 1
+        fi
+
+        case "$reply" in
+            [Yy]|[Yy][Ee][Ss]) return 0 ;;
+            [Nn]|[Nn][Oo])     return 1 ;;
             *) echo "Please answer y or n." ;;
         esac
     done
