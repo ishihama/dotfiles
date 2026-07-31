@@ -2,26 +2,17 @@
 # Taps
 # ===========================================
 tap "d-kuro/tap"
-tap "k1low/tap"
 tap "sdkman/tap"
-tap "shopify/shopify"
 
 # ===========================================
 # Core CLI Utilities
 # ===========================================
-brew "coreutils"
-brew "findutils"
-brew "gawk"
-brew "gnu-sed"
-brew "grep"
+# GNU coreutils/findutils/gawk/gnu-sed/grep は入れない:
+# gnubin へのPATHを通していないため g接頭辞コマンドしか使えず、
+# かつ aliases.sh が grep->rg, sed->sd, find->fd を割り当てているので出番がない。
 brew "tree"
-brew "watch"
-brew "wget"
 brew "jq"
 brew "yq"
-brew "nkf"
-brew "p7zip"
-brew "pwgen"
 
 # ===========================================
 # Modern Replacements
@@ -71,27 +62,19 @@ brew "neovim"
 # ===========================================
 # Languages & Runtimes
 # ===========================================
-brew "deno"
-brew "go"
 brew "mise"          # version manager (asdf alternative)
-brew "python@3.14"
 brew "sdkman/tap/sdkman-cli" # JVM version manager
+# node / go / deno / python は mise (config.toml) で管理
 
 # ===========================================
 # Cloud & Infrastructure
 # ===========================================
-brew "awscli"
 # terraform / tflint は mise (config.toml) で管理
 
 # ===========================================
 # Containers & Orchestration
 # ===========================================
 # kubectl, helm etc. via mise or manual install
-
-# ===========================================
-# Networking & Security
-# ===========================================
-brew "gnupg"
 
 # ===========================================
 # Media & Processing
@@ -110,26 +93,19 @@ brew "ios-deploy"
 # ===========================================
 # Build & Compile
 # ===========================================
-brew "autoconf"
-brew "automake"
-brew "ninja"
 brew "maven"
 
 # ===========================================
 # Data & Databases
 # ===========================================
-brew "csvq"
-brew "postgresql@14"
-brew "redis"
+# PostgreSQL / Redis はローカルインストールせず Rancher (cask) でコンテナ起動
 
 # ===========================================
 # Documentation & Presentation
 # ===========================================
 brew "gibo"          # .gitignore generator
 brew "glow"          # markdown renderer
-brew "k1low/tap/mo"  # markdown viewer (.mdをブラウザで開く)
 brew "hyperfine"     # benchmarking
-brew "pstree"        # process tree
 brew "tldr"          # simplified man pages
 
 # ===========================================
