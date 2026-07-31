@@ -135,7 +135,11 @@ brew "tldr"          # simplified man pages
 # ===========================================
 # Casks (GUI Applications)
 # ===========================================
-cask "android-platform-tools"
+# android-platform-tools はcask管理しない:
+# Googleが同一URLでファイルを差し替えるたびにchecksum不一致でbrew bundle全体が
+# 失敗するため。adb等はAndroid StudioのSDK Manager (Settings > Languages &
+# Frameworks > Android SDK > SDK Tools > Android SDK Platform-Tools) で管理する。
+# PATHは env.sh が ~/Library/Android/sdk/platform-tools を通している。
 cask "android-studio"
 cask "gcloud-cli"
 cask "ghostty"
