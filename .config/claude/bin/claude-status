@@ -62,21 +62,29 @@ rows() {
     ' "$@" 2>/dev/null
 }
 
-# 対象セッションを既に表示しているtmuxクライアント (=別のGhosttyウィンドウ) が
-# あれば、そのOSウィンドウを前面化する。tmuxがウィンドウタイトルを
-# "セッション名: ディレクトリ" に設定している (set-titles-string) ことを利用して
-# System Events でタイトル前方一致のGhosttyウィンドウをAXRaiseする。
-# 初回はmacOSのオートメーション許可ダイアログが出る。
+# 指定セッションを表示しているGhosttyウィンドウをOSレベルで前面化する。
+# tmuxがウィンドウタイトルを "セッション名: ディレクトリ" に設定している
+# (set-titles-string) ことを利用したタイトル前方一致検索。
+# 1. Hammerspoon (hs CLI) があれば hs.spaces で仮想デスクトップ (Space) 越しに
+#    フォーカス (.config/hammerspoon/init.lua の claudeFocusGhosttyWindow)
+# 2. なければ System Events でAXRaise (現在のSpaceのウィンドウしか発見できない)
+# 初回はmacOSのオートメーション/アクセシビリティ許可ダイアログが出る。
 # 無効化: CLAUDE_JUMP_FOCUS_DISABLED=1
-focus_client_window() {
-    local tsess=$1
+raise_window_for_session() {
+    local sess=$1
+    [ -z "$sess" ] && return 1
     [ "${CLAUDE_JUMP_FOCUS_DISABLED:-0}" = "1" ] && return 1
+    local prefix="${sess}: "
+    if command -v hs >/dev/null 2>&1; then
+        local esc out
+        esc=$(printf '%s' "$prefix" | sed 's/\\/\\\\/g; s/"/\\"/g')
+        out=$(hs -c "claudeFocusGhosttyWindow(\"$esc\")" 2>/dev/null)
+        [ "$out" = "true" ] && return 0
+    fi
     command -v osascript >/dev/null 2>&1 || return 1
-    # 対象セッションにアタッチ中のクライアントがなければ対象外
-    tmux list-clients -F '#{client_session}' 2>/dev/null | grep -qx "$tsess" || return 1
-    osascript - "$tsess" <<'APPLESCRIPT' >/dev/null 2>&1
+    osascript - "$prefix" <<'APPLESCRIPT' >/dev/null 2>&1
 on run argv
-    set target to (item 1 of argv) & ": "
+    set target to item 1 of argv
     tell application "System Events"
         tell process "Ghostty"
             repeat with w in windows
@@ -120,7 +128,7 @@ find_sibling_client() {
         [ -n "$cpath" ] || continue
         croot=$(git -C "$cpath" rev-parse --show-toplevel 2>/dev/null)
         if [ -n "$croot" ] && [ "$croot" = "$troot" ]; then
-            printf '%s' "$client"
+            printf '%s %s' "$client" "$csess"
             return 0
         fi
     done <<EOF
@@ -130,9 +138,11 @@ EOF
 }
 
 # 指定のtmux位置に切り替える (セッション → window → pane の順で絞り込み)
-# 1. 対象セッションを表示中のGhosttyウィンドウがあれば前面化
-# 2. 同じworktreeの別セッションを表示中のウィンドウがあれば、
-#    そのウィンドウ側のクライアントを切り替えて前面化
+# 1. 対象セッションを表示中のGhosttyウィンドウがあれば前面化。
+#    前面化できない場合 (別Space + Hammerspoonなし等) は無反応にせず
+#    現在のクライアントを切り替える
+# 2. 同じworktreeの別セッションを表示中のウィンドウがあれば、先にそのウィンドウを
+#    前面化してから (タイトルが正確なうちに) そのクライアントを切り替える
 # 3. どちらもなければ現在のクライアントをswitch-client
 jump_to() {
     local tsess=$1 twin=$2 tpane=$3
@@ -140,17 +150,18 @@ jump_to() {
     # window/pane選択はセッション単位の状態なので、どのクライアントで表示していても効く
     [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
     [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
-    if focus_client_window "$tsess"; then
+    if tmux list-clients -F '#{client_session}' 2>/dev/null | grep -qx "$tsess"; then
+        raise_window_for_session "$tsess" && return 0
+        tmux switch-client -t "$tsess" 2>/dev/null || return 1
         return 0
     fi
-    local sib
-    sib=$(find_sibling_client "$tsess")
-    if [ -n "$sib" ] && tmux switch-client -c "$sib" -t "$tsess" 2>/dev/null; then
-        # ウィンドウタイトルが新セッション名に更新されるのを待って前面化
-        # (前面化に失敗しても切り替え自体は完了しているので成功扱い)
-        sleep 0.2
-        focus_client_window "$tsess" || { sleep 0.3; focus_client_window "$tsess"; }
-        return 0
+    local sib scsess
+    read -r sib scsess <<EOF
+$(find_sibling_client "$tsess")
+EOF
+    if [ -n "$sib" ]; then
+        raise_window_for_session "$scsess"
+        tmux switch-client -c "$sib" -t "$tsess" 2>/dev/null && return 0
     fi
     tmux switch-client -t "$tsess" 2>/dev/null || return 1
     return 0
