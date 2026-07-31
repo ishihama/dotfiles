@@ -146,9 +146,11 @@ fi
 if [ -n "$TMUX" ] && [ -n "$TMUX_PANE" ] && [ -s "$STATE_FILE" ]; then
     T_SESSION=$(tmux display-message -t "$TMUX_PANE" -p '#{session_name}' 2>/dev/null)
     T_WINDOW=$(tmux display-message -t "$TMUX_PANE" -p '#{window_index}' 2>/dev/null)
+    T_PANE_INDEX=$(tmux display-message -t "$TMUX_PANE" -p '#{pane_index}' 2>/dev/null)
     if [ -n "$T_SESSION" ]; then
         if jq --arg tsess "$T_SESSION" --arg twin "$T_WINDOW" --arg tpane "$TMUX_PANE" \
-            '. + {tmux_session: $tsess, tmux_window: $twin, tmux_pane: $tpane}' \
+            --arg tpidx "$T_PANE_INDEX" \
+            '. + {tmux_session: $tsess, tmux_window: $twin, tmux_pane: $tpane, tmux_pane_index: $tpidx}' \
             "$STATE_FILE" > "$TMP_FILE" 2>/dev/null && [ -s "$TMP_FILE" ]; then
             mv "$TMP_FILE" "$STATE_FILE" 2>/dev/null
         else
