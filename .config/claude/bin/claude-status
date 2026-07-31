@@ -10,8 +10,14 @@
 #   claude-status watch     # list をループ描画 (サイドバーpane用、q で終了)
 #   claude-status sessions  # "tmux_session<TAB>glyph" 一覧 (fzf装飾用)
 #   claude-status jump      # 最優先セッション (🔔入力待ち優先) にジャンプ (tmux prefix+u)
+#   claude-status detail <session_id>  # 詳細表示 (サイドバーの i キーからpopupで呼ばれる)
 
 export PATH="/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+
+# ロケール未設定環境ではbashの部分文字列 (${var:0:n}) がバイト単位になり
+# マルチバイト文字が途中で切れるため、UTF-8をフォールバックに設定
+# (C.UTF-8はmacOS/Linux両方に存在する)
+[ -z "${LANG:-}" ] && export LANG=C.UTF-8
 
 STATE_DIR="${HOME}/.local/state/claude/sessions"
 
@@ -34,8 +40,9 @@ cleanup_stale() {
 
 # 全セッションを「waiting → working → idle、同状態内は更新の新しい順」で出力
 # フィールド: status / project / tmux_session / tmux_window / tmux_pane /
-#             tmux_pane_index / updated_at / message / note
-# message は最後のプロンプト (=何の作業か)。
+#             tmux_pane_index / updated_at / message / note / session_id
+# message は最後のプロンプト (=何の作業か)。ただし最後のプロンプトが短い
+# (「続けて」等、16文字未満) 場合は最初のプロンプト (=セッションの本題) を表示。
 # note は状態に応じた補足: 入力待ち→通知メッセージ、待機→Claudeの最後の返答
 # 区切りは US (\x1f)。タブはbashのIFSで空白扱いになり連続時に空フィールドが潰れるため使わない
 ROW_SEP=$'\x1f'
@@ -53,16 +60,21 @@ rows() {
             tmux_pane: (.tmux_pane // ""),
             tmux_pane_index: (.tmux_pane_index // ""),
             updated_at: (.updated_at // 0),
-            message: (.last_prompt // "" | gsub("[\\x00-\\x1f]"; " ")),
+            message: ((.last_prompt // "") as $lp
+                      | (.first_prompt // "") as $fp
+                      | (if ($lp | length) < 16 and $fp != "" and $fp != $lp
+                         then $fp else $lp end)
+                      | gsub("[\\x00-\\x1f]"; " ")),
             note: ((if .status == "waiting" then .last_notification
                     elif .status == "idle" then .last_reply
                     else "" end)
-                   // "" | gsub("[\\x00-\\x1f]"; " "))
+                   // "" | gsub("[\\x00-\\x1f]"; " ")),
+            session_id: (.session_id // "")
         })
         | sort_by([(.status | prio), -.updated_at])
         | .[]
         | [.status, .project, .tmux_session, .tmux_window, .tmux_pane,
-           .tmux_pane_index, (.updated_at | tostring), .message, .note]
+           .tmux_pane_index, (.updated_at | tostring), .message, .note, .session_id]
         | join("\u001f")
     ' "$@" 2>/dev/null
 }
@@ -174,8 +186,8 @@ EOF
 
 # 最優先セッション (🔔入力待ち > ⚙作業中 > ✓待機) にジャンプ
 render_jump() {
-    local status project tsess twin tpane tpidx updated message note
-    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message note; do
+    local status project tsess twin tpane tpidx updated message note sid
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message note sid; do
         [ -z "$status" ] && continue
         [ -z "$tsess" ] && continue
         jump_to "$tsess" "$twin" "$tpane" && return 0
@@ -228,8 +240,8 @@ render_list() {
     TARGETS=()
 
     local body=""
-    local status project tsess twin tpane tpidx updated message note
-    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message note; do
+    local status project tsess twin tpane tpidx updated message note sid
+    while IFS="$ROW_SEP" read -r status project tsess twin tpane tpidx updated message note sid; do
         [ -z "$status" ] && continue
         total=$((total + 1))
         case "$status" in
@@ -259,7 +271,7 @@ render_list() {
         glyph=$(glyph_for "$status")
         color=$(color_for "$status")
         if [ "$total" -le 9 ] && [ -n "$tsess" ]; then
-            TARGETS[$total]="${tsess}"$'\t'"${twin}"$'\t'"${tpane}"
+            TARGETS[$total]="${tsess}"$'\t'"${twin}"$'\t'"${tpane}"$'\t'"${sid}"
             idx="${C_DIM}${total}${C_RESET} "
         else
             idx="  "
@@ -293,6 +305,73 @@ EOF
     fi
 }
 
+# セッション詳細をpopup内に描画する (cwd / ブランチ / プロンプト / 直近の会話)
+render_detail() {
+    local sid=$1
+    local f="$STATE_DIR/$sid.json"
+    if [ ! -f "$f" ]; then
+        printf ' state not found: %s\n' "$sid"
+        printf '\n %s[press any key to close]%s' "$C_DIM" "$C_RESET"
+        read -r -n 1 2>/dev/null
+        return 1
+    fi
+    local status project tsess twin tpidx cwd updated fprompt lprompt notif reply tp
+    IFS="$ROW_SEP" read -r status project tsess twin tpidx cwd updated fprompt lprompt notif reply tp <<EOF
+$(jq -r '[
+        (.status // "idle"), (.project // "?"), (.tmux_session // ""),
+        (.tmux_window // ""), (.tmux_pane_index // ""), (.cwd // ""),
+        ((.updated_at // 0) | tostring),
+        (.first_prompt // "" | gsub("[\\x00-\\x1f]"; " ")),
+        (.last_prompt // "" | gsub("[\\x00-\\x1f]"; " ")),
+        (.last_notification // "" | gsub("[\\x00-\\x1f]"; " ")),
+        (.last_reply // "" | gsub("[\\x00-\\x1f]"; " ")),
+        (.transcript_path // "")
+    ] | join("\u001f")' "$f" 2>/dev/null)
+EOF
+    local now age glyph color branch
+    now=$(date +%s)
+    age=$(fmt_age $((now - ${updated:-0})))
+    glyph=$(glyph_for "$status")
+    color=$(color_for "$status")
+    branch=$(git -C "$cwd" branch --show-current 2>/dev/null)
+
+    printf ' %s%s %s%s %s(%s, %s)%s\n\n' \
+        "$color" "$glyph" "${tsess:-$project}" "$C_RESET" "$C_DIM" "$status" "$age" "$C_RESET"
+    printf ' %scwd:%s    %s\n' "$C_DIM" "$C_RESET" "$cwd"
+    [ -n "$branch" ] && printf ' %sbranch:%s %s\n' "$C_DIM" "$C_RESET" "$branch"
+    [ -n "$tsess" ] && printf ' %stmux:%s   %s %s.%s\n' "$C_DIM" "$C_RESET" "$tsess" "$twin" "$tpidx"
+    if [ -n "$fprompt" ]; then
+        printf '\n %s最初のプロンプト:%s %s\n' "$C_DIM" "$C_RESET" "$fprompt"
+    fi
+    if [ -n "$lprompt" ] && [ "$lprompt" != "$fprompt" ]; then
+        printf ' %s最後のプロンプト:%s %s\n' "$C_DIM" "$C_RESET" "$lprompt"
+    fi
+    [ "$status" = "waiting" ] && [ -n "$notif" ] && \
+        printf ' %s通知:%s %s%s%s\n' "$C_DIM" "$C_RESET" "$C_WAITING" "$notif" "$C_RESET"
+    [ -n "$reply" ] && printf ' %s最後の返答:%s %s\n' "$C_DIM" "$C_RESET" "$reply"
+
+    if [ -n "$tp" ] && [ -f "$tp" ]; then
+        printf '\n %s── 直近の会話 (» はユーザー) ──%s\n' "$C_DIM" "$C_RESET"
+        local line
+        tail -c 200000 "$tp" 2>/dev/null | tail -n +2 | jq -r '
+            select(.type == "user" or .type == "assistant")
+            | . as $m
+            | (.message.content
+               | if type == "string" then .
+                 else ([.[]? | select(type == "object" and .type == "text") | .text]
+                       | join(" "))
+                 end)
+            | gsub("\\s+"; " ") | sub("^ "; "") | sub(" $"; "")
+            | select(length > 0)
+            | (if $m.type == "user" then "» " else "  " end) + .' 2>/dev/null | \
+            tail -8 | while IFS= read -r line; do
+                printf ' %s\n' "${line:0:110}"
+            done
+    fi
+    printf '\n %s[press any key to close]%s' "$C_DIM" "$C_RESET"
+    read -r -n 1 2>/dev/null
+}
+
 watch_loop() {
     tput civis 2>/dev/null
     # 終了時: カーソル復帰 + サイドバーpane記録を掃除 (トグルの状態と整合させる)
@@ -300,15 +379,29 @@ watch_loop() {
     # 全消去(\033[2J)は一瞬白くなってちらつくため、ホーム(\033[H)から
     # 行末消去付きで上書きし、最後に余った下部だけ消す(\033[J)
     EOL=$'\033[K'
-    local key target
+    local key target dkey dsid
     while :; do
         printf '\033[H'
         render_list "$(tput cols 2>/dev/null || echo 44)"
-        printf ' %s1-9: jump  q: close%s%s\n\033[J' "$C_DIM" "$C_RESET" "$EOL"
+        printf ' %s1-9: jump  i+N: detail  q: close%s%s\n\033[J' "$C_DIM" "$C_RESET" "$EOL"
         key=""
         read -r -t 2 -n 1 key 2>/dev/null
         case "$key" in
             q) break ;;
+            i)
+                printf '\n %sdetail #?%s ' "$C_DIM" "$C_RESET"
+                dkey=""
+                read -r -n 1 dkey 2>/dev/null
+                case "$dkey" in
+                    [1-9])
+                        dsid=$(printf '%s' "${TARGETS[$dkey]:-}" | cut -f4)
+                        if [ -n "$dsid" ]; then
+                            tmux display-popup -w 80% -h 70% -E \
+                                "$HOME/.config/claude/bin/claude-status detail $dsid" 2>/dev/null
+                        fi
+                        ;;
+                esac
+                ;;
             [1-9])
                 # ジャンプ成功時はループを抜けてサイドバーpaneを閉じる
                 target="${TARGETS[$key]:-}"
@@ -366,8 +459,9 @@ case "${1:-list}" in
     watch)    watch_loop ;;
     sessions) render_sessions ;;
     jump)     render_jump ;;
+    detail)   render_detail "$2" ;;
     *)
-        echo "Usage: claude-status [bar|list|watch|sessions|jump]" >&2
+        echo "Usage: claude-status [bar|list|watch|sessions|jump|detail <session_id>]" >&2
         exit 1
         ;;
 esac

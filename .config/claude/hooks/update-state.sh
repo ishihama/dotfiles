@@ -84,7 +84,7 @@ case "$EVENT" in
                 status: "working",
                 last_prompt: $prompt,
                 updated_at: $now
-            }' > "$TMP_FILE" 2>/dev/null
+            } | .first_prompt = (.first_prompt // $prompt)' > "$TMP_FILE" 2>/dev/null
         ;;
 
     stop)
@@ -154,6 +154,18 @@ if [ -s "$TMP_FILE" ]; then
     mv "$TMP_FILE" "$STATE_FILE" 2>/dev/null
 else
     rm -f "$TMP_FILE" 2>/dev/null
+fi
+
+# 詳細ポップアップ (claude-status detail) が直近の会話を読めるよう
+# トランスクリプトのパスを記録する
+TRANSCRIPT_PATH=$(jget '.transcript_path')
+if [ -n "$TRANSCRIPT_PATH" ] && [ -s "$STATE_FILE" ]; then
+    if jq --arg tp "$TRANSCRIPT_PATH" '. + {transcript_path: $tp}' \
+        "$STATE_FILE" > "$TMP_FILE" 2>/dev/null && [ -s "$TMP_FILE" ]; then
+        mv "$TMP_FILE" "$STATE_FILE" 2>/dev/null
+    else
+        rm -f "$TMP_FILE" 2>/dev/null
+    fi
 fi
 
 # tmux内で動作している場合、Claudeが動いているtmux上の位置を状態に記録し、

@@ -12,7 +12,7 @@ function cheat() {
 [tmux] prefix -         横分割
 [tmux] prefix g         ghq-tmux popup
 [tmux] prefix w         gwq-tmux popup
-[tmux] prefix a         Claude状態サイドバー (1-9でジャンプ, qで閉じる)
+[tmux] prefix a         Claude状態サイドバー (1-9ジャンプ, i+N詳細, q閉じる)
 [tmux] prefix u         入力待ちClaudeへジャンプ
 [tmux] prefix c         新規window
 [tmux] prefix n/p       次/前のwindow
