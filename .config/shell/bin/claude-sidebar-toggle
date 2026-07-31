@@ -8,7 +8,8 @@ if [ -n "$pane" ] && tmux list-panes -F '#{pane_id}' | grep -qx "$pane"; then
     tmux kill-pane -t "$pane"
     tmux set-option -wu @claude_sidebar_pane
 else
-    new_pane=$(tmux split-window -h -l 44 -d -P -F '#{pane_id}' \
+    # -d を付けずフォーカスをサイドバーに移す (数字キー1-9のジャンプ操作を受けるため)
+    new_pane=$(tmux split-window -h -l 44 -P -F '#{pane_id}' \
         "$HOME/.config/claude/bin/claude-status watch")
     tmux set-option -w @claude_sidebar_pane "$new_pane"
 fi
