@@ -284,7 +284,8 @@ EOF
 
 watch_loop() {
     tput civis 2>/dev/null
-    trap 'tput cnorm 2>/dev/null' EXIT
+    # 終了時: カーソル復帰 + サイドバーpane記録を掃除 (トグルの状態と整合させる)
+    trap 'tput cnorm 2>/dev/null; tmux set-option -wu @claude_sidebar_pane 2>/dev/null' EXIT
     # 全消去(\033[2J)は一瞬白くなってちらつくため、ホーム(\033[H)から
     # 行末消去付きで上書きし、最後に余った下部だけ消す(\033[J)
     EOL=$'\033[K'
@@ -298,11 +299,13 @@ watch_loop() {
         case "$key" in
             q) break ;;
             [1-9])
+                # ジャンプ成功時はループを抜けてサイドバーpaneを閉じる
                 target="${TARGETS[$key]:-}"
                 if [ -n "$target" ]; then
                     jump_to "${target%%$'\t'*}" \
                             "$(printf '%s' "$target" | cut -f2)" \
-                            "$(printf '%s' "$target" | cut -f3)"
+                            "$(printf '%s' "$target" | cut -f3)" \
+                        && break
                 fi
                 ;;
         esac
