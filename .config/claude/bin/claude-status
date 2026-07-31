@@ -93,9 +93,47 @@ end run
 APPLESCRIPT
 }
 
+# 対象セッションと同じリポジトリ (worktree) の別セッションを表示中の
+# クライアント (=そのリポジトリ用のGhosttyウィンドウ) を探す。
+# 1つのworktree内に複数のtmuxセッションを作る運用で、対象セッションが
+# どのウィンドウにも表示されていないときの受け皿。
+# worktree判定は各セッションのアクティブpaneのパスの git toplevel 一致。
+# セッションの現在windowのアクティブpaneのカレントパスを返す
+# (display-message -t はクライアント文脈なしだと空を返す環境があるため list-panes を使う)
+session_path() {
+    tmux list-panes -t "=$1" -F '#{?pane_active,#{pane_current_path},}' 2>/dev/null | grep -m1 .
+}
+
+find_sibling_client() {
+    local tsess=$1
+    local tpath troot client csess cpath croot
+    tpath=$(session_path "$tsess")
+    [ -n "$tpath" ] || return 1
+    troot=$(git -C "$tpath" rev-parse --show-toplevel 2>/dev/null)
+    [ -n "$troot" ] || return 1
+    # 注意: tmuxの-F出力は非印字文字を\037等にエスケープするためROW_SEPは使えない。
+    # クライアント名 (/dev/ttysNNN) にスペースは入らないのでスペース区切りで分割し、
+    # セッション名側は read の残余フィールドとして受ける (スペース入りセッション名も安全)
+    while read -r client csess; do
+        [ -n "$client" ] || continue
+        cpath=$(session_path "$csess")
+        [ -n "$cpath" ] || continue
+        croot=$(git -C "$cpath" rev-parse --show-toplevel 2>/dev/null)
+        if [ -n "$croot" ] && [ "$croot" = "$troot" ]; then
+            printf '%s' "$client"
+            return 0
+        fi
+    done <<EOF
+$(tmux list-clients -F '#{client_name} #{client_session}' 2>/dev/null)
+EOF
+    return 1
+}
+
 # 指定のtmux位置に切り替える (セッション → window → pane の順で絞り込み)
-# 対象セッションが別のGhosttyウィンドウに表示されていればウィンドウごと前面化し、
-# なければ現在のクライアントをswitch-clientで切り替える
+# 1. 対象セッションを表示中のGhosttyウィンドウがあれば前面化
+# 2. 同じworktreeの別セッションを表示中のウィンドウがあれば、
+#    そのウィンドウ側のクライアントを切り替えて前面化
+# 3. どちらもなければ現在のクライアントをswitch-client
 jump_to() {
     local tsess=$1 twin=$2 tpane=$3
     [ -z "$tsess" ] && return 1
@@ -103,6 +141,15 @@ jump_to() {
     [ -n "$twin" ] && tmux select-window -t "${tsess}:${twin}" 2>/dev/null
     [ -n "$tpane" ] && tmux select-pane -t "$tpane" 2>/dev/null
     if focus_client_window "$tsess"; then
+        return 0
+    fi
+    local sib
+    sib=$(find_sibling_client "$tsess")
+    if [ -n "$sib" ] && tmux switch-client -c "$sib" -t "$tsess" 2>/dev/null; then
+        # ウィンドウタイトルが新セッション名に更新されるのを待って前面化
+        # (前面化に失敗しても切り替え自体は完了しているので成功扱い)
+        sleep 0.2
+        focus_client_window "$tsess" || { sleep 0.3; focus_client_window "$tsess"; }
         return 0
     fi
     tmux switch-client -t "$tsess" 2>/dev/null || return 1
