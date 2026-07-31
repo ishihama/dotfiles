@@ -68,8 +68,9 @@ keymap("n", "<Leader>fc", "<cmd>Telescope commands<CR>", opts)
 -- <Leader>rn = rename
 
 -- Diagnostic
-keymap("n", "[d", vim.diagnostic.goto_prev, opts)
-keymap("n", "]d", vim.diagnostic.goto_next, opts)
+-- vim.diagnostic.goto_prev/goto_next are deprecated in favour of jump()
+keymap("n", "[d", function() vim.diagnostic.jump({ count = -1, float = true }) end, opts)
+keymap("n", "]d", function() vim.diagnostic.jump({ count = 1, float = true }) end, opts)
 keymap("n", "<Leader>d", vim.diagnostic.open_float, opts)
 keymap("n", "<Leader>dl", "<cmd>Telescope diagnostics<CR>", opts)
 

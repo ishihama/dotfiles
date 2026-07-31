@@ -124,14 +124,18 @@ git config user.email  # → 仕事用メールアドレスが表示される
 
 | キー | 説明 |
 |------|------|
-| `Ctrl+R` | fzf履歴検索 |
+| `Ctrl+R` | atuin履歴検索 |
 | `Ctrl+G` | ghq + fzf + tmux (リポジトリ選択) |
-| `Ctrl+W` | gwq + fzf + tmux (worktree選択) |
-| `Ctrl+B` | git branch切り替え (fzf + preview) |
-| `Ctrl+F` | ファイル検索→nvimで開く (fd + fzf) |
-| `Ctrl+K` | プロセスkill (procs + fzf) |
+| `Ctrl+X` `w` | gwq + fzf + tmux (worktree選択) |
+| `Ctrl+X` `b` | git branch切り替え (fzf + preview) |
+| `Ctrl+X` `f` | ファイル検索→nvimで開く (fd + fzf) |
+| `Ctrl+X` `k` | プロセスkill (procs + fzf) |
 | `lg` | lazygit起動 |
 | `cheat` | チートシート表示 (コマンドラインに貼付) |
+
+> `Ctrl+X` は押して離してから次のキーを押す (押しっぱなしだと `Ctrl+X Ctrl+W` になり別のバインド)。
+> `^W`/`^B`/`^F`/`^K` は zsh 標準 (単語削除・カーソル移動・行末削除) のまま残してある。
+> `Ctrl+R` は atuin が担当する。
 
 ### Ghostty (tmux連携)
 
@@ -234,13 +238,13 @@ ghq get https://github.com/anthropics/claude-code
 
 ## gwq + fzf + tmux ワークフロー
 
-`Ctrl+W`でworktree選択して並行開発用のtmuxセッションを作成/切り替え。
+`Ctrl+X w`でworktree選択して並行開発用のtmuxセッションを作成/切り替え。
 
 gwqは`./init.sh`実行時に`brew bundle`でインストールされる。
 
 ### 使い方
 
-1. `Ctrl+W`を押す
+1. `Ctrl+X w`を押す
 2. fzfでworktreeを選択（プレビューで最近のコミット表示）
 3. `{リポジトリ}-{ブランチ}`名のtmuxセッションが自動作成される（既存なら切り替え）
 
@@ -259,7 +263,7 @@ gwq add -b feature/login
 # 別の機能も並行して開始
 gwq add -b feature/signup
 
-# Ctrl+Wで切り替え
+# Ctrl+X w で切り替え
 # それぞれ独自のtmuxセッションでフルコンテキスト維持
 
 # 完了したらクリーンアップ
@@ -280,32 +284,32 @@ gwq remove feature/login
 
 日常の開発を効率化するfzf連携キーバインド。
 
-### Ctrl+B: git branch切り替え
+### Ctrl+X b: git branch切り替え
 
 ローカルブランチをfzfで選択してcheckout。プレビューでコミット履歴を確認できる。
 
 ```bash
-# Ctrl+Bを押す → ブランチ一覧が表示
+# Ctrl+X b を押す → ブランチ一覧が表示
 # 選択するとそのブランチにcheckout
 # プレビューで各ブランチの最新コミットを確認
 ```
 
-### Ctrl+F: ファイル検索→nvimで開く
+### Ctrl+X f: ファイル検索→nvimで開く
 
 fd + fzf + batでファイルを検索。プレビューでシンタックスハイライト付きの内容を確認してnvimで開く。
 
 ```bash
-# Ctrl+Fを押す → ファイル一覧が表示
+# Ctrl+X f を押す → ファイル一覧が表示
 # 選択するとnvimで開く
 # プレビューでファイル内容を確認（bat使用）
 ```
 
-### Ctrl+K: プロセスkill
+### Ctrl+X k: プロセスkill
 
 procsでプロセス一覧を表示、fzfで選択してkill。
 
 ```bash
-# Ctrl+Kを押す → プロセス一覧が表示
+# Ctrl+X k を押す → プロセス一覧が表示
 # 選択するとkill -9で終了
 # プレビューでプロセスツリーを確認
 ```

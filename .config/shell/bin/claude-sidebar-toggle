@@ -1,15 +1,42 @@
 #!/usr/bin/env bash
 # Claude状態サイドバーのトグル (tmux prefix+a)
 # 現在のwindowの右端に claude-status watch のpaneを開閉する
-export PATH="/opt/homebrew/bin:/usr/bin:/bin:$PATH"
+set -u
+export PATH="/opt/homebrew/bin:/usr/local/bin:/home/linuxbrew/.linuxbrew/bin:/usr/bin:/bin:$PATH"
 
-pane=$(tmux show-option -wqv @claude_sidebar_pane)
-if [ -n "$pane" ] && tmux list-panes -F '#{pane_id}' | grep -qx "$pane"; then
-    tmux kill-pane -t "$pane"
-    tmux set-option -wu @claude_sidebar_pane
-else
-    # -d を付けずフォーカスをサイドバーに移す (数字キー1-9のジャンプ操作を受けるため)
-    new_pane=$(tmux split-window -h -l 44 -P -F '#{pane_id}' \
-        "$HOME/.config/claude/bin/claude-status watch")
-    tmux set-option -w @claude_sidebar_pane "$new_pane"
+OPT=@claude_sidebar_pane
+WATCHER="$HOME/.config/claude/bin/claude-status"
+
+pane=$(tmux show-option -wqv "$OPT" 2>/dev/null)
+
+# grep -qxF: pane id をリテラル比較する (-qx だと正規表現扱いになる)。
+# 空文字は list-panes の全行にマッチしてしまうため、必ず -n で弾く。
+if [ -n "$pane" ] && tmux list-panes -F '#{pane_id}' 2>/dev/null | grep -qxF "$pane"; then
+    tmux kill-pane -t "$pane" 2>/dev/null
+    tmux set-option -wu "$OPT" 2>/dev/null
+    exit 0
 fi
+
+# 記録が残っているのに pane が存在しない (watcher が異常終了した等) 場合は掃除する
+[ -n "$pane" ] && tmux set-option -wu "$OPT" 2>/dev/null
+
+if [ ! -x "$WATCHER" ]; then
+    tmux display-message "claude-sidebar: not found: $WATCHER"
+    exit 1
+fi
+
+# -d を付けずフォーカスをサイドバーに移す (数字キー1-9のジャンプ操作を受けるため)。
+# tmux はコマンド文字列を sh -c に渡すため、$HOME に空白が含まれても
+# 壊れないよう printf %q でクォートしておく。
+new_pane=$(tmux split-window -h -l 44 -P -F '#{pane_id}' \
+    "$(printf '%q watch' "$WATCHER")" 2>/dev/null)
+
+# split-window が失敗する (window が狭すぎる等) と new_pane が空になる。
+# それを記録すると次回の grep -qxF "" が全行にマッチし、kill-pane -t "" で
+# 現在の pane を殺してしまう。
+if [ -z "$new_pane" ]; then
+    tmux display-message "claude-sidebar: could not split the window"
+    exit 1
+fi
+
+tmux set-option -w "$OPT" "$new_pane"

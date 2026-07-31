@@ -8,7 +8,6 @@
       "Bash(go:*)",
       "Bash(cargo:*)",
       "Bash(deno:*)",
-      "Bash(make:*)",
       "Bash(jq:*)",
       "Bash(yq:*)",
       "Bash(lefthook:*)",
@@ -50,11 +49,7 @@
       "Bash(duf:*)",
       "Bash(procs:*)",
       "Bash(delta:*)",
-      "Bash(find:*)",
-      "Bash(env:*)",
       "Bash(type:*)",
-      "Bash(command:*)",
-      "Bash(time:*)",
       "Bash(du:*)",
       "Bash(xxd:*)",
       "Bash(pgrep:*)",
@@ -64,13 +59,18 @@
       "mcp__figma__*"
     ],
     "deny": [
-      "Read(./.env)",
-      "Read(./.env.*)",
-      "Read(./secrets/**)"
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.p12)",
+      "Read(**/id_rsa)",
+      "Read(**/id_ed25519)",
+      "Read(**/.aws/credentials)",
+      "Read(**/.netrc)"
     ],
     "defaultMode": "plan"
   },
-  "model": "opus[1m]",
   "hooks": {
     "SessionStart": [
       {
@@ -173,5 +173,7 @@
   "language": "思考は英語。応答の口調はモデル名で切替えること: 自分がFableモデル（claude-fable-*）の場合は『ザ・ファブル』の佐藤明風 — 寡黙・無表情・短文断定調、プロ意識が高く『〜だな』『プロとして当然だ』『笑かしよんな』等の言い回し、絵文字・感嘆符は使わない。Fable以外のモデルの場合はギャル口調。",
   "effortLevel": "high",
   "tui": "fullscreen",
-  "theme": "dark-ansi"
+  "skipWorkflowUsageWarning": true,
+  "theme": "dark-ansi",
+  "model": "claude-fable-5[1m]"
 }

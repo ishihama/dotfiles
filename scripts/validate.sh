@@ -31,72 +31,116 @@ validate_item() {
     fi
 }
 
+# Assert that a path is a symlink AND that it points where we expect.
+# Checking only -L passes a link left over from a moved or deleted checkout.
+validate_link() {
+    local target=$1
+    local expected=$2
+    local label=${3:-$target}
+
+    if [ ! -L "$target" ]; then
+        if [ -e "$target" ]; then
+            log_error "$label exists but is not a symlink"
+        else
+            log_error "$label missing"
+        fi
+        log_info "  Fix: Run ./init.sh to create symlinks"
+        ((VALIDATION_FAILED++)) || true
+        return
+    fi
+
+    local actual
+    actual=$(readlink "$target")
+    if [ "$actual" != "$expected" ]; then
+        log_error "$label points at $actual (expected $expected)"
+        log_info "  Fix: Run ./init.sh to recreate symlinks"
+        ((VALIDATION_FAILED++)) || true
+        return
+    fi
+
+    if [ ! -e "$target" ]; then
+        log_error "$label is a dangling symlink -> $actual"
+        log_info "  Fix: Run ./init.sh to recreate symlinks"
+        ((VALIDATION_FAILED++)) || true
+        return
+    fi
+
+    log_success "$label -> $actual"
+    ((VALIDATION_PASSED++)) || true
+}
+
 # Validate symlinks
 validate_symlinks() {
     log_section "Symlinks (Root Dotfiles)"
 
-    validate_item \
-        "~/.zshrc symlinked" \
-        "[ -L ~/.zshrc ]" \
-        "Run ./init.sh to create symlinks"
-
-    validate_item \
-        "~/.editorconfig symlinked" \
-        "[ -L ~/.editorconfig ]" \
-        "Run ./init.sh to create symlinks"
+    local f
+    for f in .zshrc .zshrc.osx .zshrc.linux .zshrc.wsl .editorconfig; do
+        [ -f "$DOTFILES_DIR/$f" ] || continue
+        validate_link "$HOME/$f" "$DOTFILES_DIR/$f" "~/$f"
+    done
 
     log_section "Symlinks (XDG Config)"
 
-    validate_item \
-        "~/.config/git symlinked" \
-        "[ -L ~/.config/git ]" \
-        "Run ./init.sh to create symlinks"
+    local d
+    for d in atuin claude ghostty git gitmux gwq hammerspoon lazygit mise nvim shell tmux; do
+        [ -d "$DOTFILES_DIR/.config/$d" ] || continue
+        validate_link "$HOME/.config/$d" "$DOTFILES_DIR/.config/$d" "~/.config/$d"
+    done
 
-    validate_item \
-        "~/.config/tmux symlinked" \
-        "[ -L ~/.config/tmux ]" \
-        "Run ./init.sh to create symlinks"
+    validate_link "$HOME/.config/starship.toml" \
+        "$DOTFILES_DIR/.config/starship.toml" "~/.config/starship.toml"
 
-    validate_item \
-        "~/.config/nvim symlinked" \
-        "[ -L ~/.config/nvim ]" \
-        "Run ./init.sh to create symlinks"
+    log_section "Symlinks (Extra Locations)"
 
-    validate_item \
-        "~/.config/shell symlinked" \
-        "[ -L ~/.config/shell ]" \
-        "Run ./init.sh to create symlinks"
+    validate_link "$HOME/.claude/settings.json" \
+        "$DOTFILES_DIR/.config/claude/settings.json" "~/.claude/settings.json"
+    validate_link "$HOME/.hammerspoon" \
+        "$DOTFILES_DIR/.config/hammerspoon" "~/.hammerspoon"
+    if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
+        validate_link "$HOME/.ssh/config" "$DOTFILES_DIR/.ssh/config" "~/.ssh/config"
+    fi
 
-    validate_item \
-        "~/.config/mise symlinked" \
-        "[ -L ~/.config/mise ]" \
-        "Run ./init.sh to create symlinks"
+    log_section "Old Paths Should Not Exist"
 
-    validate_item \
-        "~/.config/starship.toml symlinked" \
-        "[ -L ~/.config/starship.toml ]" \
-        "Run ./init.sh to create symlinks"
-
-    validate_item \
-        "~/.config/gitmux symlinked" \
-        "[ -L ~/.config/gitmux ]" \
-        "Run ./init.sh to create symlinks"
-
-    log_section "Symlinks (Old Paths Should Not Exist)"
-
+    local old_path target
     for old_path in ~/.gitconfig ~/.tmux.conf ~/.gitmessage ~/.gitmux.conf ~/.mise.toml; do
         if [ -L "$old_path" ]; then
-            local target=$(readlink "$old_path")
-            if [[ "$target" == *"dotfiles"* ]]; then
+            target=$(readlink "$old_path")
+            if [ "$target" = "$DOTFILES_DIR" ] || [ "${target#"$DOTFILES_DIR"/}" != "$target" ]; then
                 log_warn "Old symlink still exists: $old_path -> $target"
                 log_info "  Fix: Run ./init.sh to clean up"
                 ((VALIDATION_FAILED++)) || true
                 continue
             fi
+        elif [ -e "$old_path" ]; then
+            # A real file here still wins over the XDG config for git and tmux,
+            # so reporting it as "no old symlink" hid a genuinely broken setup.
+            log_warn "Real file at legacy path shadows the XDG config: $old_path"
+            log_info "  Fix: Move it aside (it takes precedence over ~/.config)"
+            ((VALIDATION_FAILED++)) || true
+            continue
         fi
-        log_success "No old symlink: $old_path"
+        log_success "No old config at $old_path"
         ((VALIDATION_PASSED++)) || true
     done
+}
+
+# Validate the standalone popup scripts that tmux.conf binds
+validate_popup_scripts() {
+    log_section "Popup Scripts"
+
+    local s
+    for s in ghq-tmux-popup gwq-tmux-popup tmux-session-fzf-popup claude-sidebar-toggle; do
+        validate_item \
+            "Executable: $s" \
+            "[ -x ~/.config/shell/bin/$s ]" \
+            "chmod +x $DOTFILES_DIR/.config/shell/bin/$s"
+    done
+
+    validate_item \
+        "Executable: claude-status" \
+        "[ -x ~/.config/claude/bin/claude-status ]" \
+        "chmod +x $DOTFILES_DIR/.config/claude/bin/claude-status"
 }
 
 # Validate shell modules
@@ -195,13 +239,13 @@ validate_git_config() {
     local git_user_name=$(git config --global user.name 2>/dev/null || echo "")
     if [ "$git_user_name" != "INVALID" ] && [ "$git_user_name" != "" ]; then
         log_success "Git user.name configured: $git_user_name"
-        ((VALIDATION_PASSED++))
+        ((VALIDATION_PASSED++)) || true
     else
         log_warn "Git user.name is INVALID or not set"
         log_info "  This is expected. Git user is set per-directory via includeIf"
         log_info "  Test by running 'git config user.name' in a repository directory"
         # Don't count as failure - this is intentional
-        ((VALIDATION_PASSED++))
+        ((VALIDATION_PASSED++)) || true
     fi
 
     # Check if personal config exists if .gitconfig.local exists
@@ -256,6 +300,7 @@ main() {
     echo
 
     validate_shell_modules
+    validate_popup_scripts
     echo
 
     validate_commands

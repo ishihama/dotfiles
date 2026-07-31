@@ -2,11 +2,32 @@
 # homebrew.sh - Install Homebrew and packages
 # Extracted from init.sh lines 73-96
 
+BREW_INSTALL_URL="https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh"
+
 setup_homebrew() {
+    if is_dry_run; then
+        command_exists brew \
+            && log_info "[DRY RUN] Homebrew already installed" \
+            || log_info "[DRY RUN] would install Homebrew"
+        log_info "[DRY RUN] would run: brew bundle --file=$DOTFILES_DIR/Brewfile"
+        log_info "[DRY RUN] would install the benelan/gh-fzf gh extension"
+        return 0
+    fi
+
     # Install Homebrew if not present
     if ! command_exists brew; then
         log_info "Installing Homebrew..."
-        /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+        local installer
+        installer=$(fetch_installer "$BREW_INSTALL_URL") || return 1
+        /bin/bash "$installer"
+        local rc=$?
+        rm -f "$installer"
+
+        if [ $rc -ne 0 ]; then
+            log_error "Homebrew installation failed (exit $rc)"
+            return 1
+        fi
 
         # Add Homebrew to PATH for this session
         if [ -f "/opt/homebrew/bin/brew" ]; then

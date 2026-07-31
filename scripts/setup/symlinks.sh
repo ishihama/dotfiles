@@ -44,6 +44,7 @@ setup_symlinks() {
     log_info "Symlinking dotfiles from $DOTFILES_DIR"
 
     # Root dotfiles → $HOME
+    local file
     for file in "${ROOT_DOTFILES[@]}"; do
         if [ -f "$DOTFILES_DIR/$file" ]; then
             safe_symlink "$DOTFILES_DIR/$file" "$HOME/$file"
@@ -51,7 +52,8 @@ setup_symlinks() {
     done
 
     # .config directories → $HOME/.config/
-    mkdir -p "$HOME/.config"
+    run_cmd mkdir -p "$HOME/.config"
+    local dir
     for dir in "${CONFIG_DIRS[@]}"; do
         if [ -d "$DOTFILES_DIR/.config/$dir" ]; then
             safe_symlink "$DOTFILES_DIR/.config/$dir" "$HOME/.config/$dir"
@@ -69,7 +71,7 @@ setup_symlinks() {
     # so we additionally symlink settings.json there. The rest of .config/claude/
     # (hooks/, bin/) is symlinked via CONFIG_DIRS above.
     if [ -f "$DOTFILES_DIR/.config/claude/settings.json" ]; then
-        mkdir -p "$HOME/.claude"
+        run_cmd mkdir -p "$HOME/.claude"
         safe_symlink "$DOTFILES_DIR/.config/claude/settings.json" "$HOME/.claude/settings.json"
     fi
 
@@ -81,8 +83,8 @@ setup_symlinks() {
 
     # SSH config (personal + Include ~/.ssh/config.local for per-machine/work entries)
     if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
-        mkdir -p "$HOME/.ssh"
-        chmod 700 "$HOME/.ssh"
+        run_cmd mkdir -p "$HOME/.ssh"
+        run_cmd chmod 700 "$HOME/.ssh"
         safe_symlink "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config"
     fi
 
@@ -91,14 +93,18 @@ setup_symlinks() {
 }
 
 cleanup_old_symlinks() {
+    local old_link target
     for old_link in "${OLD_SYMLINKS[@]}"; do
-        if [ -L "$old_link" ]; then
-            local target=$(readlink "$old_link")
-            # Only remove if it points to our dotfiles repo
-            if [[ "$target" == *"dotfiles"* ]]; then
-                rm "$old_link"
-                log_info "Cleaned up old symlink: $old_link"
-            fi
+        [ -L "$old_link" ] || continue
+        target=$(readlink "$old_link")
+
+        # Only remove links into *this* checkout. Matching on the substring
+        # "dotfiles" would also eat an unrelated ~/src/work-dotfiles link.
+        if [ "$target" = "$DOTFILES_DIR" ] || [ "${target#"$DOTFILES_DIR"/}" != "$target" ]; then
+            run_cmd rm "$old_link"
+            is_dry_run || log_info "Cleaned up old symlink: $old_link"
+        else
+            log_skip "Leaving foreign symlink alone: $old_link -> $target"
         fi
     done
 }

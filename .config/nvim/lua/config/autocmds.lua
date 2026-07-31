@@ -22,7 +22,13 @@ autocmd("VimEnter", {
     if filename:sub(1, #memo_dir) == memo_dir then
       return
     end
-    require("nvim-tree.api").tree.open()
+    -- pcall: on the very first launch plugins are still installing, and an
+    -- unguarded require throws an autocmd error on every startup until
+    -- nvim-tree exists.
+    local ok, api = pcall(require, "nvim-tree.api")
+    if ok then
+      api.tree.open()
+    end
   end,
 })
 
@@ -31,7 +37,7 @@ augroup("YankHighlight", { clear = true })
 autocmd("TextYankPost", {
   group = "YankHighlight",
   callback = function()
-    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 200 })
+    vim.hl.on_yank({ higroup = "IncSearch", timeout = 200 })
   end,
 })
 
@@ -53,9 +59,29 @@ autocmd("BufWritePre", {
   group = "TrimWhitespace",
   pattern = "*",
   callback = function()
+    -- Two trailing spaces are a hard line break in Markdown, so stripping
+    -- them silently changes how the document renders.
+    local skip = { markdown = true, gitcommit = true, diff = true }
+    if skip[vim.bo.filetype] then
+      return
+    end
+    -- Edit the buffer directly instead of :%s - the ex command clobbers the
+    -- last-search pattern, so a later `n` jumps to trailing whitespace
+    -- rather than the user's own search.
     local save_cursor = vim.fn.getpos(".")
-    vim.cmd([[%s/\s\+$//e]])
-    vim.fn.setpos(".", save_cursor)
+    local lines = vim.api.nvim_buf_get_lines(0, 0, -1, false)
+    local changed = false
+    for i, line in ipairs(lines) do
+      local trimmed = line:gsub("%s+$", "")
+      if trimmed ~= line then
+        lines[i] = trimmed
+        changed = true
+      end
+    end
+    if changed then
+      vim.api.nvim_buf_set_lines(0, 0, -1, false, lines)
+      vim.fn.setpos(".", save_cursor)
+    end
   end,
 })
 
@@ -81,7 +107,7 @@ autocmd("BufWritePre", {
     if event.match:match("^%w%w+://") then
       return
     end
-    local file = vim.loop.fs_realpath(event.match) or event.match
+    local file = vim.uv.fs_realpath(event.match) or event.match
     vim.fn.mkdir(vim.fn.fnamemodify(file, ":p:h"), "p")
   end,
 })
