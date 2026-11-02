@@ -94,15 +94,14 @@ validate_symlinks() {
 
     validate_link "$HOME/.claude/settings.json" \
         "$DOTFILES_DIR/.config/claude/settings.json" "~/.claude/settings.json"
-    # Per-account config dirs listed in the (non-git) Claude account-map
-    local claude_map="$HOME/.config/claude-accounts/account-map"
-    if [ -f "$claude_map" ]; then
-        local profile
-        for profile in $(awk '$1 !~ /^#/ && NF >= 2 && $2 != "default" && $2 ~ /^[A-Za-z0-9_-]+$/ { print $2 }' "$claude_map" | sort -u); do
-            validate_link "$HOME/.claude-$profile/settings.json" \
-                "$DOTFILES_DIR/.config/claude/settings.json" "~/.claude-$profile/settings.json"
-        done
-    fi
+    # Per-owner config dirs (~/.claude-<owner>, see claude-wrapper.sh)
+    local claude_dir
+    for claude_dir in "$HOME"/.claude-*/; do
+        [ -d "$claude_dir" ] || continue
+        claude_dir="${claude_dir%/}"
+        validate_link "$claude_dir/settings.json" \
+            "$DOTFILES_DIR/.config/claude/settings.json" "~/${claude_dir##*/}/settings.json"
+    done
     validate_link "$HOME/.hammerspoon" \
         "$DOTFILES_DIR/.config/hammerspoon" "~/.hammerspoon"
     if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
