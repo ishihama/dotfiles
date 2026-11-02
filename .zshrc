@@ -21,6 +21,7 @@ for _mod in \
     gwq-tmux.sh \
     gwq-wrapper.sh \
     gh-wrapper.sh \
+    claude-wrapper.sh \
     fzf-widgets.sh \
     memo.sh \
     completions.sh \

@@ -41,6 +41,7 @@ main() {
     run_setup_module "homebrew" "Installing Homebrew packages"
     run_setup_module "shell" "Setting up shell environment"
     run_setup_module "git" "Configuring Git"
+    run_setup_module "claude" "Preparing Claude Code accounts"
     run_setup_module "tools" "Installing additional tools"
 
     # Validation. A failing check is worth reporting, but it must not swallow

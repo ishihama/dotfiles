@@ -94,6 +94,15 @@ validate_symlinks() {
 
     validate_link "$HOME/.claude/settings.json" \
         "$DOTFILES_DIR/.config/claude/settings.json" "~/.claude/settings.json"
+    # Per-account config dirs listed in the (non-git) Claude account-map
+    local claude_map="$HOME/.config/claude-accounts/account-map"
+    if [ -f "$claude_map" ]; then
+        local profile
+        for profile in $(awk '$1 !~ /^#/ && NF >= 2 && $2 != "default" && $2 ~ /^[A-Za-z0-9_-]+$/ { print $2 }' "$claude_map" | sort -u); do
+            validate_link "$HOME/.claude-$profile/settings.json" \
+                "$DOTFILES_DIR/.config/claude/settings.json" "~/.claude-$profile/settings.json"
+        done
+    fi
     validate_link "$HOME/.hammerspoon" \
         "$DOTFILES_DIR/.config/hammerspoon" "~/.hammerspoon"
     if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
@@ -147,7 +156,7 @@ validate_popup_scripts() {
 validate_shell_modules() {
     log_section "Shell Modules"
 
-    local modules=(env.sh aliases.sh ghq-tmux.sh gwq-tmux.sh gwq-wrapper.sh gh-wrapper.sh fzf-widgets.sh memo.sh completions.sh platform.sh cheat.sh)
+    local modules=(env.sh aliases.sh ghq-tmux.sh gwq-tmux.sh gwq-wrapper.sh gh-wrapper.sh claude-wrapper.sh fzf-widgets.sh memo.sh completions.sh platform.sh cheat.sh)
     for module in "${modules[@]}"; do
         validate_item \
             "Shell module: $module" \
