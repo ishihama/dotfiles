@@ -98,7 +98,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `permissions.deny` only constrains the **Read tool**. It does not and cannot stop `cat`, `rg`, `bat`, `head` or `xxd` from reading the same file, and those are all on the allow list. Treat the deny entries as guard rails against accidental reads, not as a security boundary
 - Entries that reach arbitrary command execution without a prompt were removed from the allow list: `find`, `env`, `command`, `time`, `make` (`env sh -c …`, `find -exec sh -c …`, `make -f /dev/stdin`). `find` is redundant anyway since `fd` is allowed
 - `npm`/`pnpm`/`yarn`/`go`/`cargo`/`deno`/`gh`/`mise` remain allowed and offer equivalent escapes (lifecycle scripts, `go run`, `build.rs`). This is a deliberate trade for daily usability — do not add entries of this class without weighing that
-- `defaultMode: "plan"` does not gate Bash commands that are already on the allow list
+- `defaultMode` is `"auto"`. Whatever the mode (plan included), Bash commands already on the allow list run without a prompt
 
 **Package Management**
 - `Brewfile` - Homebrew packages organized by category (Modern CLI tools, Shell & Terminal, Git & GitHub, Languages, Cloud, etc.), casks, Mac App Store apps
