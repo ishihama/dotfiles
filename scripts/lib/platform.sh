@@ -4,7 +4,8 @@
 
 # Detect the current platform
 detect_platform() {
-    local uname_str=$(uname -s)
+    local uname_str
+    uname_str=$(uname -s)
 
     case "$uname_str" in
         Darwin*)
@@ -38,7 +39,8 @@ is_wsl() {
 }
 
 # Export the platform for use in scripts
-export DOTFILES_PLATFORM=$(detect_platform)
+DOTFILES_PLATFORM=$(detect_platform)
+export DOTFILES_PLATFORM
 
 # Export functions
 export -f detect_platform is_macos is_linux is_wsl

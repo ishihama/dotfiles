@@ -1,8 +1,10 @@
-# pbcopy
-alias pbcopy='clip.exe'
+# Clipboard: pbcopy is a script on PATH (~/.local/bin/pbcopy ->
+# .config/shell/bin/wsl/pbcopy) that converts to UTF-16LE for clip.exe, so
+# tmux copy-pipe can call it too. Drop the xsel alias from .zshrc.linux, which
+# would otherwise shadow it in interactive shells.
+unalias pbcopy 2>/dev/null
 
-# x server
-export DISPLAY=localhost:0.0
+# DISPLAY is left alone: WSLg sets DISPLAY=:0 itself.
 
 
 # tmux wsl-terminal

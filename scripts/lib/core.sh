@@ -233,7 +233,8 @@ run_setup_module() {
     fi
 
     # Source the module and run its setup function
-    if source "$script_path" && setup_${module_name}; then
+    # shellcheck source=/dev/null  # module path is chosen at runtime
+    if source "$script_path" && "setup_${module_name}"; then
         log_success "$description completed"
         return 0
     else

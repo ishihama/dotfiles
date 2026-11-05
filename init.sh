@@ -2,6 +2,9 @@
 # init.sh - Dotfiles setup orchestrator
 # This script coordinates the setup process using modular scripts
 
+# Resolve `source` paths relative to this file, not shellcheck's cwd
+# shellcheck source-path=SCRIPTDIR
+
 # -E so the ERR trap below is inherited by shell functions; without it
 # error_handler never fires.
 set -Eeuo pipefail
@@ -20,7 +23,9 @@ for arg in "$@"; do
 done
 
 # Load core libraries
+# shellcheck source=scripts/lib/core.sh
 source "$SCRIPTS_DIR/lib/core.sh"
+# shellcheck source=scripts/lib/platform.sh
 source "$SCRIPTS_DIR/lib/platform.sh"
 
 # Set up error handling
@@ -64,6 +69,12 @@ main() {
         log_success "Setup complete!"
     fi
     print_next_steps
+
+    # A dry run changes nothing, so on a machine that is not set up yet the
+    # validation is guaranteed to fail. Report it, but don't fail the preview.
+    if is_dry_run; then
+        return 0
+    fi
     return "$validation_rc"
 }
 

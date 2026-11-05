@@ -39,6 +39,11 @@ export PATH="${ANDROID_SDK_ROOT}/platform-tools:$PATH"
 # Rust
 export PATH="$HOME/.cargo/bin:$PATH"
 
+# User-local executables (Claude Code native install, WSL pbcopy, ...).
+# Appended, not prepended, so it never shadows an existing command, and only
+# when absent so re-sourcing ~/.zshrc doesn't grow PATH.
+[[ ":$PATH:" == *":$HOME/.local/bin:"* ]] || export PATH="$PATH:$HOME/.local/bin"
+
 # Claude Code helpers (claude-status etc.)
 export PATH="$HOME/.config/claude/bin:$PATH"
 

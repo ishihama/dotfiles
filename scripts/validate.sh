@@ -2,13 +2,20 @@
 # validate.sh - Validate dotfiles setup
 # Checks symlinks, commands, and Git configuration
 
+# The "~/..." strings in this file are display labels, not paths to expand.
+# shellcheck disable=SC2088
+# shellcheck source-path=SCRIPTDIR
+
 set -euo pipefail
 
 DOTFILES_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 SCRIPTS_DIR="$DOTFILES_DIR/scripts"
 
 # Load core library for logging
+# shellcheck source=lib/core.sh
 source "$SCRIPTS_DIR/lib/core.sh"
+# shellcheck source=lib/platform.sh
+source "$SCRIPTS_DIR/lib/platform.sh"
 
 # Validation results
 VALIDATION_PASSED=0
@@ -84,6 +91,10 @@ validate_symlinks() {
     local d
     for d in atuin claude ghostty git gitmux gwq hammerspoon lazygit mise nvim shell tmux; do
         [ -d "$DOTFILES_DIR/.config/$d" ] || continue
+        # macOS apps; symlinks.sh does not link these elsewhere
+        if ! is_macos && { [ "$d" = ghostty ] || [ "$d" = hammerspoon ]; }; then
+            continue
+        fi
         validate_link "$HOME/.config/$d" "$DOTFILES_DIR/.config/$d" "~/.config/$d"
     done
 
@@ -102,8 +113,14 @@ validate_symlinks() {
         validate_link "$claude_dir/settings.json" \
             "$DOTFILES_DIR/.config/claude/settings.json" "~/${claude_dir##*/}/settings.json"
     done
-    validate_link "$HOME/.hammerspoon" \
-        "$DOTFILES_DIR/.config/hammerspoon" "~/.hammerspoon"
+    if is_macos; then
+        validate_link "$HOME/.hammerspoon" \
+            "$DOTFILES_DIR/.config/hammerspoon" "~/.hammerspoon"
+    fi
+    if is_wsl; then
+        validate_link "$HOME/.local/bin/pbcopy" \
+            "$DOTFILES_DIR/.config/shell/bin/wsl/pbcopy" "~/.local/bin/pbcopy"
+    fi
     if [ -f "$DOTFILES_DIR/.ssh/config" ]; then
         validate_link "$HOME/.ssh/config" "$DOTFILES_DIR/.ssh/config" "~/.ssh/config"
     fi
@@ -244,7 +261,8 @@ validate_git_config() {
         "Check ~/.config/git/config commit.template setting"
 
     # Check if Git user is configured (not the INVALID placeholder)
-    local git_user_name=$(git config --global user.name 2>/dev/null || echo "")
+    local git_user_name
+    git_user_name=$(git config --global user.name 2>/dev/null || echo "")
     if [ "$git_user_name" != "INVALID" ] && [ "$git_user_name" != "" ]; then
         log_success "Git user.name configured: $git_user_name"
         ((VALIDATION_PASSED++)) || true
