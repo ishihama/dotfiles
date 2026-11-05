@@ -44,9 +44,12 @@
 	prune = true
 [ghq]
 	root = ~/repos
+# gh is looked up on PATH (not /opt/homebrew/bin/gh) so the same config works
+# with Linuxbrew on Linux/WSL. A git started without Homebrew on PATH (some
+# macOS GUI apps) gets no helper and falls back to its own prompt.
 [credential "https://github.com"]
 	helper =
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !gh auth git-credential
 [credential "https://gist.github.com"]
 	helper =
-	helper = !/opt/homebrew/bin/gh auth git-credential
+	helper = !gh auth git-credential
