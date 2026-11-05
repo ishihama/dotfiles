@@ -1,0 +1,24 @@
+#!/bin/bash
+# pbcopy for WSL - copy stdin to the Windows clipboard.
+#
+# clip.exe decodes its input with the console code page unless it looks like
+# UTF-16, so UTF-8 from Linux (Japanese, emoji) arrives garbled. Convert to
+# UTF-16LE first. No BOM: clip.exe keeps it as a literal U+FEFF in the
+# clipboard. clip.exe itself turns LF into CRLF.
+#
+# Lives on PATH (~/.local/bin/pbcopy, linked by scripts/setup/symlinks.sh on
+# WSL only) rather than as an alias, so tmux copy-pipe and other
+# non-interactive callers can use it.
+
+set -o pipefail
+
+clip=$(command -v clip.exe || true)
+if [ -z "$clip" ] && [ -x /mnt/c/Windows/System32/clip.exe ]; then
+    clip=/mnt/c/Windows/System32/clip.exe
+fi
+if [ -z "$clip" ]; then
+    echo "pbcopy: clip.exe not found (is Windows interop enabled?)" >&2
+    exit 1
+fi
+
+iconv -f UTF-8 -t UTF-16LE | "$clip"

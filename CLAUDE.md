@@ -65,7 +65,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/shell/cheat.sh` - Cheatsheet function (fzf-based keybinding reference)
 - `.zshrc.osx` - macOS-specific settings (currently minimal)
 - `.zshrc.linux` - Linux-specific (Linuxbrew, xdg-open aliases)
-- `.zshrc.wsl` - WSL-specific (Windows clipboard, X Server display)
+- `.zshrc.wsl` - WSL-specific (drops the xsel `pbcopy` alias so `~/.local/bin/pbcopy` → `.config/shell/bin/wsl/pbcopy` wins; leaves WSLg's `DISPLAY=:0` alone)
 
 **Neovim Configuration**
 - `.config/nvim/init.lua` - Entry point, loads config modules
@@ -129,7 +129,8 @@ dotfiles/
 │   │       ├── ghq-tmux-popup  # ghq popup (no interactive shell)
 │   │       ├── gwq-tmux-popup  # gwq popup (no interactive shell)
 │   │       ├── tmux-session-fzf-popup  # session switcher popup
-│   │       └── claude-sidebar-toggle   # Claude status sidebar toggle (prefix+a)
+│   │       ├── claude-sidebar-toggle   # Claude status sidebar toggle (prefix+a)
+│   │       └── wsl/pbcopy      # UTF-8→UTF-16LE→clip.exe (WSL only, linked to ~/.local/bin)
 │   ├── git/                     # Git configuration (XDG native)
 │   │   ├── config              # Main git config
 │   │   ├── message             # Commit message template

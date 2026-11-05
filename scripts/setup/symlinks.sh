@@ -26,6 +26,19 @@ CONFIG_DIRS=(
     tmux
 )
 
+# Subset of CONFIG_DIRS that only makes sense on macOS (Ghostty and
+# Hammerspoon are macOS apps); skipped on Linux/WSL
+MACOS_ONLY_CONFIG_DIRS=(
+    ghostty
+    hammerspoon
+)
+
+# WSL-only executables linked into ~/.local/bin (on PATH via env.sh).
+# On macOS these would shadow the real system commands.
+WSL_BIN_SCRIPTS=(
+    pbcopy
+)
+
 # .config files to symlink individually
 CONFIG_FILES=(
     starship.toml
@@ -55,6 +68,9 @@ setup_symlinks() {
     run_cmd mkdir -p "$HOME/.config"
     local dir
     for dir in "${CONFIG_DIRS[@]}"; do
+        if ! is_macos && is_macos_only_config_dir "$dir"; then
+            continue
+        fi
         if [ -d "$DOTFILES_DIR/.config/$dir" ]; then
             safe_symlink "$DOTFILES_DIR/.config/$dir" "$HOME/.config/$dir"
         fi
@@ -77,7 +93,7 @@ setup_symlinks() {
 
     # Hammerspoon reads ~/.hammerspoon/init.lua (XDG非対応バージョンがあるため
     # ~/.config/hammerspoon に加えて ~/.hammerspoon もリンクする)
-    if [ -d "$DOTFILES_DIR/.config/hammerspoon" ]; then
+    if is_macos && [ -d "$DOTFILES_DIR/.config/hammerspoon" ]; then
         safe_symlink "$DOTFILES_DIR/.config/hammerspoon" "$HOME/.hammerspoon"
     fi
 
@@ -88,8 +104,27 @@ setup_symlinks() {
         safe_symlink "$DOTFILES_DIR/.ssh/config" "$HOME/.ssh/config"
     fi
 
+    # WSL clipboard helpers etc. -> ~/.local/bin
+    if is_wsl; then
+        run_cmd mkdir -p "$HOME/.local/bin"
+        local script
+        for script in "${WSL_BIN_SCRIPTS[@]}"; do
+            if [ -f "$DOTFILES_DIR/.config/shell/bin/wsl/$script" ]; then
+                safe_symlink "$DOTFILES_DIR/.config/shell/bin/wsl/$script" "$HOME/.local/bin/$script"
+            fi
+        done
+    fi
+
     # Clean up old symlinks from pre-XDG layout
     cleanup_old_symlinks
+}
+
+is_macos_only_config_dir() {
+    local name=$1 d
+    for d in "${MACOS_ONLY_CONFIG_DIRS[@]}"; do
+        [ "$d" = "$name" ] && return 0
+    done
+    return 1
 }
 
 cleanup_old_symlinks() {

@@ -15,11 +15,13 @@ setup_tools() {
     mkdir -p ~/.config/delta
     if [ ! -f ~/.config/delta/catppuccin.gitconfig ]; then
         log_info "Downloading catppuccin theme for delta..."
-        download_git_config \
+        if download_git_config \
             "https://raw.githubusercontent.com/catppuccin/delta/main/catppuccin.gitconfig" \
-            ~/.config/delta/catppuccin.gitconfig \
-            && log_success "delta catppuccin theme installed" \
-            || log_warn "Failed to download delta catppuccin theme"
+            ~/.config/delta/catppuccin.gitconfig; then
+            log_success "delta catppuccin theme installed"
+        else
+            log_warn "Failed to download delta catppuccin theme"
+        fi
     else
         log_skip "delta catppuccin theme already installed"
     fi

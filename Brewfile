@@ -85,10 +85,13 @@ brew "imagemagick"
 # ===========================================
 # Mobile Development
 # ===========================================
-brew "cocoapods"
-brew "libimobiledevice"
-brew "ideviceinstaller"
-brew "ios-deploy"
+# iOS向けツールはmacOS専用 (WSL/LinuxのLinuxbrewでは入らない or 意味がない)
+if OS.mac?
+  brew "cocoapods"
+  brew "libimobiledevice"
+  brew "ideviceinstaller"
+  brew "ios-deploy"
+end
 
 # ===========================================
 # Build & Compile
@@ -108,29 +111,32 @@ brew "glow"          # markdown renderer
 brew "hyperfine"     # benchmarking
 brew "tldr"          # simplified man pages
 
-# ===========================================
-# Casks (GUI Applications)
-# ===========================================
-# android-platform-tools はcask管理しない:
-# Googleが同一URLでファイルを差し替えるたびにchecksum不一致でbrew bundle全体が
-# 失敗するため。adb等はAndroid StudioのSDK Manager (Settings > Languages &
-# Frameworks > Android SDK > SDK Tools > Android SDK Platform-Tools) で管理する。
-# PATHは env.sh が ~/Library/Android/sdk/platform-tools を通している。
-cask "android-studio"
-cask "gcloud-cli"
-cask "ghostty"
-cask "google-chrome"
-cask "hammerspoon"   # Space越しウィンドウフォーカス (claude-status jump)
-cask "intellij-idea-ce"
-cask "microsoft-word"
-cask "rancher"
-cask "slack"
-cask "slack-cli"
-cask "zoom"
+# cask / mas はmacOS専用。Linuxbrewはcaskを扱えず、masはApp Store前提。
+if OS.mac?
+  # ===========================================
+  # Casks (GUI Applications)
+  # ===========================================
+  # android-platform-tools はcask管理しない:
+  # Googleが同一URLでファイルを差し替えるたびにchecksum不一致でbrew bundle全体が
+  # 失敗するため。adb等はAndroid StudioのSDK Manager (Settings > Languages &
+  # Frameworks > Android SDK > SDK Tools > Android SDK Platform-Tools) で管理する。
+  # PATHは env.sh が ~/Library/Android/sdk/platform-tools を通している。
+  cask "android-studio"
+  cask "gcloud-cli"
+  cask "ghostty"
+  cask "google-chrome"
+  cask "hammerspoon"   # Space越しウィンドウフォーカス (claude-status jump)
+  cask "intellij-idea-ce"
+  cask "microsoft-word"
+  cask "rancher"
+  cask "slack"
+  cask "slack-cli"
+  cask "zoom"
 
-# ===========================================
-# Mac App Store
-# ===========================================
-# Apple純正 (Keynote/Numbers/Pages) はOSプリインストール済みのため除外
-mas "Microsoft Excel", id: 462058435
-mas "Microsoft PowerPoint", id: 462062816
+  # ===========================================
+  # Mac App Store
+  # ===========================================
+  # Apple純正 (Keynote/Numbers/Pages) はOSプリインストール済みのため除外
+  mas "Microsoft Excel", id: 462058435
+  mas "Microsoft PowerPoint", id: 462062816
+end

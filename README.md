@@ -46,6 +46,33 @@ cd ~/repos/github.com/ishihama/dotfiles
 ./init.sh --dry-run
 ```
 
+### Windows (WSL2)
+
+Ubuntu 24.04 on WSL2 で動作確認しています。`bootstrap.sh` はmacOS専用（Xcode CLTの確認がある）なので、手動でクローンして `init.sh` を実行します:
+
+```bash
+# 1. 前提パッケージ (Linuxbrewのビルド依存 + ログインシェル用のzsh)
+sudo apt update
+sudo apt install -y build-essential procps curl file git zsh
+
+# 2. クローンして実行（パス構造は上記「手動でクローンする場合」と同じ）
+mkdir -p ~/repos/github.com/ishihama
+git clone https://github.com/ishihama/dotfiles.git ~/repos/github.com/ishihama/dotfiles
+cd ~/repos/github.com/ishihama/dotfiles
+./init.sh
+
+# 3. ログインシェルの変更を反映（WSLを再起動してもOK）
+exec zsh -l
+```
+
+macOSとの違い:
+- Homebrewは Linuxbrew（`/home/linuxbrew/.linuxbrew`）としてインストールされます。インストール時に `sudo` パスワードを聞かれます
+- `Brewfile` の cask / mas / iOS系ツールはmacOS専用なのでスキップされます
+- `init.sh` がログインシェルを `/usr/bin/zsh` に `chsh` します（パスワードを聞かれます）
+- Ghostty / Hammerspoon の設定はリンクされません（Windows側のターミナルは Windows Terminal 等を使用）
+- `pbcopy` は `~/.local/bin/pbcopy`（→ `.config/shell/bin/wsl/pbcopy`）で、UTF-8 を UTF-16LE に変換して `clip.exe` に渡します。PATH上のスクリプトなのでtmuxのコピーモード（`y` / `Enter`）からもWindowsのクリップボードにコピーできます
+- GUIアプリは WSLg が設定する `DISPLAY=:0` をそのまま使います（X Serverは不要）
+
 ### init.sh実行後の手動ステップ
 
 SSH鍵の生成・GitHub登録は `init.sh` 中に対話で完結します（スキップした場合は `./init.sh` 再実行）。残りの手順:
