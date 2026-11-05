@@ -32,24 +32,63 @@ brewfile_tap_formulae() {
 
 # Homebrew 7 refuses to load formulae from non-official taps until they are
 # trusted ("Refusing to load formula ... from untrusted tap"), which made
-# brew bundle skip gwq and sdkman-cli. Trust exactly the formulae the Brewfile
-# names - not whole taps. Older Homebrew has no `brew trust` and needs none.
+# brew bundle skip gwq and sdkman-cli.
+#
+# Trusting is a security decision: a trusted formula is Ruby that Homebrew runs
+# on install/upgrade, and the trust is recorded by name only, so a later change
+# to the tap is trusted too. So ask per formula (default No) instead of doing it
+# silently, and only for formulae the Brewfile names - never whole taps.
+# Already-trusted formulae are not asked again. Older Homebrew has no
+# `brew trust` and needs none.
 #
 # The trust store lives under $XDG_CONFIG_HOME when it is set, and env.sh sets
 # it for every zsh. Pin the same value here so later `brew upgrade` runs from
 # zsh read the store this bash run wrote.
+brew_trust() {
+    XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}" brew trust "$@"
+}
+
+# owner/tap/name -> https://github.com/owner/homebrew-tap (Homebrew's naming rule)
+tap_repo_url() {
+    local formula=$1
+    local owner=${formula%%/*}
+    local rest=${formula#*/}
+    printf 'https://github.com/%s/homebrew-%s\n' "$owner" "${rest%%/*}"
+}
+
 trust_brewfile_formulae() {
     brew help trust >/dev/null 2>&1 || return 0
 
-    local formula
+    # Collect first: confirm() reads stdin, so the prompt must not run inside a
+    # loop whose stdin is the formula list. (No mapfile - macOS /bin/bash is 3.2.)
+    local formulae=() formula
     while IFS= read -r formula; do
-        [ -n "$formula" ] || continue
-        if XDG_CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}" brew trust --formula "$formula" >/dev/null 2>&1; then
-            log_success "Trusted tap formula: $formula"
+        [ -n "$formula" ] && formulae+=("$formula")
+    done < <(brewfile_tap_formulae)
+    [ "${#formulae[@]}" -gt 0 ] || return 0
+
+    local trusted
+    trusted=$(brew_trust --json=v1 2>/dev/null || true)
+
+    for formula in "${formulae[@]}"; do
+        if printf '%s' "$trusted" | grep -qF "\"$formula\""; then
+            log_skip "Already trusted: $formula"
+            continue
+        fi
+
+        log_info "Homebrew 7+ requires trusting third-party formula: $formula"
+        log_info "  Source: $(tap_repo_url "$formula")"
+        if ! confirm "Trust $formula? (Homebrew will run its Ruby on install/upgrade)" "n"; then
+            log_warn "Not trusted: $formula (brew bundle will skip it; trust later with: brew trust --formula $formula)"
+            continue
+        fi
+
+        if brew_trust --formula "$formula" >/dev/null 2>&1; then
+            log_success "Trusted: $formula"
         else
             log_warn "Failed to trust $formula; brew bundle may skip it"
         fi
-    done < <(brewfile_tap_formulae)
+    done
 }
 
 setup_homebrew() {
@@ -65,7 +104,7 @@ setup_homebrew() {
         fi
         local formula
         while IFS= read -r formula; do
-            log_info "[DRY RUN] would run: brew trust --formula $formula (Homebrew 7+ only)"
+            log_info "[DRY RUN] would ask before: brew trust --formula $formula (Homebrew 7+ only)"
         done < <(brewfile_tap_formulae)
         log_info "[DRY RUN] would run: brew bundle --file=$DOTFILES_DIR/Brewfile"
         log_info "[DRY RUN] would install the benelan/gh-fzf gh extension"

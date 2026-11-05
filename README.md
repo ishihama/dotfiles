@@ -26,6 +26,8 @@ curl -fsSL https://raw.githubusercontent.com/ishihama/dotfiles/main/bootstrap.sh
 - SSH鍵が無ければその場で生成（ssh-keygen）→ GitHubへの登録（gh ssh-key add）まで対話で完結
 - Git設定済みでもSSH鍵が無い場合は、`./init.sh` 再実行で鍵の生成・登録だけ実行できます
 
+Homebrew 7以降では、サードパーティtapのformula（`d-kuro/tap/gwq`、`sdkman/tap/sdkman-cli`）を `brew trust` するか1つずつ確認されます（デフォルトはNo、信頼済みのものは聞かれません）。信頼しなかったformulaは `brew bundle` でスキップされるので、後から入れる場合は `brew trust --formula <name>` してから `brew bundle` を再実行してください。
+
 ### 手動でクローンする場合
 
 クローン先は `~/repos/github.com/{owner}/{repo}` 構造が必須です（ghq rootとGitの`includeIf`によるアカウント切替がこのパスに依存しています）:
