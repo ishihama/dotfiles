@@ -47,6 +47,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `scripts/setup/git.sh` - **Interactive Git configuration with auto-generation**
 - `scripts/setup/claude.sh` - Per-owner Claude Code config dirs (`~/.claude-<owner>/`) for each `~/repos/github.com/<owner>/`
 - `scripts/setup/tools.sh` - Additional tools (delta, TPM, mise)
+- `scripts/setup/windows_terminal.sh` - WSL only: merges `.config/windows-terminal/settings.json` into Windows Terminal's own `settings.json` with `jq` (backup first, no-op when unchanged), and offers the JetBrainsMono Nerd Font install via winget
 - `scripts/validate.sh` - Post-setup validation (XDG paths, shell modules, old symlink detection)
 
 **Shell Configuration (Zsh)**
@@ -93,6 +94,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `.config/gwq/config.toml` - gwq configuration (basedir: `~/repos`)
 - `.config/hammerspoon/init.lua` - Hammerspoon config (Space-crossing window focus for claude-status jump; symlinked to both `~/.config/hammerspoon` and `~/.hammerspoon`)
 - `.config/lazygit/config.yml` - lazygit custom commands (gh PR integration: list, view, checkout, create, diff)
+- `.config/windows-terminal/settings.json` - Partial Windows Terminal config (not symlinked; merged by `scripts/setup/windows_terminal.sh`): default profile "Ubuntu (tmux)" (fixed GUID, `wsl.exe -d <distro> --cd ~ -e <tmux> new-session -A -s main`), Catppuccin Mocha scheme, globals, and `tmuxKeys` (Alt+key → `sendInput` of Ctrl+T + key, the stand-in for Ghostty's Cmd+key since Win+key is owned by the OS)
 
 **Claude Code Permissions (`.config/claude/settings.json`)**
 - `permissions.deny` only constrains the **Read tool**. It does not and cannot stop `cat`, `rg`, `bat`, `head` or `xxd` from reading the same file, and those are all on the allow list. Treat the deny entries as guard rails against accidental reads, not as a security boundary
@@ -146,6 +148,7 @@ dotfiles/
 │   ├── atuin/                   # Atuin shell history
 │   ├── ghostty/                 # Ghostty terminal
 │   ├── gwq/                     # gwq worktree manager
+│   ├── windows-terminal/        # Windows Terminal partial config (merged on WSL)
 │   ├── lazygit/                 # lazygit configuration
 │   │   └── config.yml
 │   └── claude/                  # Claude Code settings (hooks: state tracking, bin: claude-status)
@@ -168,7 +171,8 @@ dotfiles/
     │   ├── shell.sh
     │   ├── git.sh
     │   ├── claude.sh
-    │   └── tools.sh
+    │   ├── tools.sh
+    │   └── windows_terminal.sh
     └── validate.sh              # XDG paths + shell modules + old symlink detection
 ```
 
@@ -204,6 +208,13 @@ dotfiles/
 - State writes are serialized with a directory lock and promoted only after `jq -e .` accepts the result, so concurrent hooks cannot lose an update or install a half-written document. A file that is nonetheless unparsable is moved aside as `*.json.broken` rather than blanking the display for every session
 - `~/.local/state/claude/sessions/` is created 700 and its files 600: they hold `cwd` and prompt text
 - Values read back from state files are treated as untrusted: `updated_at` is integer-checked before arithmetic, and the session name passed to `hs -c` is escaped byte-by-byte into a Lua literal
+
+**Windows Terminal (WSL)**
+- Windows Terminal owns its `settings.json` (rewritten from the GUI) and cannot read a symlink into `\\wsl$`, so it is merged, never linked. Only dotfiles-owned entries are replaced: the profile by GUID, the scheme by name, actions/keybindings whose `id` starts with `User.dotfiles.`, plus any user keybinding on the same `keys`. Everything else is kept
+- `%LOCALAPPDATA%` is resolved via PowerShell with UTF-8 output: `cmd.exe` prints in CP932 and garbles a Japanese user name
+- tmux is resolved with `command -v tmux` at setup time because `wsl.exe -e` skips the login shell (no Linuxbrew on PATH); tmux then starts login zsh for each pane
+- Windows Terminal rewrites `settings.json` on every load: it reorders actions/keybindings, serializes keys its own way (`vk(220)` comes back as `alt+\\`) and migrates renamed keys (`confirmCloseAllTabs` → `warning.confirmCloseAllTabs`). Write the partial config in the form WT writes back, and compare actions/keybindings order-insensitively, or every re-run reports a change
+- A settings.json with comments cannot be parsed by `jq`; the module warns and skips instead of rewriting it
 
 **Modern CLI Tool Aliases**
 - All defined in `.config/shell/aliases.sh` - traditional commands aliased to modern alternatives (cat->bat, ls->eza, grep->rg, find->fd, ps->procs, du->dust, df->duf, sed->sd, top->btop, http->xh, vi/vim->nvim)
