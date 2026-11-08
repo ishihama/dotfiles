@@ -14,7 +14,10 @@
 
 WT_DOTFILES_CONFIG="$DOTFILES_DIR/.config/windows-terminal/settings.json"
 WT_ACTION_PREFIX="User.dotfiles."
-WT_FONT_FAMILY="JetBrainsMono Nerd Font"
+# The DEVCOM MSI registers the font as "JetBrainsMono NF" (and "NFM"), not
+# "JetBrainsMono Nerd Font" like the macOS cask. Windows Terminal needs the
+# registered family name, and wt_font_installed greps for it.
+WT_FONT_FAMILY="JetBrainsMono NF"
 WT_FONT_WINGET_ID="DEVCOM.JetBrainsMonoNerdFont"
 
 setup_windows_terminal() {
