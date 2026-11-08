@@ -74,7 +74,7 @@ macOSとの違い:
 - Ghostty / Hammerspoon の設定はリンクされません（Windows側のターミナルは下記の Windows Terminal を使用）
 - Windows Terminal の設定は `init.sh` が自動で入れます（`scripts/setup/windows_terminal.sh`）。Windows Terminal は `\\wsl$` 越しのシンボリックリンクを読めないので、`.config/windows-terminal/settings.json`（dotfiles側の差分）を Windows 側の `settings.json` に `jq` でマージします。それ以外の設定（GUIで変えたもの含む）はそのまま残り、変更前の内容は `settings.json.backup.<日時>` に退避されます
   - 既定プロファイル「Ubuntu (tmux)」: 開くとWSLの tmux セッション `main` にアタッチ（Ghosttyの `command` と同じ）
-  - Catppuccin Mocha / JetBrainsMono Nerd Font 11pt / 不透明度80% / 選択でコピー
+  - Catppuccin Mocha / JetBrainsMono NF 11pt / 不透明度80% / 選択でコピー
   - Ghostty の Cmd+キー を Alt+キー に置き換え（Win+キーはOSが使っているため）: Alt+T=prefix, Alt+N=新規window, Alt+W=pane閉じる, Alt+1-9=window切替, Alt+H/J/K/L=pane移動, Alt+¥ / Alt+| =縦分割, Alt+- =横分割
   - フォントが未インストールなら winget（`DEVCOM.JetBrainsMonoNerdFont`、管理者権限のMSI）で入れるか確認されます
 - `pbcopy` は `~/.local/bin/pbcopy`（→ `.config/shell/bin/wsl/pbcopy`）で、UTF-8 を UTF-16LE に変換して `clip.exe` に渡します。PATH上のスクリプトなのでtmuxのコピーモード（`y` / `Enter`）からもWindowsのクリップボードにコピーできます

@@ -47,7 +47,7 @@ Repository clones via `gh repo clone` will automatically use the correct Git ide
 - `scripts/setup/git.sh` - **Interactive Git configuration with auto-generation**
 - `scripts/setup/claude.sh` - Per-owner Claude Code config dirs (`~/.claude-<owner>/`) for each `~/repos/github.com/<owner>/`
 - `scripts/setup/tools.sh` - Additional tools (delta, TPM, mise)
-- `scripts/setup/windows_terminal.sh` - WSL only: merges `.config/windows-terminal/settings.json` into Windows Terminal's own `settings.json` with `jq` (backup first, no-op when unchanged), and offers the JetBrainsMono Nerd Font install via winget
+- `scripts/setup/windows_terminal.sh` - WSL only: merges `.config/windows-terminal/settings.json` into Windows Terminal's own `settings.json` with `jq` (backup first, no-op when unchanged), and offers the JetBrainsMono Nerd Font install via winget (the MSI registers the family as `JetBrainsMono NF`, which is what the profile's `font.face` must name)
 - `scripts/validate.sh` - Post-setup validation (XDG paths, shell modules, old symlink detection)
 
 **Shell Configuration (Zsh)**
