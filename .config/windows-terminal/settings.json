@@ -1,0 +1,64 @@
+{
+    "globals": {
+        "copyOnSelect": true,
+        "warning.confirmCloseAllTabs": false,
+        "initialCols": 180,
+        "initialRows": 50
+    },
+    "profile": {
+        "guid": "{e5b89154-84cd-4870-b71a-8ba93c3ed9d5}",
+        "name": "Ubuntu (tmux)",
+        "hidden": false,
+        "colorScheme": "Catppuccin Mocha",
+        "font": {
+            "face": "JetBrainsMono Nerd Font",
+            "size": 11
+        },
+        "opacity": 80,
+        "useAcrylic": false,
+        "closeOnExit": "graceful"
+    },
+    "scheme": {
+        "name": "Catppuccin Mocha",
+        "cursorColor": "#F5E0DC",
+        "selectionBackground": "#585B70",
+        "background": "#1E1E2E",
+        "foreground": "#CDD6F4",
+        "black": "#45475A",
+        "red": "#F38BA8",
+        "green": "#A6E3A1",
+        "yellow": "#F9E2AF",
+        "blue": "#89B4FA",
+        "purple": "#F5C2E7",
+        "cyan": "#94E2D5",
+        "white": "#BAC2DE",
+        "brightBlack": "#585B70",
+        "brightRed": "#F38BA8",
+        "brightGreen": "#A6E3A1",
+        "brightYellow": "#F9E2AF",
+        "brightBlue": "#89B4FA",
+        "brightPurple": "#F5C2E7",
+        "brightCyan": "#94E2D5",
+        "brightWhite": "#A6ADC8"
+    },
+    "tmuxKeys": [
+        { "keys": "alt+t", "name": "prefix", "input": "" },
+        { "keys": "alt+n", "name": "newWindow", "input": "c" },
+        { "keys": "alt+w", "name": "killPane", "input": "x" },
+        { "keys": "alt+1", "name": "window1", "input": "1" },
+        { "keys": "alt+2", "name": "window2", "input": "2" },
+        { "keys": "alt+3", "name": "window3", "input": "3" },
+        { "keys": "alt+4", "name": "window4", "input": "4" },
+        { "keys": "alt+5", "name": "window5", "input": "5" },
+        { "keys": "alt+6", "name": "window6", "input": "6" },
+        { "keys": "alt+7", "name": "window7", "input": "7" },
+        { "keys": "alt+8", "name": "window8", "input": "8" },
+        { "keys": "alt+9", "name": "window9", "input": "9" },
+        { "keys": "alt+h", "name": "paneLeft", "input": "h" },
+        { "keys": "alt+j", "name": "paneDown", "input": "j" },
+        { "keys": "alt+k", "name": "paneUp", "input": "k" },
+        { "keys": "alt+l", "name": "paneRight", "input": "l" },
+        { "keys": ["alt+\\", "alt+shift+\\"], "name": "splitVertical", "input": "|" },
+        { "keys": "alt+minus", "name": "splitHorizontal", "input": "-" }
+    ]
+}

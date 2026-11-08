@@ -48,6 +48,7 @@ main() {
     run_setup_module "git" "Configuring Git"
     run_setup_module "claude" "Preparing Claude Code accounts"
     run_setup_module "tools" "Installing additional tools"
+    run_setup_module "windows_terminal" "Configuring Windows Terminal"
 
     # Validation. A failing check is worth reporting, but it must not swallow
     # the summary and next-steps output below.
